@@ -2,6 +2,7 @@ package com.ajpr00.tabletapp.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
@@ -10,7 +11,6 @@ import androidx.compose.material.icons.automirrored.twotone.MenuBook
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.twotone.FastRewind
 import androidx.compose.material.icons.twotone.MenuBook
@@ -22,13 +22,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 
 
@@ -143,8 +150,9 @@ fun PanelMenu(
 }
 
 @Composable
-fun BottomMenuReproductor(
+fun MenuReproductorVideo(
     modifier: Modifier = Modifier,
+    tapPosition: Offset,
     color: Color,
     isPlaying: Boolean,
     volume: Float,
@@ -156,9 +164,22 @@ fun BottomMenuReproductor(
     onRewind: () -> Unit,
     onMenu: () -> Unit
 ) {
+    var menuWidth by remember { mutableStateOf(0) }
+    var menuHeight by remember { mutableStateOf(0) }
+
     BoxWithConstraints(
         modifier = modifier
-    ) {
+            .onGloballyPositioned { coords ->
+                menuWidth = coords.size.width
+                menuHeight = coords.size.height
+            }
+            .offset {
+                // Cálculo para **centrar** el menú en el tap
+                val centeredX = tapPosition.x - menuWidth / 2f
+                val centeredY = tapPosition.y - menuHeight / 2f
+
+                IntOffset(centeredX.toInt(), centeredY.toInt())
+            }) {
         val size = maxHeight * 0.1f // tamaño relativo al alto del padre
 
         Row(
@@ -187,7 +208,7 @@ fun BottomMenuReproductor(
             Column {
                 CustomButtonPanel(
                     size = size,
-                    icon = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow ,
+                    icon = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                     label = "Play/Pause",
                     color = color,
                     onClick = onPlayPause
@@ -217,6 +238,80 @@ fun BottomMenuReproductor(
                     color = color,
                     onClick = onForward
                 )
+                CustomButtonPanel(
+                    size = size,
+                    icon = Icons.TwoTone.SkipNext,
+                    label = "Next",
+                    color = color,
+                    onClick = onNext
+                )
+
+            }
+        }
+    }
+}
+
+
+@Composable
+fun MenuReproductorImage(
+    modifier: Modifier = Modifier,
+    tapPosition: Offset,
+    color: Color,
+    isPlaying: Boolean,
+    onPlayPause: () -> Unit,
+    onPrev: () -> Unit,
+    onNext: () -> Unit,
+    onMenu: () -> Unit
+) {
+    var menuWidth by remember { mutableStateOf(0) }
+    var menuHeight by remember { mutableStateOf(0) }
+
+    BoxWithConstraints(
+        modifier = modifier
+            .onGloballyPositioned { coords ->
+                menuWidth = coords.size.width
+                menuHeight = coords.size.height
+            }
+            .offset {
+                // Cálculo para **centrar** el menú en el tap
+                val centeredX = tapPosition.x - menuWidth / 2f
+                val centeredY = tapPosition.y - menuHeight / 2f
+
+                IntOffset(centeredX.toInt(), centeredY.toInt())
+            }) {
+
+        val size = maxHeight * 0.1f // tamaño relativo al alto del padre
+
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .background(Color.Transparent),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Column {
+                CustomButtonPanel(
+                    size = size,
+                    icon = Icons.TwoTone.SkipPrevious, label = "Prev",
+                    color = color,
+                    onClick = onPrev
+                )
+            }
+            Column {
+                CustomButtonPanel(
+                    size = size,
+                    icon = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                    label = "Play/Pause",
+                    color = color,
+                    onClick = onPlayPause
+                )
+                CustomButtonPanel(
+                    size = size,
+                    icon = Icons.AutoMirrored.TwoTone.MenuBook, label = "MENU",
+                    color = color,
+                    onClick = onMenu
+                )
+            }
+            Column {
                 CustomButtonPanel(
                     size = size,
                     icon = Icons.TwoTone.SkipNext,

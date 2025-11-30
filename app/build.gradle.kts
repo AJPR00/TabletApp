@@ -100,7 +100,8 @@ dependencies {
 
     // Room (Base de datos)
     implementation(libs.androidx.room.runtime)              // Runtime de Room
-    implementation(libs.androidx.room.ktx)                  // Extensiones Kotlin para Room
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.compose.foundation.layout)                  // Extensiones Kotlin para Room
     kapt(libs.androidx.room.compiler)                       // Compiler de Room (procesador de anotaciones)
 
     // Media3 (ExoPlayer y dependencias)
