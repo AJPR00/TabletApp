@@ -1,14 +1,14 @@
-package com.ajpr00.tabletapp.ui.screen
+package com.ajpr00.tabletapp.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,43 +17,40 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.ajpr00.tabletapp.ui.components.BottomReproductor
+
 import com.ajpr00.tabletapp.ui.viewmodel.MediaBackgroundViewModel
 
 @Composable
-fun MenuOverlay(onClose: () -> Unit) {
-    val viewModel: MediaBackgroundViewModel = hiltViewModel()
+fun MenuOverlay(viewModel: MediaBackgroundViewModel, onClose: () -> Unit) {
+    var showMenuReproductor by remember { mutableStateOf(true) }
     var showMenu by remember { mutableStateOf(false) }
+
+    val option = viewModel.option.collectAsState().value
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0x66000000)) // negro semitransparente
+            .background(Color.Transparent)
             .clickable { onClose() },
-        contentAlignment = Alignment.Center
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Menú de opciones", color = Color.White, fontSize = 22.sp)
-            Spacer(Modifier.height(16.dp))
-            BottomReproductor(
-                isPlaying = viewModel.isMuted.value,
-                volume = 0.5f,
-                onPlayPause = { viewModel.toggleMute() },
+        if (showMenuReproductor) {
+            BottomMenuReproductor(
+                isPlaying = option.isPlaying,
+                volume = if (option.isMuted) 0f else 1f,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
+                onPlayPause = { viewModel.togglePlayPause() },
                 onMute = { viewModel.toggleMute() },
                 onPrev = { viewModel.prevMedia() },
                 onNext = { viewModel.nextMedia() },
-                onMenosPrev = { viewModel.prevMedia() },
-                onMasNext = { viewModel.nextMedia() },
+                onForward = { viewModel.forward() },
+                onRewind = { viewModel.rewind() },
                 onMenu = { showMenu = true }
             )
-            if (showMenu) {
-                MenuOptions(onClose = { showMenu = false })
-            }
+            VerticalSlider(option.volume, onValueChange = { viewModel.setVolume(it) }, modifier = Modifier.width(200.dp).align(alignment = Alignment.CenterEnd))
+        }
+        if (showMenu) {
+            showMenuReproductor = false
+            MenuOptions( viewModel = viewModel,onClose = { showMenu = false })
         }
     }
 }

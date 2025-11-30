@@ -1,12 +1,23 @@
 package com.ajpr00.tabletapp.data.mapper
 
-import androidx.room.TypeConverter
+import com.ajpr00.tabletapp.data.db.local.entity.MediaContentEntity
 import com.ajpr00.tabletapp.domain.model.FormatType
+import com.ajpr00.tabletapp.domain.model.MediaContent
 
-class Converters {
-    @TypeConverter
-    fun fromFormatType(value: FormatType): String = value.name
+fun MediaContentEntity.toDomain(): MediaContent =
+    MediaContent(
+        id = id,
+        name = name,
+        path = path,
+        type = FormatType.valueOf(type),
+        isFavorite = isFavorite
+    )
 
-    @TypeConverter
-    fun toFormatType(value: String): FormatType = FormatType.valueOf(value)
-}
+fun MediaContent.toEntity(): MediaContentEntity =
+    MediaContentEntity(
+        id = id,
+        name = name,
+        path = path,
+        type = type.name,
+        isFavorite = isFavorite
+    )

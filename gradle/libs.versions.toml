@@ -1,32 +1,63 @@
 [versions]
-agp = "8.8.0"
-kotlin = "2.0.0"
-coreKtx = "1.16.0"
-junit = "4.13.2"
-junitVersion = "1.2.1"
-espressoCore = "3.6.1"
-lifecycleRuntimeKtx = "2.9.1"
-activityCompose = "1.10.1"
-composeBom = "2024.04.01"
+agp = "8.13.0"                # Android Gradle Plugin, necesario para compilar proyectos Android
+kotlin = "2.2.20"              # Versión de Kotlin usada en el proyecto
+coreKtx = "1.17.0"             # Extensiones de Kotlin para Android (más idiomático)
+junit = "4.13.2"               # Framework de testing unitario
+junitVersion = "1.3.0"         # Extensión de JUnit para AndroidX
+espressoCore = "3.7.0"         # Testing de UI con Espresso
+lifecycleRuntimeKtx = "2.9.4"  # Extensiones de ciclo de vida con coroutines
+activityCompose = "1.11.0"     # Integración de Activity con Compose
+composeBom = "2025.10.00"      # BOM de Compose para alinear versiones
+media3 = "1.8.0"               # Librerías Media3 (ExoPlayer, UI, etc.)
+room = "2.8.3"                 # Room para persistencia en BD
+coil = "2.7.0"                 # Coil para carga de imágenes
+hilt = "2.57.2"                # Hilt para inyección de dependencias
+hiltNavigationCompose = "1.3.0"# Integración de Hilt con Compose Navigation
+navigationCompose = "2.9.6"    # Navegación en Compose
+kotlinSerialization = "1.9.0"  # Serialización JSON con Kotlinx
 
 [libraries]
-androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
-androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
-androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
-androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
-androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
-androidx-ui = { group = "androidx.compose.ui", name = "ui" }
-androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
-androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
-androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
-androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
-androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
-androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" } # Extensiones Kotlin para Android
+junit = { group = "junit", name = "junit", version.ref = "junit" } # Testing unitario
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" } # Extensión JUnit para Android
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" } # Testing UI
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" } # Ciclo de vida + coroutines
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" } # Activity + Compose
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" } # BOM Compose
+androidx-ui = { group = "androidx.compose.ui", name = "ui" } # Core de Compose UI
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" } # Gráficos en Compose
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" } # Herramientas de preview
+androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" } # Preview en Compose
+androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" } # Testing Compose
+androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" } # Testing Compose con JUnit4
+androidx-material3 = { group = "androidx.compose.material3", name = "material3" } # Material Design 3
+androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" } # Iconos extendidos
+
+# Google Fonts para Compose. Permite usar GoogleFont.Provider y descargar fuentes dinámicamente vía Play Services
+androidx-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts" }
+
+media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" } # Reproductor ExoPlayer
+media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3" } # UI de Media3
+media3-common = { module = "androidx.media3:media3-common", version.ref = "media3" } # Utilidades comunes de Media3
+
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" } # Runtime de Room
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" } # Extensiones Kotlin para Room
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" } # Compiler de Room (kapt)
+
+coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil" } # Coil + Compose
+coil-gif = { module = "io.coil-kt:coil-gif", version.ref = "coil" }
+
+hilt = { module = "com.google.dagger:hilt-android", version.ref = "hilt" } # Hilt Android
+hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" } # Compiler Hilt (kapt)
+hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" } # Hilt + Navigation Compose
+
+navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" } # Navegación Compose
+
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinSerialization" } # Serialización JSON
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-
+hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }

@@ -1,3 +1,5 @@
+package com.ajpr00.tabletapp.ui.components
+
 // Android / sistema
 import android.util.Log
 import androidx.annotation.OptIn
@@ -15,6 +17,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.layout.ContentScale
 
 // Material3
 
@@ -35,7 +40,6 @@ import coil.compose.AsyncImage
 
 // Tu dominio / modelos
 import com.ajpr00.tabletapp.domain.model.FormatType
-import com.ajpr00.tabletapp.domain.model.TransitionOption
 import com.ajpr00.tabletapp.domain.model.transitionFor
 
 // Tu ViewModel
@@ -43,6 +47,9 @@ import com.ajpr00.tabletapp.ui.viewmodel.MediaBackgroundViewModel
 
 // Corrutinas
 import kotlinx.coroutines.delay
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.ajpr00.tabletapp.domain.model.ReproductorConfig
 
 
 /**
@@ -52,37 +59,63 @@ import kotlinx.coroutines.delay
  */
 @OptIn(UnstableApi::class, ExperimentalAnimationApi::class)
 @Composable
-fun Reproductor(tiempoImagen: Long, transitionOption: TransitionOption) {
+fun Reproductor(viewModel: MediaBackgroundViewModel) {
     val TAG = "MediaBackground"
     val context = LocalContext.current
 
-    val viewModel: MediaBackgroundViewModel = hiltViewModel()
     val media = viewModel.currentMedia.value
+    val option = viewModel.option.collectAsState().value
+
     Log.d("MediaBackground", "Media cargado: $media")
 
     // ExoPlayer se recuerda mientras el Composable viva
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
-            volume = if (viewModel.isMuted.value) 0f else 1f
             addListener(object : Player.Listener {
                 override fun onPlaybackStateChanged(state: Int) {
                     if (state == Player.STATE_ENDED) {
-                        Log.d("MediaBackground", "Vídeo terminado, avanzando al siguiente")
-                        viewModel.nextMedia() // 👈 aquí pedimos al ViewModel que cambie al siguiente
+                        viewModel.nextMedia()
                     }
                 }
             })
         }
     }
 
+    LaunchedEffect(option.isMuted) {
+        exoPlayer.volume = option.volume
+    }
+
+    LaunchedEffect(option.volume) {
+        exoPlayer.volume = option.volume
+    }
+
+    LaunchedEffect(option.isPlaying) {
+        exoPlayer.playWhenReady = option.isPlaying
+    }
+
+    LaunchedEffect(option.rewinds) {
+        if (option.rewinds != 0) {
+            val newPosition = (exoPlayer.currentPosition + option.rewinds * 1000)
+                .coerceIn(0, exoPlayer.duration)
+            exoPlayer.seekTo(newPosition)
+
+            viewModel.resetRewinds()
+        }
+    }
+
     LaunchedEffect(media?.path) {
-        if (media?.type == FormatType.VIDEO) {
-            exoPlayer.setMediaItem(MediaItem.fromUri(media.path))
-            exoPlayer.prepare()
-            exoPlayer.playWhenReady = true
-        } else {
-            exoPlayer.stop()
-            delay(tiempoImagen)
+        try {
+            if (media?.type == FormatType.VIDEO) {
+                exoPlayer.setMediaItem(MediaItem.fromUri(media.path))
+                exoPlayer.prepare()
+                exoPlayer.playWhenReady = true
+            } else {
+                exoPlayer.stop()
+                delay(option.tiempoImagen)
+                viewModel.nextMedia()
+            }
+        } catch (e: Exception) {
+            Log.e("Reproductor", "Error reproduciendo medio: ${e.message}")
             viewModel.nextMedia()
         }
     }
@@ -96,14 +129,15 @@ fun Reproductor(tiempoImagen: Long, transitionOption: TransitionOption) {
 
     AnimatedContent(
         targetState = media,
-        transitionSpec = transitionFor(transitionOption)
+        transitionSpec = transitionFor(option.transitionOption)
     ) { current ->
         when (current?.type) {
             FormatType.IMAGE -> {
                 AsyncImage(
                     model = current.path,
                     contentDescription = null,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
                 )
             }
             FormatType.VIDEO -> {

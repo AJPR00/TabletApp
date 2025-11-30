@@ -1,20 +1,18 @@
 package com.ajpr00.tabletapp.util
 
+import android.content.Context
+import android.net.Uri
+import android.util.Log
 import com.ajpr00.tabletapp.domain.model.FormatType
 
-fun detectFormatType(path: String): FormatType {
-    val lowerPath = path.lowercase()
-
+// Detecta el tipo de formato de un archivo dado su ruta
+fun detectFormatType(context: Context, uri: Uri): FormatType {
+    val mime = context.contentResolver.getType(uri) ?: return FormatType.IMAGE
+    Log.d("MimeType", "El MIME es: $mime")
     return when {
-        lowerPath.endsWith(".jpg") || lowerPath.endsWith(".jpeg") || lowerPath.endsWith(".png") || lowerPath.endsWith(".gif") ->
-            FormatType.IMAGE
-
-        lowerPath.endsWith(".mp4") || lowerPath.endsWith(".mov") || lowerPath.endsWith(".mkv") || lowerPath.endsWith(".webm") ->
-            FormatType.VIDEO
-
-        lowerPath.endsWith(".mp3") || lowerPath.endsWith(".wav") || lowerPath.endsWith(".ogg") ->
-            FormatType.AUDIO
-
-        else -> throw Exception("Formato no reconocido $path")
+        mime.startsWith("image") -> FormatType.IMAGE
+        mime.startsWith("video") -> FormatType.VIDEO
+        mime.startsWith("audio") -> FormatType.AUDIO
+        else -> throw Exception("Formato no reconocido $mime")
     }
 }
