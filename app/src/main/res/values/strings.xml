@@ -1,3 +1,9 @@
 <resources>
-    <string name="app_name">VisumLoop</string>
+    <string name="app_name">VisumLoop (Debug)</string>
+
+    <!-- Web client ID (OAuth client_type=3) -->
+    <string name="web_client_id">913153816828-8rk5odghongt5ujadbsfpoi87ph4oo5k.apps.googleusercontent.com</string>
+
+    <!-- Android client ID SHA1 DEBUG -->
+    <string name="android_client_id">913153816828-ken1c1h7qkrgmd5t4ei33mgnev5v0amn.apps.googleusercontent.com</string>
 </resources>

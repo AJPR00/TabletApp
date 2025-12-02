@@ -1,61 +1,77 @@
 [versions]
-agp = "8.13.0"                # Android Gradle Plugin, necesario para compilar proyectos Android
-kotlin = "2.2.20"              # Versión de Kotlin usada en el proyecto
-coreKtx = "1.17.0"             # Extensiones de Kotlin para Android (más idiomático)
-junit = "4.13.2"               # Framework de testing unitario
-junitVersion = "1.3.0"         # Extensión de JUnit para AndroidX
-espressoCore = "3.7.0"         # Testing de UI con Espresso
-lifecycleRuntimeKtx = "2.9.4"  # Extensiones de ciclo de vida con coroutines
-activityCompose = "1.11.0"     # Integración de Activity con Compose
-composeBom = "2025.10.00"      # BOM de Compose para alinear versiones
-media3 = "1.8.0"               # Librerías Media3 (ExoPlayer, UI, etc.)
-room = "2.8.3"                 # Room para persistencia en BD
-coil = "2.7.0"                 # Coil para carga de imágenes
-hilt = "2.57.2"                # Hilt para inyección de dependencias
-hiltNavigationCompose = "1.3.0"# Integración de Hilt con Compose Navigation
-navigationCompose = "2.9.6"    # Navegación en Compose
+agp = "8.13.0"
+kotlin = "2.2.20"
+coreKtx = "1.17.0"
+junit = "4.13.2"
+junitVersion = "1.3.0"
+espressoCore = "3.7.0"
+lifecycleRuntimeKtx = "2.9.4"
+activityCompose = "1.11.0"
+composeBom = "2025.10.00"
+media3 = "1.8.0"
+room = "2.8.3"
+coil = "2.7.0"
+hilt = "2.57.2"
+hiltNavigationCompose = "1.3.0"
+navigationCompose = "2.9.6"
 kotlinSerialization = "1.9.0"
-foundationLayout = "1.9.5"  # Serialización JSON con Kotlinx
+foundationLayout = "1.9.5"
+playServicesAuth = "21.4.0"
+googleApiClient = "1.32.1"
+googleDriveApi = "v3-rev20220815-2.0.0"
+datastore = "1.1.1"
+firebaseBom = "33.5.1"   # BOM de Firebase
+googleServices = "4.4.2" # Plugin Google Services
 
 [libraries]
-androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" } # Extensiones Kotlin para Android
-junit = { group = "junit", name = "junit", version.ref = "junit" } # Testing unitario
-androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" } # Extensión JUnit para Android
-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" } # Testing UI
-androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" } # Ciclo de vida + coroutines
-androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" } # Activity + Compose
-androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" } # BOM Compose
-androidx-ui = { group = "androidx.compose.ui", name = "ui" } # Core de Compose UI
-androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" } # Gráficos en Compose
-androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" } # Herramientas de preview
-androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" } # Preview en Compose
-androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" } # Testing Compose
-androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" } # Testing Compose con JUnit4
-androidx-material3 = { group = "androidx.compose.material3", name = "material3" } # Material Design 3
-androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" } # Iconos extendidos
-
-# Google Fonts para Compose. Permite usar GoogleFont.Provider y descargar fuentes dinámicamente vía Play Services
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts" }
 
-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" } # Reproductor ExoPlayer
-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3" } # UI de Media3
-media3-common = { module = "androidx.media3:media3-common", version.ref = "media3" } # Utilidades comunes de Media3
+media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
+media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3" }
+media3-common = { module = "androidx.media3:media3-common", version.ref = "media3" }
 
-androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" } # Runtime de Room
-androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" } # Extensiones Kotlin para Room
-androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" } # Compiler de Room (kapt)
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 
-coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil" } # Coil + Compose
+coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil" }
 coil-gif = { module = "io.coil-kt:coil-gif", version.ref = "coil" }
 
-hilt = { module = "com.google.dagger:hilt-android", version.ref = "hilt" } # Hilt Android
-hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" } # Compiler Hilt (kapt)
-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" } # Hilt + Navigation Compose
+hilt = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
+hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
+hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 
-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" } # Navegación Compose
+navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinSerialization" }
-androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" } # Serialización JSON
+androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
+
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
+google-api-client-android = { group = "com.google.api-client", name = "google-api-client-android", version.ref = "googleApiClient" }
+google-api-services-drive = { group = "com.google.apis", name = "google-api-services-drive", version.ref = "googleDriveApi" }
+
+# DataStore
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastore" }
+
+# Firebase
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -63,3 +79,4 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
