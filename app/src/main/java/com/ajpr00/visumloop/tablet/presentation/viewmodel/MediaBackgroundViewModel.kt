@@ -11,16 +11,38 @@ import androidx.lifecycle.viewModelScope
 import com.ajpr00.visumloop.tablet.data.repository.MediaRepository
 import com.ajpr00.visumloop.tablet.domain.model.FormatType
 import com.ajpr00.visumloop.tablet.domain.model.MediaContent
+import com.ajpr00.visumloop.tablet.presentation.state.EstadoMenus
 import com.ajpr00.visumloop.tablet.presentation.state.ReproductorConfig
 import com.ajpr00.visumloop.tablet.util.detectFormatType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+/**
+ * 📌 MediaBackgroundViewModel
+ *
+ * Este ViewModel es el "cerebro" del reproductor multimedia de la app.
+ * Su función principal es **centralizar y controlar** todo lo que pasa con:
+ *  - La lista de archivos multimedia (imágenes y vídeos) que vienen de la BD.
+ *  - El estado del reproductor (play/pause, mute, volumen, rebobinar, adelantar).
+ *  - Los menús y paneles visuales (menú lateral, menú del reproductor, bloqueo de pantalla).
+ *
+ *    - Mantiene una sola fuente de verdad sobre qué media se está reproduciendo.
+ *    - Decide si lo que se reproduce es vídeo o imagen.
+ *    - Controla el índice actual y permite avanzar, retroceder o elegir aleatoriamente.
+ *    - Guarda la configuración del reproductor en un StateFlow para que la UI se actualice sola.
+ *
+ *    Cómo funciona:
+ *    1. Al iniciar, escucha la BD y carga la lista de medias.
+ *    2. Si hay archivos, arranca reproduciendo el primero.
+ *    3. La UI observa los StateFlow (option, mediaList, currentMedia, etc.) y se redibuja.
+ *    4. Cuando el usuario interactúa (mute, play/pause, siguiente, etc.), el ViewModel actualiza el estado.
+ *    5. Los Logs (`Log.d`) permiten seguir paso a paso qué acción se ejecutó y cómo cambió el estado.
+ *
+ */
 
 @HiltViewModel
 class MediaBackgroundViewModel @Inject constructor(
@@ -31,13 +53,17 @@ class MediaBackgroundViewModel @Inject constructor(
     private val _option = MutableStateFlow(ReproductorConfig())
     val option: StateFlow<ReproductorConfig> = _option
 
+    val _estadoVisualMenu = MutableStateFlow(EstadoMenus())
+    val stadoVisualMenu: StateFlow<EstadoMenus> = _estadoVisualMenu
+
+    private val _lastInteraction = MutableStateFlow(System.currentTimeMillis())
+
     // Indica si el media actual es un vídeo
     private val _isVideo = MutableStateFlow(false)
     val isVideo = _isVideo
 
-    // Lista completa de medias (Flow en tiempo real)
-    val mediaList: StateFlow<List<MediaContent>> = repository.getAllMedia()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    private val _mediaList = MutableStateFlow<List<MediaContent>>(emptyList())
+    val mediaList: StateFlow<List<MediaContent>> = _mediaList
 
     // Índice del media actual
     private val _currentIndex = mutableStateOf(0)
@@ -46,17 +72,53 @@ class MediaBackgroundViewModel @Inject constructor(
     // Media que se está reproduciendo actualmente
     val currentMedia: State<MediaContent?> = mutableStateOf(null)
 
+    val lastInteraction: StateFlow<Long> = _lastInteraction
+
     init {
-        // Cuando hay medias cargadas y no hay ninguna seleccionada, reproducimos la primera
         viewModelScope.launch {
-            mediaList.collect { list ->
-                Log.d("MediaBackgroundVM", "Lista de medias actualizada: tamaño=${list.size}")
+            repository.getAllMediaBd().collect { list ->
+                Log.d("MediaBackgroundVM", "📂 Lista recibida del repo: tamaño=${list.size}")
+                _mediaList.value = list
+
                 if (list.isNotEmpty() && currentMedia.value == null) {
-                    Log.d("MediaBackgroundVM", "Inicializando reproducción en índice 0")
+                    Log.d("MediaBackgroundVM", "▶ Inicializando reproducción en índice 0")
                     playMediaAt(0)
                 }
             }
         }
+    }
+
+    fun resetTimer() {
+        _lastInteraction.value = System.currentTimeMillis()
+        Log.d("ViewModel", "Timer reiniciado → lastInteraction=${_lastInteraction.value}")
+    }
+
+    fun toggleOpenSidePanel() {
+        _estadoVisualMenu.value =
+            _estadoVisualMenu.value.copy(showSidePanel = !_estadoVisualMenu.value.showSidePanel)
+    }
+
+    fun toggleShowMenuReproductor() {
+        _estadoVisualMenu.value = _estadoVisualMenu.value.copy(
+            showMenuReproductor = !_estadoVisualMenu.value.showMenuReproductor
+        )
+    }
+
+    fun toggleShowMenuApp() {
+        _estadoVisualMenu.value =
+            _estadoVisualMenu.value.copy(showMenuApp = !_estadoVisualMenu.value.showMenuApp)
+    }
+
+    fun toggleCloseSidePanel() {
+        _estadoVisualMenu.value =
+            _estadoVisualMenu.value.copy(showSidePanel = !_estadoVisualMenu.value.showSidePanel)
+    }
+
+    fun toggleLockScreen() {
+        _estadoVisualMenu.value = _estadoVisualMenu.value.copy(
+            onLockScreen = !_estadoVisualMenu.value.onLockScreen,
+            showMenuReproductor = !_estadoVisualMenu.value.showMenuReproductor
+        )
     }
 
     fun isVideo(mediaContent: MediaContent): Boolean {
@@ -209,4 +271,5 @@ class MediaBackgroundViewModel @Inject constructor(
             current.copy(rewinds = 0)
         }
     }
+
 }

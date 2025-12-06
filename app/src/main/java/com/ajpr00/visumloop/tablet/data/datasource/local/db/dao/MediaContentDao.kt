@@ -1,7 +1,7 @@
-package com.ajpr00.visumloop.tablet.data.db.local.dao
+package com.ajpr00.visumloop.tablet.data.datasource.local.db.dao
 
 import androidx.room.*
-import com.ajpr00.visumloop.tablet.data.db.local.entity.MediaContentEntity
+import com.ajpr00.visumloop.tablet.data.datasource.local.db.entity.MediaContentEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

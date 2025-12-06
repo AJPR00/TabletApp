@@ -1,6 +1,6 @@
 package com.ajpr00.visumloop.tablet.data.mapper
 
-import com.ajpr00.visumloop.tablet.data.db.local.entity.MediaContentEntity
+import com.ajpr00.visumloop.tablet.data.datasource.local.db.entity.MediaContentEntity
 import com.ajpr00.visumloop.tablet.domain.model.FormatType
 import com.ajpr00.visumloop.tablet.domain.model.MediaContent
 

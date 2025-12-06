@@ -9,7 +9,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.ui.layout.ContentScale
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -23,8 +22,6 @@ import com.ajpr00.visumloop.tablet.presentation.viewmodel.MediaBackgroundViewMod
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 
 /**
  * Reproductor principal que alterna entre imágenes y videos.
@@ -41,11 +38,10 @@ fun Reproductor(viewModel: MediaBackgroundViewModel) {
 
     // Estado actual del medio a reproducir (imagen o video)
     val media = viewModel.currentMedia.value
+    Log.d(TAG, "🟦 Media cargado en Reproductor(): $media")
 
     // Opciones de reproducción actuales del ViewModel (volumen, mute, etc)
     val option = viewModel.option.collectAsState().value
-
-    Log.d(TAG, "🟦 Media cargado en Reproductor(): $media")
 
     // Se crea y recuerda una única instancia de ExoPlayer mientras el Composable esté activo
     val exoPlayer = remember {
@@ -104,15 +100,13 @@ fun Reproductor(viewModel: MediaBackgroundViewModel) {
         }
     }
 
-    // ------------------------------------------------------------
-// Cargar vídeo o imagen
-// ------------------------------------------------------------
+    // Cargar vídeo o imagen
     LaunchedEffect(media?.path, option.tiempoImagen) {
         try {
-            Log.d(TAG, "🔄 Cambio de media detectado: ${media?.path}  tipo=${media?.type}")
+            Log.d(TAG, "ambio de media detectado: ${media?.path}  tipo=${media?.type}")
 
             if (media?.type == FormatType.VIDEO) {
-                Log.d(TAG, "🎬 Reproduciendo VIDEO: ${media.path}")
+                Log.d(TAG, "Reproduciendo VIDEO: ${media.path}")
                 // Preparar y reproducir video
                 exoPlayer.setMediaItem(MediaItem.fromUri(media.path))
                 exoPlayer.prepare()
@@ -124,7 +118,7 @@ fun Reproductor(viewModel: MediaBackgroundViewModel) {
                 val minTiempo = 2000L
                 val tiempo = maxOf(option.tiempoImagen, minTiempo)
 
-                Log.d(TAG, "🖼 Mostrando IMAGEN por $tiempo ms (option=${option.tiempoImagen})")
+                Log.d(TAG, "Mostrando IMAGEN por $tiempo ms (option=${option.tiempoImagen})")
 
                 // Paramos el player por si estaba reproduciendo algo
                 exoPlayer.stop()
@@ -137,13 +131,13 @@ fun Reproductor(viewModel: MediaBackgroundViewModel) {
 
                 // Comprobación de seguridad: si el media cambió durante el delay NO llamamos nextMedia()
                 val stillSame = viewModel.currentMedia.value?.path == currentPath
-                Log.d(TAG, "⏱ Delay acabado. ¿sigue siendo el mismo media? $stillSame")
+                Log.d(TAG, "Delay acabado. ¿sigue siendo el mismo media? $stillSame")
 
                 if (stillSame) {
-                    Log.d(TAG, "⏭ Imagen mostrada suficiente tiempo, cargando siguiente media")
+                    Log.d(TAG, "Imagen mostrada suficiente tiempo, cargando siguiente media")
                     viewModel.nextMedia()
                 } else {
-                    Log.d(TAG, "✋ El media cambió durante el delay — no avanzamos (evita bucle)")
+                    Log.d(TAG, "El media cambió durante el delay — no avanzamos (evita bucle)")
                 }
 
             } else {
@@ -151,25 +145,20 @@ fun Reproductor(viewModel: MediaBackgroundViewModel) {
             }
 
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Error reproduciendo media: ${e.message}", e)
+            Log.e(TAG, "Error reproduciendo media: ${e.message}", e)
             viewModel.nextMedia()
         }
     }
 
-
-    // ------------------------------------------------------------
     // Liberar ExoPlayer cuando el composable se destruye
-    // ------------------------------------------------------------
     DisposableEffect(Unit) {
         onDispose {
-            Log.d(TAG, "🟥 Liberando ExoPlayer")
+            Log.d(TAG, "Liberando ExoPlayer")
             exoPlayer.release()
         }
     }
 
-    // ------------------------------------------------------------
     // ANIMACIÓN ENTRE IMAGEN Y VIDEO
-    // ------------------------------------------------------------
     AnimatedContent(
         targetState = media,
         transitionSpec = transitionFor(option.transitionOption)
@@ -185,22 +174,7 @@ fun Reproductor(viewModel: MediaBackgroundViewModel) {
                     model = current.path,
                     contentDescription = null,
                     modifier = Modifier
-                        .fillMaxSize()
-                        .pointerInput(Unit) {
-                            detectTransformGestures { _, pan, zoomChange, _ ->
-                                // Actualiza zoom con límites (ej. 0.5x a 3x)
-                                zoom = (zoom * zoomChange).coerceIn(0.5f, 3f)
-                                // Opcional: Actualiza offset para pan (desplazamiento)
-                                offset += pan
-                            }
-                        }
-                        .graphicsLayer {
-                            // Aplica la escala y offset
-                            scaleX = zoom
-                            scaleY = zoom
-                            translationX = offset.x
-                            translationY = offset.y
-                        },
+                        .fillMaxSize(),
                     contentScale = ContentScale.Crop  // Mantiene proporción inicial
                 )
             }

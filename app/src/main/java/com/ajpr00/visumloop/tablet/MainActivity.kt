@@ -5,10 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
-import com.ajpr00.visumloop.tablet.ui.screen.ReproductorScreen
+import com.ajpr00.visumloop.tablet.navigation.NavigationCore
 import com.ajpr00.visumloop.tablet.ui.theme.TabletAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -20,9 +19,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             TabletAppTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ReproductorScreen(
-                        modifier = Modifier.padding(innerPadding),
-                    )
+                    NavigationCore(innerPadding)
                 }
             }
         }

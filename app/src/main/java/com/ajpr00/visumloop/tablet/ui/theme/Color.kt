@@ -5,13 +5,13 @@ import androidx.compose.ui.graphics.Color
 // Propio Translucido
 
 // 🎨 Colores principales del tema claro
-val primaryLight = Color(0xFF765A0B) // Color principal (botones, elementos destacados)
-val onPrimaryLight = Color(0xFFFFFFFF) // Texto/ícono encima del primary
+val primaryLight = Color(0xFFFFefbf) // Color principal (botones, elementos destacados)
+val onPrimaryLight = Color(0xFFC24C1E) // Texto/ícono encima del primary
 val primaryContainerLight = Color(0xFFFFDF99) // Fondo contenedor del primary
 val onPrimaryContainerLight = Color(0xFF5A4300) // Texto encima del contenedor primary
 
 // 🎨 Colores secundarios
-val secondaryLight = Color(0xFF6A5D3F) // Color secundario (elementos de soporte)
+val secondaryLight = Color(0xFFC24C1E) // Color secundario (elementos de soporte)
 val onSecondaryLight = Color(0xFFFFFFFF) // Texto/ícono encima del secondary
 val secondaryContainerLight = Color(0xFFF4E0BB) // Fondo contenedor del secondary
 val onSecondaryContainerLight = Color(0xFF52452A) // Texto encima del contenedor secondary

@@ -1,4 +1,4 @@
-package com.ajpr00.visumloop.tablet.data.db.local.entity
+package com.ajpr00.visumloop.tablet.data.datasource.local.db.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

@@ -1,31 +1,65 @@
 package com.ajpr00.visumloop.tablet.presentation.viewmodel
 
+import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ajpr00.visumloop.tablet.data.datasource.local.preferences.LoginPreferences
 import com.ajpr00.visumloop.tablet.data.repository.AuthRepository
+import com.ajpr00.visumloop.tablet.presentation.state.AuthUiState
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val repository: AuthRepository
+    private val repository: AuthRepository,
+    private val loginPreferences: LoginPreferences
 ) : ViewModel() {
 
-    var idToken by mutableStateOf<String?>(null)
+    private var _uiState = MutableStateFlow(AuthUiState())
+    val uiState: StateFlow<AuthUiState> = _uiState
+
+
+    var driveToken: String? = null
         private set
 
-    var authCode by mutableStateOf<String?>(null)
-        private set
-    fun onGoogleAccountReceived(account: GoogleSignInAccount) {
-        idToken = account.idToken
-        authCode = account.serverAuthCode
+    init {
+        viewModelScope.launch {
+            loginPreferences.idToken.collect { token ->
+                _uiState.value = _uiState.value.copy(idToken = token)
+            }
+            loginPreferences.authCode.collect { code ->
+                _uiState.value = _uiState.value.copy(authCode = code)
+            }
+        }
     }
+
+    fun setDriveToken(token: String) {
+        driveToken = token
+    }
+
+    fun onGoogleAccountReceived(account: GoogleSignInAccount) {
+        val idToken = account.idToken
+        val authCode = account.serverAuthCode
+
+        viewModelScope.launch {
+            loginPreferences.saveTokens(idToken, authCode)
+        }
+
+        _uiState.value = _uiState.value.copy(
+            idToken = idToken,
+            authCode = authCode,
+            email = account.email,
+            nombreCompleto = listOfNotNull(account.givenName, account.familyName)
+                .takeIf { it.isNotEmpty() }
+                ?.joinToString(" ")
+        )
+    }
+
 
     fun loginWithGoogle(idToken: String, email: String, givenName: String?, familyName: String?) {
         Log.d("VIEWMODELLoginConGoogle", "INICIANDO... login con Google")
@@ -43,10 +77,10 @@ class AuthViewModel @Inject constructor(
                     ?: "Usuario sin nombre"
 
 
-              //  preferencesRepository.saveLogin(email, nombreCompleto)
+                //  preferencesRepository.saveLogin(email, nombreCompleto)
 
-              //  val sesionActiva = preferencesRepository.sesionActiva.first()
-              //  val penaNombre = preferencesRepository.nombrePena.first()
+                //  val sesionActiva = preferencesRepository.sesionActiva.first()
+                //  val penaNombre = preferencesRepository.nombrePena.first()
 
             }
         }

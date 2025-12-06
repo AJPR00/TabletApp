@@ -1,10 +1,17 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.hilt.android)
-    alias(libs.plugins.google.services) // Google Services
+    alias(libs.plugins.google.services)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+val properties = Properties().apply {
+    load(rootProject.file("local.properties").inputStream())
 }
 
 android {
@@ -27,6 +34,11 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // OAuth y FirebaseUI
+        buildConfigField("String","GOOGLE_CLIENT_ID","\"${properties["GOOGLE_CLIENT_ID"]}\"")
+        buildConfigField("String","GOOGLE_CLIENT_SECRET","\"${properties["GOOGLE_CLIENT_SECRET"]}\"")
+        buildConfigField("String","GOOGLE_REDIRECT_URI","\"https://app-visumlopp.firebaseapp.com/__/auth/handler\"")
     }
 
     buildTypes {
@@ -41,24 +53,31 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlin {
         compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
     }
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
         resources {
-            excludes += "META-INF/DEPENDENCIES"
+            excludes.add("META-INF/DEPENDENCIES")
         }
+    }
+
+
+    kotlinOptions {
+        freeCompilerArgs = listOf("-XXLanguage:+PropertyParamAnnotationDefaultTargetMode")
     }
 }
 
@@ -67,54 +86,81 @@ tasks.withType<JavaCompile> {
 }
 
 dependencies {
+    // AndroidX Core + Lifecycle + Activity Compose
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
 
+    // Compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
-
     implementation(libs.androidx.ui.text.google.fonts)
+    implementation(libs.androidx.compose.foundation.layout)
 
+    // Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    implementation(libs.androidx.compose.foundation.layout)
     kapt(libs.androidx.room.compiler)
 
+    // Media3
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.ui)
     implementation(libs.media3.common)
 
+    // Coil
     implementation(libs.coil.compose)
     implementation(libs.coil.gif)
 
+    // Hilt
     implementation(libs.hilt)
     implementation(libs.hilt.navigation.compose)
     kapt(libs.hilt.compiler)
 
+    // Navigation Compose
     implementation(libs.navigation.compose)
 
+    // Kotlinx Serialization
     implementation(libs.kotlinx.serialization.json)
 
+    // Google Play Services Auth (FirebaseUI / Google Sign-In)
     implementation(libs.play.services.auth)
 
-    implementation(libs.google.api.client.android)
-    implementation(libs.google.api.services.drive)
+    // FirebaseUI Auth
+    implementation(libs.firebase.ui.auth)
 
-    implementation(libs.androidx.datastore.preferences)
-
-    implementation(libs.firebase.auth)
+    // Firebase
     implementation(platform(libs.firebase.bom))
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
 
+    // Google Drive API
+    implementation(libs.google.api.services.drive)
+    implementation(libs.google.http.client)
+    implementation(libs.google.http.client.gson)
+    implementation(libs.google.api.client.android)
+
+    // DataStore
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.datastore.core)
+
+    // FTP
+    implementation(libs.commons.net)
+
+    // Desugar
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
+
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+
+    // Debug
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }

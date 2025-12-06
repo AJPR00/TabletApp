@@ -2,6 +2,7 @@ package com.ajpr00.visumloop.tablet.ui.components
 
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,15 +34,21 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.ajpr00.visumloop.tablet.R
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 @Composable
-fun PanelMenu(
+fun PanelMenuOpciones(
     shape: Shape,
     oneBox: () -> Unit,
     twoBox: () -> Unit,
@@ -52,24 +59,48 @@ fun PanelMenu(
     sevenBox: () -> Unit,
     eightBox: () -> Unit,
     nineBox: () -> Unit,
+    onLock: () -> Unit,
+    resetTimer: () -> Unit
 ) {
     BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.2f))
+            .pointerInput(Unit) {
+                coroutineScope {
+                    detectTapGestures(
+                        onPress = {
+                            Log.d(
+                                "Gestos",
+                                "onPress detectado, esperando 5s para desbloquear/bloquear"
+                            )
+                            val job = launch {
+                                delay(5000) // espera 5 segundos
+                                onLock()
+                                Log.d("Gestos", "Long press de 5s en PanelMenu → onLock()")
+                            }
+                            tryAwaitRelease() // espera a que levante el dedo
+                            job.cancel() // si levanta antes, cancela
+                            Log.d("Gestos", "onPress liberado antes de los 5s → cancelado")
+                        },
+                    )
+                }
+            }
     ) {
-        val size = maxHeight * 0.25f // tamaño relativo al alto del padre
-
+        Log.d("Gestos", "Estoy en MenuOptions/PanelMenuOpciones")
+        val size = minOf(maxWidth, maxHeight) * 0.25f
         Row(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .background(Color.Transparent),
-            horizontalArrangement = Arrangement.SpaceEvenly
+                .fillMaxWidth()
+                .align(Alignment.Center),
+            horizontalArrangement = Arrangement.Center,
         ) {
             // Columna izquierda: retroceder
-            Column {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 CustomButtonPanel(
                     size = size,
                     icon = Icons.TwoTone.FastRewind,
-                    label = "(-15) ",
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
+                    label = "Login",
                     shape = shape,
                     onClick = oneBox
                 )
@@ -77,28 +108,27 @@ fun PanelMenu(
                     size = size,
                     icon = Icons.TwoTone.SkipPrevious,
                     label = "Driver Cargar",
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
-                    shape = shape,
-                    onClick = { twoBox
-                    Log.d("MenuOptions", "onClick-> twoBox") }
+                   shape = shape,
+                    onClick = {
+                        twoBox
+                        Log.d("MenuOptions", "onClick-> twoBox")
+                    }
                 )
                 CustomButtonPanel(
                     size = size,
-                    icon = Icons.TwoTone.SkipPrevious,
+                    icon = ImageVector.vectorResource(R.drawable.user_circle_fill),
                     label = "login",
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
                     shape = shape,
                     onClick = threeBox
                 )
             }
 
             // Columna central: play/pause + mute
-            Column {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 CustomButtonPanel(
                     size = size,
-                    icon = Icons.Filled.Pause,
-                    label = "Play/Pause",
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
+                    icon = ImageVector.vectorResource(R.drawable.tree_structure_fill),
+                    label = "FTP",
                     shape = shape,
                     onClick = fourBox
                 )
@@ -106,45 +136,42 @@ fun PanelMenu(
                 CustomButtonPanel(
                     size = size,
                     icon = Icons.TwoTone.MenuBook, label = "MENU",
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
                     shape = shape,
                     onClick = fiveBox
                 )
                 CustomButtonPanel(
                     size = size,
-                    icon = Icons.Filled.VolumeUp,
-                    label = "Añadir nueva cuenta",
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
+                    icon = ImageVector.vectorResource(R.drawable.dropbox_logo_fill),
+                    label = "Dropbox",
                     shape = shape,
                     onClick = sixBox
                 )
             }
 
             // Columna derecha: avanzar
-            Column {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 CustomButtonPanel(
                     size = size,
-                    icon = Icons.Filled.FastForward,
-                    label = "(+15)",
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
+                    icon = ImageVector.vectorResource(R.drawable.folder_open_fill),
+                    label = "Mis Archivos",
                     shape = shape,
                     onClick = sevenBox
                 )
                 CustomButtonPanel(
                     size = size,
-                    icon = Icons.TwoTone.SkipNext,
-                    label = "Iniciar sesion goodle",
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
+                    icon = ImageVector.vectorResource(R.drawable.folder_star_fill),
+                    label = "Favoritos",
                     shape = shape,
-                    onClick = { eightBox()
-                    Log.d("MenuOptions", "onClick-> eightBox") }
+                    onClick = {
+                        eightBox()
+                        Log.d("MenuOptions", "onClick-> eightBox")
+                    },
 
-                )
+                    )
                 CustomButtonPanel(
                     size = size,
-                    icon = Icons.TwoTone.SkipNext,
-                    label = "Next",
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
+                    icon = ImageVector.vectorResource(R.drawable.google_drive_logo_fill),
+                    label = "Google Drive",
                     shape = shape,
                     onClick = nineBox
 
@@ -336,9 +363,9 @@ fun CustomButtonPanel(
     shape: Shape = RoundedCornerShape(50),
     size: Dp,
     icon: ImageVector,
-    iconSize: Dp = 15.dp,
+    iconSize: Dp = 90.dp,
     label: String,
-    color: Color,
+    color: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
     onClick: () -> Unit
 ) {
     TextButton(
@@ -347,14 +374,14 @@ fun CustomButtonPanel(
         shape = shape,
         colors = ButtonDefaults.textButtonColors(
             containerColor = color,
-            contentColor = Color.Black
+            contentColor = MaterialTheme.colorScheme.onPrimary
         )
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = Color.Black,
+                tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(iconSize) // 👈 aquí aplicas el tamaño
             )
             Text(text = label, textAlign = TextAlign.Center)

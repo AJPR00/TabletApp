@@ -2,8 +2,8 @@ package com.ajpr00.visumloop.tablet.di
 
 import android.content.Context
 import androidx.room.Room
-import com.ajpr00.visumloop.tablet.data.db.local.AppDatabase
-import com.ajpr00.visumloop.tablet.data.db.local.dao.MediaContentDao
+import com.ajpr00.visumloop.tablet.data.datasource.local.db.AppDatabase
+import com.ajpr00.visumloop.tablet.data.datasource.local.db.dao.MediaContentDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
