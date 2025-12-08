@@ -37,7 +37,7 @@ fun Reproductor(viewModel: MediaBackgroundViewModel) {
     val context = LocalContext.current
 
     // Estado actual del medio a reproducir (imagen o video)
-    val media = viewModel.currentMedia.value
+    val media = viewModel.currentMedia.collectAsState().value
     Log.d(TAG, "🟦 Media cargado en Reproductor(): $media")
 
     // Opciones de reproducción actuales del ViewModel (volumen, mute, etc)
@@ -90,20 +90,20 @@ fun Reproductor(viewModel: MediaBackgroundViewModel) {
         if (option.rewinds != 0) {
             Log.d(TAG, "⏩ Avanzando/retrocediendo ${option.rewinds}s")
 
-            val newPosition = (exoPlayer.currentPosition + option.rewinds * 1000)
-                .coerceIn(0, exoPlayer.duration)
+            if (exoPlayer.isPlaying || exoPlayer.playbackState == Player.STATE_READY) {
+                val newPosition = (exoPlayer.currentPosition + option.rewinds * 1000)
+                    .coerceIn(0, exoPlayer.duration)
+                exoPlayer.seekTo(newPosition)
+            }
 
-            exoPlayer.seekTo(newPosition)
-
-            // Reseteamos valor para no repetirlo
+            delay(100) // pequeño margen
             viewModel.resetRewinds()
         }
     }
 
-    // Cargar vídeo o imagen
     LaunchedEffect(media?.path, option.tiempoImagen) {
         try {
-            Log.d(TAG, "ambio de media detectado: ${media?.path}  tipo=${media?.type}")
+            Log.d(TAG, "Cambio de media detectado: ${media?.path}  tipo=${media?.type}")
 
             if (media?.type == FormatType.VIDEO) {
                 Log.d(TAG, "Reproduciendo VIDEO: ${media.path}")
@@ -114,7 +114,7 @@ fun Reproductor(viewModel: MediaBackgroundViewModel) {
 
             } else if (media != null) {
                 // Caso: Es una imagen
-                // 1) aseguramos un tiempo mínimo razonable (ej. 2000 ms) para evitar bucles rápidos
+                // 1) Aseguramos un tiempo mínimo razonable (ej. 2000 ms) para evitar bucles rápidos
                 val minTiempo = 2000L
                 val tiempo = maxOf(option.tiempoImagen, minTiempo)
 
@@ -123,21 +123,23 @@ fun Reproductor(viewModel: MediaBackgroundViewModel) {
                 // Paramos el player por si estaba reproduciendo algo
                 exoPlayer.stop()
 
-                // Guardamos el id/path del media actual para comprobar después del delay
+                // Guardamos el path del medio actual al inicio del delay
                 val currentPath = media.path
 
                 // Esperamos el tiempo configurado
                 delay(tiempo)
 
-                // Comprobación de seguridad: si el media cambió durante el delay NO llamamos nextMedia()
+                // Verificamos si el medio sigue siendo el mismo (no cambió por interacción del usuario)
                 val stillSame = viewModel.currentMedia.value?.path == currentPath
-                Log.d(TAG, "Delay acabado. ¿sigue siendo el mismo media? $stillSame")
+                Log.d(TAG, "Delay completado. ¿Medio sigue siendo el mismo? $stillSame")
 
                 if (stillSame) {
-                    Log.d(TAG, "Imagen mostrada suficiente tiempo, cargando siguiente media")
+                    // Solo avanzamos si no hubo cambios (avance automático)
+                    Log.d(TAG, "Imagen mostrada, avanzando automáticamente al siguiente")
                     viewModel.nextMedia()
                 } else {
-                    Log.d(TAG, "El media cambió durante el delay — no avanzamos (evita bucle)")
+                    // Si cambió, no avanzamos (previene bucle infinito)
+                    Log.d(TAG, "Medio cambió durante el delay — no avanzamos automáticamente")
                 }
 
             } else {
@@ -146,7 +148,8 @@ fun Reproductor(viewModel: MediaBackgroundViewModel) {
 
         } catch (e: Exception) {
             Log.e(TAG, "Error reproduciendo media: ${e.message}", e)
-            viewModel.nextMedia()
+            // No llamamos a nextMedia() aquí para evitar bucles por excepciones
+            // Solo para errores críticos, pero no para LeftCompositionCancellationException
         }
     }
 

@@ -12,6 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import com.ajpr00.visumloop.tablet.presentation.viewmodel.MediaBackgroundViewModel
+import com.ajpr00.visumloop.tablet.presentation.viewmodel.MediaItemsViewModel
 import com.ajpr00.visumloop.tablet.ui.components.MediaList
 import com.ajpr00.visumloop.tablet.ui.components.MenuGesto
 import com.ajpr00.visumloop.tablet.ui.components.MenuApp
@@ -56,41 +57,42 @@ fun NavigationCore(innerPadding: PaddingValues) {
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry(MainGraph::class.qualifiedName!!)
                 }
-                val vm: MediaBackgroundViewModel = hiltViewModel(parentEntry)
+                val viewModelMediaBackground: MediaBackgroundViewModel = hiltViewModel(parentEntry)
+                val viewModelMediaItems: MediaItemsViewModel = hiltViewModel(parentEntry)
 
                 ReproductorScreen(
-                    goToReproductor = { Reproductor(vm) },
+                    goToReproductor = { Reproductor(viewModelMediaBackground) },
                     goToMenuOverlayScreen = {
                         MenuOverlayScreen(
-                            viewModelMediaBackground = vm,
+                            viewModelMediaBackground = viewModelMediaBackground,
                             menuGestoReproducion = {
                                 MenuGesto(
-                                    isVideo = vm.isVideo.collectAsState().value,
-                                    onPaused = { vm.togglePlayPause() },
-                                    onPrevMedia = { vm.prevMedia() },
-                                    onNextMedia = { vm.nextMedia() },
-                                    onRewind = { vm.rewind() },
-                                    onForward = { vm.forward() },
-                                    onSeekForward = { vm.forward() },
-                                    onSeekBackward = { vm.rewind() },
-                                    onVolumeChange = { delta -> vm.setVolume(vm.option.value.volume + delta)},
-                                    onLock = { vm.toggleLockScreen() },
-                                    onMenu = { vm.toggleShowMenuApp() },
-                                    resetTimer = { vm.resetTimer() }
+                                    isVideo = viewModelMediaBackground.isVideo.collectAsState().value,
+                                    onPaused = { viewModelMediaBackground.togglePlayPause() },
+                                    onPrevMedia = { viewModelMediaBackground.prevMedia() },
+                                    onNextMedia = { viewModelMediaBackground.nextMedia() },
+                                    onRewind = { viewModelMediaBackground.rewind()},
+                                    onForward = { viewModelMediaBackground.forward()},
+                                    onSeekForward = { delta -> viewModelMediaBackground.forward(delta) },
+                                    onSeekBackward = { delta -> viewModelMediaBackground.rewind(delta) },
+                                    onVolumeChange = { delta -> viewModelMediaBackground.setVolume(viewModelMediaBackground.option.value.volume + delta) },
+                                    onLockScreen = { viewModelMediaBackground.togglesLockScreen() },
+                                    onShowMenu = { viewModelMediaBackground.isShowMenuApp(it) },
+                                    resetTimer = { viewModelMediaBackground.updateLastInteraction() }
                                 )
                             },
                             menuApp = {
                                 MenuApp(
-                                    viewModelMediaBackground = vm,
+                                    viewModelMediaBackground = viewModelMediaBackground,
                                     viewModelAuth = hiltViewModel(),
-                                    viewModelMediaItme = hiltViewModel()
+                                    viewModelMediaItme = viewModelMediaItems
                                 )
                             },
                             panelSelectorMedia = {
                                 MediaList(
-                                    items = vm.mediaList.collectAsState().value,
-                                    onItemClick = { /* acción */ },
-                                    onToggleFavorite = { /* acción */ }
+                                    viewModelMediaItems = viewModelMediaItems,
+                                    viewModelMediaBackground = viewModelMediaBackground,
+
                                 )
                             }
                         )

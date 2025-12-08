@@ -13,7 +13,6 @@ import androidx.compose.material.icons.automirrored.twotone.MenuBook
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.twotone.FastRewind
 import androidx.compose.material.icons.twotone.MenuBook
 import androidx.compose.material.icons.twotone.SkipNext
@@ -55,47 +54,54 @@ fun PanelMenuOpciones(
     threeBox: () -> Unit,
     fourBox: () -> Unit,
     fiveBox: () -> Unit,
-    sixBox: () -> Unit,
+    sixBox: (isClose: Boolean) -> Unit,
     sevenBox: () -> Unit,
-    eightBox: () -> Unit,
-    nineBox: () -> Unit,
+    eightBox: (isClose: Boolean) -> Unit,
+    nineBox: (isClose: Boolean) -> Unit,
     onLock: () -> Unit,
-    resetTimer: () -> Unit
+    onClosedMenuApp: (isClose: Boolean) -> Unit
 ) {
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.2f))
+            // 👇 Tap en el fondo cierra el panel
             .pointerInput(Unit) {
                 coroutineScope {
                     detectTapGestures(
+                        onTap = { offset ->
+                            Log.d("Gestos", "Tap en fondo → cerramos menu")
+                            onClosedMenuApp(false)
+                        },
                         onPress = {
                             Log.d(
                                 "Gestos",
                                 "onPress detectado, esperando 5s para desbloquear/bloquear"
                             )
                             val job = launch {
-                                delay(5000) // espera 5 segundos
+                                delay(5000)
                                 onLock()
                                 Log.d("Gestos", "Long press de 5s en PanelMenu → onLock()")
                             }
-                            tryAwaitRelease() // espera a que levante el dedo
-                            job.cancel() // si levanta antes, cancela
+                            tryAwaitRelease()
+                            job.cancel()
                             Log.d("Gestos", "onPress liberado antes de los 5s → cancelado")
-                        },
+                        }
                     )
                 }
             }
     ) {
         Log.d("Gestos", "Estoy en MenuOptions/PanelMenuOpciones")
         val size = minOf(maxWidth, maxHeight) * 0.25f
+
+        // 👇 Contenedor de botones centrado
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.Center),
             horizontalArrangement = Arrangement.Center,
         ) {
-            // Columna izquierda: retroceder
+            // Columna izquierda
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 CustomButtonPanel(
                     size = size,
@@ -108,11 +114,8 @@ fun PanelMenuOpciones(
                     size = size,
                     icon = Icons.TwoTone.SkipPrevious,
                     label = "Driver Cargar",
-                   shape = shape,
-                    onClick = {
-                        twoBox
-                        Log.d("MenuOptions", "onClick-> twoBox")
-                    }
+                    shape = shape,
+                    onClick = twoBox
                 )
                 CustomButtonPanel(
                     size = size,
@@ -123,7 +126,7 @@ fun PanelMenuOpciones(
                 )
             }
 
-            // Columna central: play/pause + mute
+            // Columna central
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 CustomButtonPanel(
                     size = size,
@@ -132,10 +135,10 @@ fun PanelMenuOpciones(
                     shape = shape,
                     onClick = fourBox
                 )
-
                 CustomButtonPanel(
                     size = size,
-                    icon = Icons.TwoTone.MenuBook, label = "MENU",
+                    icon = Icons.TwoTone.MenuBook,
+                    label = "MENU",
                     shape = shape,
                     onClick = fiveBox
                 )
@@ -144,11 +147,11 @@ fun PanelMenuOpciones(
                     icon = ImageVector.vectorResource(R.drawable.dropbox_logo_fill),
                     label = "Dropbox",
                     shape = shape,
-                    onClick = sixBox
+                    onClick = { sixBox(true) }
                 )
             }
 
-            // Columna derecha: avanzar
+            // Columna derecha
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 CustomButtonPanel(
                     size = size,
@@ -162,24 +165,20 @@ fun PanelMenuOpciones(
                     icon = ImageVector.vectorResource(R.drawable.folder_star_fill),
                     label = "Favoritos",
                     shape = shape,
-                    onClick = {
-                        eightBox()
-                        Log.d("MenuOptions", "onClick-> eightBox")
-                    },
-
-                    )
+                    onClick = { eightBox(true) }
+                )
                 CustomButtonPanel(
                     size = size,
                     icon = ImageVector.vectorResource(R.drawable.google_drive_logo_fill),
                     label = "Google Drive",
                     shape = shape,
-                    onClick = nineBox
-
+                    onClick = { nineBox(true) }
                 )
             }
         }
     }
 }
+
 
 @Composable
 fun MenuReproductorVideo(

@@ -7,22 +7,24 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.unit.dp
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import com.ajpr00.visumloop.tablet.R
 import com.ajpr00.visumloop.tablet.presentation.viewmodel.MediaBackgroundViewModel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -37,34 +39,39 @@ fun MenuOverlayScreen(
     panelSelectorMedia: @Composable () -> Unit
 ) {
     Log.d("Flow", "▶ Entrando en MenuOverlayScreen")
-
     val estado by viewModelMediaBackground.stadoVisualMenu.collectAsState()
+    var showLockIcon by rememberSaveable { mutableStateOf(false) }
 
-    var tapPosition by remember { mutableStateOf(Offset.Zero) }
-    var lastInteraction by remember { mutableStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(estado.lastInteraction, estado.showSidePanel, estado.showMenuApp) {
+        if (estado.showSidePanel || estado.showMenuApp) {
+            Log.d("FlowRelo", "⏱ Algún menú activo → iniciando temporizador de 20s")
 
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val panelWidth = screenWidth / 3
+            // Capturamos el momento de inicio
+            val start = estado.lastInteraction
+            Log.d("FlowRelo", "⏱ Comienzo del temporizador: $start")
+            // Esperamos 20s
+            delay(50000)
 
-    LaunchedEffect(lastInteraction, estado.showSidePanel) {
-        if (estado.showSidePanel) {
-            Log.d("Flow", "⏱ Panel lateral activo → iniciando temporizador de 20s")
-            delay(20000)
+            // Comprobamos si hubo interacción nueva
             val now = System.currentTimeMillis()
-            if (now - lastInteraction >= 20000) {
-                viewModelMediaBackground.toggleCloseSidePanel()
-                Log.d("Flow", "⏱ Panel lateral cerrado por inactividad")
-            }
-        }
-    }
-    LaunchedEffect(lastInteraction, estado.showMenuApp) {
-        if (estado.showMenuApp) {
-            Log.d("Flow", "⏱ Menú de app activo → iniciando temporizador de 20s")
-            delay(20000)
-            val now = System.currentTimeMillis()
-            if (now - lastInteraction >= 20000) {
-                viewModelMediaBackground.toggleShowMenuApp()
-                Log.d("Flow", "⏱ Menú de app cerrado por inactividad")
+            Log.d("FlowRelo", "⏱ Fin del temporizador: $now")
+            val elapsed = now - start
+
+            Log.d("FlowRelo", "⏱ Tiempo transcurrido: $elapsed")
+
+            if (elapsed >= 50000) {
+                // No hubo interacción → cerramos
+                if (estado.showSidePanel) {
+                    viewModelMediaBackground.isShowSidePanel(false)
+                    Log.d("FlowRelo", "⏱ Panel lateral cerrado por inactividad")
+                }
+                if (estado.showMenuApp) {
+                    viewModelMediaBackground.isShowMenuApp(false)
+                    Log.d("FlowRelo", "⏱ Menú de app cerrado por inactividad")
+                }
+            } else {
+                Log.d("FlowRelo", "⏱ Hubo interacción reciente → reinicio del temporizador")
+                // El LaunchedEffect se reinicia automáticamente porque cambió lastInteraction
             }
         }
     }
@@ -72,39 +79,33 @@ fun MenuOverlayScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .pointerInput(estado.showSidePanel) {
-                detectTapGestures { offset ->
-                    Log.d("Gestos", "👆 Tap detectado en offset=$offset")
-                    if (estado.showSidePanel) {
-                        val touchX = offset.x.dp
-                        val sideStart = screenWidth - panelWidth
-                        if (touchX < sideStart) {
-                            viewModelMediaBackground.toggleCloseSidePanel()
-                            Log.d("Gestos", "👆 Tap fuera del panel → cerramos panel lateral")
-                            return@detectTapGestures
-                        }
-                    }
-                    tapPosition = offset
-                    viewModelMediaBackground.toggleShowMenuReproductor()
-                    Log.d(
-                        "Gestos",
-                        "👆 Tap normal → showMenuReproductor=${estado.showMenuReproductor}"
-                    )
-                    viewModelMediaBackground.resetTimer()
-                }
-            }
             // Long press y doble tap
             .pointerInput(Unit) {
                 coroutineScope {
                     detectTapGestures(
+                        onTap = {
+                            // Al hacer tap mostramos el candado
+                            if (estado.isLockScreen) {
+                                showLockIcon = true
+                                Log.d("Gestos", "👆 Tap → mostrar candado temporal")
+
+                                // Lanzamos corrutina para ocultarlo en 2s
+                                launch {
+                                    delay(2000)
+                                    showLockIcon = false
+                                    Log.d("Gestos", "⏱ Candado ocultado tras 2s")
+                                }
+                            }
+                        },
                         onPress = {
+                            viewModelMediaBackground.updateLastInteraction()
                             Log.d("Gestos", "✋ onPress detectado → esperando 3.5s para lock/unlock")
                             val job = launch {
                                 delay(3500)
-                                viewModelMediaBackground.toggleLockScreen()
+                                viewModelMediaBackground.togglesLockScreen()
                                 Log.d(
                                     "Gestos",
-                                    "✋ Long press ejecutado → onLockScreen=${estado.onLockScreen}"
+                                    "✋ Long press ejecutado → onLockScreen=${estado.isLockScreen}"
                                 )
                             }
                             tryAwaitRelease()
@@ -112,44 +113,51 @@ fun MenuOverlayScreen(
                             Log.d("Gestos", "✋ onPress liberado antes de los 3.5s → cancelado")
                         },
                         onDoubleTap = {
-                            viewModelMediaBackground.toggleShowMenuApp()
+                            viewModelMediaBackground.isShowMenuApp(true)
                             Log.d("Gestos", "👆👆 Doble tap → showMenu=${estado.showMenuApp}")
-                            viewModelMediaBackground.resetTimer()
                         }
                     )
                 }
             }
     ) {
-        if (estado.showMenuReproductor) {
-            Log.d("Flow", "🎵 Mostrando menú de reproducción")
+        if (estado.isLockScreen) {
+            if (showLockIcon) Icon(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(200.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
+                painter = painterResource(id = R.drawable.ic_lock),
+                contentDescription = "Icono Candado"
+            )
+        } else {
+
+            Log.d("Flow", "Mostrando menú de reproducción")
             menuGestoReproducion()
-        }
 
-        AnimatedVisibility(
-            visible = estado.showMenuApp,
-            modifier = Modifier.align(Alignment.CenterEnd),
-            enter = slideInHorizontally { full -> full },
-            exit = slideOutHorizontally { full -> full }
-        ) {
-            Row(
-                modifier = Modifier.fillMaxSize()
+            AnimatedVisibility(
+                visible = estado.showMenuApp,
+                modifier = Modifier.align(Alignment.CenterEnd),
+                enter = slideInHorizontally { full -> full },
+                exit = slideOutHorizontally { full -> full }
             ) {
-                // Columna izquierda → menuApp
-                Box(
-                    modifier = Modifier
-                        .weight(if (estado.showSidePanel) 2f else 1f) // mitad izquierda
-                        .fillMaxHeight()
-                ) {
-                    menuApp()
-                }
+                Row(
 
-                if (estado.showSidePanel) {
+                ) {
+                    // Columna izquierda → menuApp
                     Box(
                         modifier = Modifier
-                            .weight(1f) // mitad derecha
-                            .fillMaxHeight()
+                            .weight(if (estado.showSidePanel) 2f else 1f) // mitad izquierda
                     ) {
-                        panelSelectorMedia()
+                        menuApp()
+                    }
+
+                    if (estado.showSidePanel) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f) // mitad derecha
+                        ) {
+                            panelSelectorMedia()
+                        }
                     }
                 }
             }

@@ -10,7 +10,7 @@ import com.ajpr00.visumloop.tablet.data.mapper.toEntity
 import com.ajpr00.visumloop.tablet.domain.model.MediaContent
 import com.ajpr00.visumloop.tablet.domain.model.MediaResult
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
@@ -20,47 +20,71 @@ class MediaRepository @Inject constructor(
     private val driveDataSource: DataSourceGoogleDrive,
     private val loginPreferences: LoginPreferences
 ) {
+
+    suspend fun filterIsFavorite(list: List<MediaContent>): List<MediaContent> {
+        // Obtener la lista de favoritos de la BD
+        val favoritesFromDb = dao.getAllMedia().first().map { it.toDomain() }
+
+        // Crear un conjunto de paths favoritos para búsqueda rápida
+        val favoritePaths = favoritesFromDb.map { it.path }.toSet()
+
+        // Marcar como favorito los que están en la BD
+        return list.map { media ->
+            if (media.path in favoritePaths) media.copy(isFavorite = true)
+            else media
+        }
+    }
+
+    fun filterRepet(list: List<MediaContent>): List<MediaContent> {
+        return list.filter { it.name.isNotEmpty() && it.path.isNotEmpty() }
+            .distinctBy { it.id }
+    }
+
     /*******ROOM*********/
+
     // Obtiene todos los media de la base de datos
     fun getAllMediaBd(): Flow<List<MediaContent>> =
         dao.getAllMedia().map { list -> list.map { it.toDomain() } }
 
-    // Obtiene todas las medias de la base de datos
     /*suspend fun getAllMedia(): List<MediaContent> =
         dao.getAll().map { it.toDomain() }*/
 
     // Inserta una media en la base de datos
-    suspend fun insertMedia(media: MediaContent) =
+    suspend fun addBd(media: MediaContent) {
+        media.isFavorite = true
         dao.insert(media.toEntity())
+    }
 
     suspend fun deleteMedia(media: MediaContent) =
         dao.delete(media.toEntity())
 
     /*******FTP*********/
-    suspend fun listMediaFilesFTP(): List<MediaContent> =
-        ftpDataSource.listMediaFiles()
+    suspend fun listMediaFilesFTPFiltered(): List<MediaContent> {
+        val files = filterRepet(ftpDataSource.listMediaFiles())
+        return filterIsFavorite(files)
+    }
 
     /*******Google Drive*********/
     suspend fun listMediaFilesDrive(accessToken: String): MediaResult {
         return try {
             Log.d("DriveFlow", "🔑 Iniciando listado de archivos en Google Drive")
-            Log.d("DriveFlow", "📌 AccessToken: $accessToken") // Solo para depuración; no mostrar en producción
+            Log.d(
+                "DriveFlow",
+                "📌 AccessToken: $accessToken"
+            )
 
-            val files = driveDataSource.listDriveFiles(accessToken)
+            val files = filterRepet(driveDataSource.listDriveFiles(accessToken))
 
-            Log.d("DriveFlow", "🟢 Archivos obtenidos de Drive:")
-            files.forEach { file ->
-                Log.d("DriveFlow", "    • ${file.name} (ID: ${file.id}, MIME: ${file.type})")
-            }
-
-            MediaResult.Success(files)
+            MediaResult.Success(filterIsFavorite(files))
         } catch (e: Exception) {
             Log.e("DriveFlow", "❌ Error al cargar archivos desde Drive: ${e.localizedMessage}", e)
             MediaResult.Error("Error al cargar desde Drive", e)
         }
     }
 
-
-
     /*******Local*********/
+    suspend fun listMediaFilesLocalFiltered(localFiles: List<MediaContent>): List<MediaContent> {
+        val files = filterRepet(localFiles)
+        return filterIsFavorite(files)
+    }
 }

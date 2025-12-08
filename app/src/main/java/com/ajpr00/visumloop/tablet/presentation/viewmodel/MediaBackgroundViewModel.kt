@@ -16,7 +16,9 @@ import com.ajpr00.visumloop.tablet.presentation.state.ReproductorConfig
 import com.ajpr00.visumloop.tablet.util.detectFormatType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -53,71 +55,64 @@ class MediaBackgroundViewModel @Inject constructor(
     private val _option = MutableStateFlow(ReproductorConfig())
     val option: StateFlow<ReproductorConfig> = _option
 
-    val _estadoVisualMenu = MutableStateFlow(EstadoMenus())
+    private val _estadoVisualMenu = MutableStateFlow(EstadoMenus())
     val stadoVisualMenu: StateFlow<EstadoMenus> = _estadoVisualMenu
-
-    private val _lastInteraction = MutableStateFlow(System.currentTimeMillis())
 
     // Indica si el media actual es un vídeo
     private val _isVideo = MutableStateFlow(false)
     val isVideo = _isVideo
 
-    private val _mediaList = MutableStateFlow<List<MediaContent>>(emptyList())
-    val mediaList: StateFlow<List<MediaContent>> = _mediaList
+    val mediaList: StateFlow<List<MediaContent>> =
+        repository.getAllMediaBd()
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5000),
+                emptyList()
+            )
 
     // Índice del media actual
-    private val _currentIndex = mutableStateOf(0)
-    val currentIndex: State<Int> = _currentIndex
+    private val _currentIndex = MutableStateFlow(0)
+    val currentIndex: StateFlow<Int> = _currentIndex
 
     // Media que se está reproduciendo actualmente
-    val currentMedia: State<MediaContent?> = mutableStateOf(null)
-
-    val lastInteraction: StateFlow<Long> = _lastInteraction
+    private val _currentMedia = MutableStateFlow<MediaContent?>(null)
+    val currentMedia: StateFlow<MediaContent?> = _currentMedia
 
     init {
         viewModelScope.launch {
-            repository.getAllMediaBd().collect { list ->
-                Log.d("MediaBackgroundVM", "📂 Lista recibida del repo: tamaño=${list.size}")
-                _mediaList.value = list
-
+            mediaList.collect { list ->
+                Log.d("MediaBackgroundVM", "📂 Favoritos actualizados: ${list.size}")
                 if (list.isNotEmpty() && currentMedia.value == null) {
-                    Log.d("MediaBackgroundVM", "▶ Inicializando reproducción en índice 0")
                     playMediaAt(0)
                 }
             }
         }
     }
 
-    fun resetTimer() {
-        _lastInteraction.value = System.currentTimeMillis()
-        Log.d("ViewModel", "Timer reiniciado → lastInteraction=${_lastInteraction.value}")
+    fun updateLastInteraction(time: Long = System.currentTimeMillis()) {
+        Log.d("FlowRelo", "⏱ Actualizando lastInteraction a $time")
+        _estadoVisualMenu.update { current ->
+            current.copy(lastInteraction = time)
+        }
     }
 
-    fun toggleOpenSidePanel() {
+    fun setShowMenuReproductor(isShow: Boolean) {
+        _estadoVisualMenu.update { it.copy(showMenuReproductor = isShow) }
+    }
+
+    fun isShowMenuApp(isShow: Boolean) {
         _estadoVisualMenu.value =
-            _estadoVisualMenu.value.copy(showSidePanel = !_estadoVisualMenu.value.showSidePanel)
+            _estadoVisualMenu.value.copy(showMenuApp = isShow)
     }
 
-    fun toggleShowMenuReproductor() {
+    fun isShowSidePanel(isShow: Boolean) {
+        _estadoVisualMenu.value =
+            _estadoVisualMenu.value.copy(showSidePanel = isShow)
+    }
+
+    fun togglesLockScreen() {
         _estadoVisualMenu.value = _estadoVisualMenu.value.copy(
-            showMenuReproductor = !_estadoVisualMenu.value.showMenuReproductor
-        )
-    }
-
-    fun toggleShowMenuApp() {
-        _estadoVisualMenu.value =
-            _estadoVisualMenu.value.copy(showMenuApp = !_estadoVisualMenu.value.showMenuApp)
-    }
-
-    fun toggleCloseSidePanel() {
-        _estadoVisualMenu.value =
-            _estadoVisualMenu.value.copy(showSidePanel = !_estadoVisualMenu.value.showSidePanel)
-    }
-
-    fun toggleLockScreen() {
-        _estadoVisualMenu.value = _estadoVisualMenu.value.copy(
-            onLockScreen = !_estadoVisualMenu.value.onLockScreen,
-            showMenuReproductor = !_estadoVisualMenu.value.showMenuReproductor
+            isLockScreen = !_estadoVisualMenu.value.isLockScreen,
         )
     }
 
@@ -153,7 +148,7 @@ class MediaBackgroundViewModel @Inject constructor(
         viewModelScope.launch {
             newMedia.forEach {
                 Log.d("MediaBackgroundVM", "Insertando media en BD: $it")
-                repository.insertMedia(it)
+                repository.addBd(it)
             }
         }
     }
@@ -161,27 +156,15 @@ class MediaBackgroundViewModel @Inject constructor(
     /** Reproduce un MediaContent directamente */
     fun playMedia(media: MediaContent) {
         val index = mediaList.value.indexOf(media)
-        Log.d("MediaBackgroundVM", "playMedia(media): índice encontrado = $index")
-
-        _currentIndex.value = index
-        (currentMedia as MutableState<MediaContent?>).value = media
-
-        // Actualiza si es vídeo
-        _isVideo.value = media.type == FormatType.VIDEO
-
-        Log.d("MediaBackgroundVM", "Reproduciendo media: $media")
+        if (index >= 0) playMediaAt(index)
     }
 
     /** Reproduce un media por índice */
     fun playMediaAt(index: Int) {
         if (index in mediaList.value.indices) {
-            Log.d("MediaBackgroundVM", "playMediaAt(): cambiando a índice $index")
-
             _currentIndex.value = index
             val media = mediaList.value[index]
-            (currentMedia as MutableState<MediaContent?>).value = media
-
-            // Marca si es vídeo
+            _currentMedia.value = media
             _isVideo.value = media.type == FormatType.VIDEO
             Log.d("MediaBackgroundVM", "Reproduciendo media: $media")
         } else {
@@ -249,7 +232,7 @@ class MediaBackgroundViewModel @Inject constructor(
     }
 
     /** Rebobina X segundos */
-    fun rewind(seconds: Int = 15) {
+    fun rewind(seconds: Int = 5) {
         Log.d("MediaBackgroundVM", "Rebobinando $seconds segundos")
         _option.update { current ->
             current.copy(rewinds = -seconds)
@@ -257,7 +240,7 @@ class MediaBackgroundViewModel @Inject constructor(
     }
 
     /** Adelanta X segundos */
-    fun forward(seconds: Int = 15) {
+    fun forward(seconds: Int = 5) {
         Log.d("MediaBackgroundVM", "Adelantando $seconds segundos")
         _option.update { current ->
             current.copy(rewinds = seconds)
@@ -271,5 +254,4 @@ class MediaBackgroundViewModel @Inject constructor(
             current.copy(rewinds = 0)
         }
     }
-
 }

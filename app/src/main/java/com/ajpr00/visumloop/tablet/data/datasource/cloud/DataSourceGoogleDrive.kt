@@ -70,7 +70,11 @@ class DataSourceGoogleDrive @Inject constructor(
             Log.d("GoogleDriveRepo", "Listando imágenes y vídeos de Drive...")
 
             val request = Request.Builder()
-                .url("https://www.googleapis.com/drive/v3/files?q=mimeType contains 'image/' or mimeType contains 'video/'&fields=files(id,name,mimeType,thumbnailLink)")
+                .url(
+                    "https://www.googleapis.com/drive/v3/files?" +
+                            "q=mimeType contains 'image/' or mimeType contains 'video/'" +
+                            "&fields=files(id,name,mimeType,thumbnailLink)"
+                )
                 .header("Authorization", "Bearer $accessToken")
                 .build()
 
@@ -85,15 +89,13 @@ class DataSourceGoogleDrive @Inject constructor(
 
             Log.d("GoogleDriveRepo", "Número de archivos multimedia recibidos: ${files.length()}")
 
-            List(files.length()) { i ->
+            // Transformamos y filtramos en un solo paso
+            val mediaList = List(files.length()) { i ->
                 val obj = files.getJSONObject(i)
-                val name = obj.getString("name")
-                val mime = obj.getString("mimeType")
+                val name = obj.optString("name", "")
+                val mime = obj.optString("mimeType", "")
                 val thumb = obj.optString("thumbnailLink", "")
-
                 val type = detectFormatType(mime = mime)
-
-                Log.d("GoogleDriveRepo", "Archivo[$i]: $name ($mime → $type)")
 
                 MediaContent(
                     id = name.hashCode(),
@@ -103,5 +105,8 @@ class DataSourceGoogleDrive @Inject constructor(
                     isFavorite = false
                 )
             }
+
+            mediaList
         }
+
 }

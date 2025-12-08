@@ -10,15 +10,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -29,6 +26,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,11 +37,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.ajpr00.visumloop.tablet.domain.model.FormatType
 import com.ajpr00.visumloop.tablet.domain.model.MediaContent
+import com.ajpr00.visumloop.tablet.presentation.viewmodel.MediaBackgroundViewModel
+import com.ajpr00.visumloop.tablet.presentation.viewmodel.MediaItemsViewModel
 
 /*@Composable
 fun MediaList(
@@ -66,37 +67,57 @@ fun MediaList(
 }*/
 @Composable
 fun MediaList(
-    label: String="",
-    items: List<MediaContent>,
-    onItemClick: (MediaContent) -> Unit,
-    onToggleFavorite: (MediaContent) -> Unit
+    viewModelMediaItems: MediaItemsViewModel,
+    viewModelMediaBackground: MediaBackgroundViewModel,
+    label: String = "",
 ) {
-    Log.d("Gestos", "Estoy en MediaList")
+    val items by viewModelMediaItems.mediaItems.collectAsState()
+    val lis by viewModelMediaBackground.mediaList.collectAsState()
 
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 150.dp),
+    LaunchedEffect(items) {
+        Log.d("MediaList", "MediaList items actualizados: ${items.size}")
+    }
+
+    Box(
         modifier = Modifier
+            .padding(16.dp)
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
             .border(
-                color = MaterialTheme.colorScheme.onPrimary,
+                // color = MaterialTheme.colorScheme.onPrimary,
+                color = Color.Black,
                 width = 5.dp,
                 shape = RoundedCornerShape(12.dp)
             )
-            .padding(32.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+            .background(
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+                shape = RoundedCornerShape(12.dp)
+            ),
     ) {
-        item {
-            Text(label)
-            Spacer(modifier = Modifier.size(16.dp))
-        }
-        items(items) { item ->
-            MediaCardGrid(
-                media = item,
-                onClick = { onItemClick(item) },
-                onToggleFavorite = { onToggleFavorite(item) }
-            )
+        Text(label, modifier = Modifier.align(Alignment.TopCenter))
+        LazyVerticalGrid(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            columns = GridCells.Adaptive(minSize = 150.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(lis) { item ->
+                Log.d(
+                    "MediaList",
+                    "Mostrando item: ${item.name}, type: ${item.type}, path: ${item.path}"
+                )
+                MediaCardGrid(
+                    media = item,
+                    onClick = {
+                        Log.d("MediaList", "Click en item: ${item.name}")
+                    },
+                    onToggleFavorite = {
+                        Log.d("MediaList", "Toggle favorite en item: ${item.name}")
+                        viewModelMediaItems.toggleFavorite(item)
+                    }
+                )
+            }
         }
     }
 }
@@ -105,7 +126,7 @@ fun MediaList(
 fun MediaCardGrid(
     media: MediaContent,
     onClick: () -> Unit,
-    onToggleFavorite: () -> Unit
+    onToggleFavorite: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -125,7 +146,8 @@ fun MediaCardGrid(
         ) {
             Icon(
                 imageVector = if (media.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                contentDescription = "Favorite"
+                contentDescription = if (media.isFavorite) "Favorito" else "No favorito",
+                tint = if (media.isFavorite) Color.Red else Color.Gray
             )
         }
     }
@@ -224,39 +246,4 @@ fun getVideoThumbnail(path: String, context: Context): Bitmap? {
     } catch (e: Exception) {
         null
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewMediaList() {
-    val items = listOf(
-        MediaContent(
-            id = 1,
-            name = "Imagen de muestra",
-            path = "https://picsum.photos/200",
-            type = FormatType.IMAGE,
-            isFavorite = false
-        ),
-        MediaContent(
-            id = 2,
-            name = "Video de muestra",
-            path = "sample_video.mp4",
-            type = FormatType.VIDEO,
-            isFavorite = true
-        ),
-        MediaContent(
-            id = 3,
-            name = "Audio de prueba",
-            path = "sample_audio.mp3",
-            type = FormatType.IMAGE,
-            isFavorite = false
-        )
-    )
-
-    MediaList(
-        label = "Mis Archivos",
-        items = items,
-        onItemClick = {},
-        onToggleFavorite = {}
-    )
 }
