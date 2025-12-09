@@ -10,12 +10,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,12 +24,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ajpr00.visumloop.tablet.R
 
-import com.ajpr00.visumloop.tablet.presentation.viewmodel.AuthViewModel
+import com.ajpr00.visumloop.tablet.presentation.viewmodel.LoginViewModel
 import com.ajpr00.visumloop.tablet.presentation.viewmodel.MediaBackgroundViewModel
 import com.ajpr00.visumloop.tablet.presentation.viewmodel.MediaItemsViewModel
 import com.firebase.ui.auth.AuthUI
@@ -49,7 +45,8 @@ import kotlinx.coroutines.withContext
 fun MenuApp(
     viewModelMediaBackground: MediaBackgroundViewModel,
     viewModelMediaItme: MediaItemsViewModel,
-    viewModelAuth: AuthViewModel,
+    viewModelAuth: LoginViewModel,
+    panelContent: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()  // CoroutineScope asociado al Composable
@@ -58,6 +55,7 @@ fun MenuApp(
     val launcherMedia = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenMultipleDocuments()
     ) { uris: List<Uri> ->
+
         uris.forEach { uri ->
             val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
             context.contentResolver.takePersistableUriPermission(uri, flags)
@@ -65,6 +63,7 @@ fun MenuApp(
         viewModelMediaItme.loadMediaLocal(context, uris)
     }
 
+// 👉 Launcher que gestiona el resultado del login con FirebaseUI
     val launcherLogin = rememberLauncherForActivityResult(
         contract = FirebaseAuthUIActivityResultContract()
     ) { result ->
@@ -74,6 +73,12 @@ fun MenuApp(
 
         if (result.resultCode == Activity.RESULT_OK) {
             Log.d("LoginFlow", "✅ Login completado correctamente")
+
+            // 👉 En este punto ya ocurrió internamente:
+            // 1. FirebaseUI leyó google-services.json → obtuvo el Client ID de tu app.
+            // 2. Google validó que el Client ID coincide con tu proyecto en Google Cloud.
+            // 3. Se lanzó la pantalla de login del usuario → eligió cuenta y aceptó scopes.
+            // 4. Google devolvió un GoogleSignInAccount vinculado a esa cuenta.
 
             val account = GoogleSignIn.getLastSignedInAccount(context)
 
@@ -98,6 +103,8 @@ fun MenuApp(
             scope.launch {
                 try {
                     val token = withContext(Dispatchers.IO) {
+                        // 👉 Aquí pedimos el Access Token real para el scope DRIVE_READONLY
+                        // Este token es dinámico, caduca y se usa en llamadas a la API.
                         GoogleAuthUtil.getToken(
                             context,
                             acc,
@@ -108,13 +115,15 @@ fun MenuApp(
                     Log.d("LoginFlow", "🟢 TOKEN OBTENIDO CORRECTAMENTE:")
                     Log.d("LoginFlow", "    $token")
 
-                    // Guardamos token
+                    // 👉 Guardamos el token en el ViewModel de autenticación
                     viewModelAuth.setDriveToken(token)
                     Log.d("LoginFlow", "💾 Token guardado en AuthViewModel")
 
+                    // 👉 También lo pasamos al ViewModel de media items
                     viewModelMediaItme.setDriveToken(token)
                     Log.d("LoginFlow", "💾 Token pasado a MediaItemsViewModel")
 
+                    // 👉 Con el token ya podemos llamar a la API de Drive
                     Log.d("LoginFlow", "📡 Cargando archivos desde Google Drive...")
                     viewModelMediaItme.loadFromDrive(token)
 
@@ -131,13 +140,20 @@ fun MenuApp(
         Log.d("LoginFlow", "--------------------------------------")
     }
 
+    // 👉 Función que inicia el flujo de login con FirebaseUI
     fun startLogin() {
         Log.d("LoginFlow", "🟦 Iniciando flujo de login con FirebaseUI")
 
         val providers = arrayListOf(
-            AuthUI.IdpConfig.GoogleBuilder()
-                .setScopes(listOf(DriveScopes.DRIVE_READONLY))
-                .build()
+            AuthUI.IdpConfig.GoogleBuilder()//Compruebame si estoy en googleCloud y adems quiero pedir permiso para drive
+                // Aquí defines el proveedor Google.
+                // Internamente FirebaseUI usará el Client ID de google-services.json
+                // para validar que tu app está registrada en Google Cloud.
+                // Si falla, es porque el Client ID no coincide o no está dado de alta.
+                .setScopes(listOf(DriveScopes.DRIVE_READONLY)) // 👉 Solicitud de permisos (scopes).
+                // Esto no da el token aún, solo indica que quieres acceso de lectura a Drive.
+                .build(),
+            AuthUI.IdpConfig.EmailBuilder().build()
         )
 
         Log.d("LoginFlow", "📌 Scopes solicitados:")
@@ -145,6 +161,10 @@ fun MenuApp(
             Log.d("LoginFlow", "    – DRIVE_READONLY")
         }
 
+        // Aquí FirebaseUI construye el intent:
+        // - Consulta google-services.json → obtiene el Client ID.
+        // - Prepara la petición de login con Google y los scopes.
+        // - Cuando se lance, Google validará el Client ID antes de mostrar la pantalla al usuario.
         val signInIntent = AuthUI.getInstance()
             .createSignInIntentBuilder()
             .setAvailableProviders(providers)
@@ -154,25 +174,27 @@ fun MenuApp(
         launcherLogin.launch(signInIntent)
     }
 
-    PanelMenuOpciones(
-        shape = RoundedCornerShape(10),
-        oneBox = { /*TODO*/ },
-        twoBox = { /*TODO*/ },
-        threeBox = { startLogin() },
-        fourBox = { /*TODO*/ },
-        fiveBox = { /*TODO*/ },
-        sixBox = { viewModelMediaBackground.isShowSidePanel(it) },
-        sevenBox = { launcherMedia.launch(arrayOf("image/*", "video/*")) },
-        eightBox = { viewModelMediaBackground.isShowSidePanel(it) },
-        nineBox = {
-            val token = viewModelAuth.driveToken
-            viewModelMediaItme.loadFromDrive(token)
-            token?.let { viewModelMediaItme.loadFromDrive(it) }
-            viewModelMediaBackground.isShowSidePanel(it)
-        },
-        onLock = { viewModelMediaBackground.togglesLockScreen() },
-        onClosedMenuApp = { viewModelMediaBackground.isShowMenuApp(it) }
-    )
+    //  PanelMenuOpciones(
+    //  shape = RoundedCornerShape(10),
+    //   oneBox = { /*TODO*/ },
+    //   twoBox = { /*TODO*/ },
+    //   threeBox = { },
+    //    fourBox = { /*TODO*/ },
+    //   fiveBox = { /*TODO*/ },
+    //   sixBox = { viewModelMediaBackground.isShowSidePanel(it) },
+    //    sevenBox = { launcherMedia.launch(arrayOf("image/*", "video/*")) },
+    //   eightBox = { viewModelMediaBackground.isShowSidePanel(it) },
+    //   nineBox = {
+    //       val token = viewModelAuth.driveToken
+    //       viewModelMediaItme.loadFromDrive(token)
+    //       token?.let { viewModelMediaItme.loadFromDrive(it) }
+    //       viewModelMediaBackground.isShowSidePanel(it)
+    //   },
+    //   onLock = { viewModelMediaBackground.togglesLockScreen() },
+    //  onClosedMenuApp = { viewModelMediaBackground.isShowMenuApp(it) }
+    //)
+
+    panelContent()
 
     if (stateAuth.idToken != null) {
         Log.d("MenuApp", "Usuario autenticado con idToken=${stateAuth.idToken}")
@@ -180,253 +202,5 @@ fun MenuApp(
     }
 }
 
-@SuppressLint("ConfigurationScreenWidthHeight")
-@Composable
-fun MenuGesto(
-    isVideo: Boolean,
-    onPaused: () -> Unit,
-    onPrevMedia: () -> Unit,
-    onNextMedia: () -> Unit,
-    onRewind: () -> Unit,
-    onForward: () -> Unit,
-    onSeekForward: (seconds: Int) -> Unit,
-    onSeekBackward: (seconds: Int) -> Unit,
-    onVolumeChange: (delta: Float) -> Unit,
-    onLockScreen: () -> Unit,
-    onShowMenu: (isClose: Boolean) -> Unit,
-    resetTimer: () -> Unit
-) {
-    var widthPx by remember { mutableStateOf(0) }
-
-    // Estados de feedback temporal
-    var showPrev by remember { mutableStateOf(false) }
-    var showNext by remember { mutableStateOf(false) }
-    var showPause by remember { mutableStateOf(false) }
-    var showRewind by remember { mutableStateOf(false) }
-    var showForward by remember { mutableStateOf(false) }
-    var showVolume by remember { mutableStateOf(false) }
-
-    var seekOffset by remember { mutableStateOf(0f) }
-    var showSeek by remember { mutableStateOf(false) }
-    var volumeKey by remember { mutableStateOf(0) }
-    var seekKey by remember { mutableStateOf(0) }
-
-
-    val tiemShow: Long = 4000 // duración del flash (2s)
-
-    // Nivel de volumen actual (0.0f a 1.0f)
-    var volumeLevel by remember { mutableStateOf(0.5f) }
-
-    BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxSize()
-            .onSizeChanged { widthPx = it.width }
-            .pointerInput(isVideo, widthPx) {
-                coroutineScope {
-                    detectTapGestures(
-                        onTap = { offset ->
-                            val x = offset.x
-                            val third = widthPx / 3f
-                            when {
-                                x < third -> {
-                                    onPrevMedia(); showPrev = true
-                                }
-
-                                x > 2 * third -> {
-                                    onNextMedia(); showNext = true
-                                }
-
-                                else -> {
-                                    onPaused(); showPause = true
-                                }
-                            }
-                        },
-                        onDoubleTap = { offset ->
-                            val x = offset.x
-                            val third = widthPx / 3f
-                            when {
-                                x < third -> if (isVideo) {
-                                    onRewind(); showRewind = true
-                                }
-
-                                x > 2 * third -> if (isVideo) {
-                                    onForward(); showForward = true
-                                }
-
-                                else -> {
-                                    onShowMenu(true); resetTimer()
-                                }
-                            }
-                        },
-                        onPress = {
-                            val job = launch {
-                                delay(3500)
-                                onLockScreen()
-                            }
-                            tryAwaitRelease()
-                            job.cancel()
-                        }
-                    )
-                }
-            }
-            .pointerInput(isVideo) {
-                detectDragGestures(
-                    onDrag = { change, dragAmount ->
-                        change.consume()
-                        if (kotlin.math.abs(dragAmount.x) < kotlin.math.abs(dragAmount.y)) {
-                            // Lógica de volumen (sin cambios)
-                            if (isVideo) {
-                                if (dragAmount.y < 0) {
-                                    volumeLevel = (volumeLevel + 0.01f).coerceIn(0f, 1f)
-                                    onVolumeChange(+0.01f)
-                                } else {
-                                    volumeLevel = (volumeLevel - 0.01f).coerceIn(0f, 1f)
-                                    onVolumeChange(-0.01f)
-                                }
-                                showVolume = true
-                                volumeKey++
-                            }
-                        } else {
-                            // Lógica de seek: acumular en lugar de seek inmediato
-                            if (isVideo) {
-                                seekOffset += dragAmount.x / 20f  // Divisor más pequeño para mayor sensibilidad (ajusta a /10f si quieres más)
-                                showSeek = true
-                                seekKey++
-                            }
-                        }
-                    },
-                    onDragEnd = {
-                        // Aplicar el seek total acumulado al final del drag
-                        if (isVideo && kotlin.math.abs(seekOffset) >= 1f) {  // Solo si es >= 1 segundo para evitar seeks insignificantes
-                            val totalSeconds = seekOffset.toInt()
-                            if (totalSeconds > 0) onSeekForward(totalSeconds) else onSeekBackward(-totalSeconds)
-                        }
-                        // Resetear para el próximo drag
-                        seekOffset = 0f
-                        showSeek = false
-                    }
-                )
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        val iconSize = maxWidth * 0.10f
-
-        // --- Feedback temporal ---
-        if (showPrev) {
-            Icon(
-                painterResource(R.drawable.skip_back), "Prev",
-                Modifier
-                    .align(Alignment.CenterStart)
-                    .size(iconSize),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            LaunchedEffect(showPrev) { delay(tiemShow); showPrev = false }
-        }
-
-        if (showNext) {
-            Icon(
-                painterResource(R.drawable.skip_forward), "Next",
-                Modifier
-                    .align(Alignment.CenterEnd)
-                    .size(iconSize),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            LaunchedEffect(showNext) { delay(tiemShow); showNext = false }
-        }
-
-        if (showPause) {
-            Icon(
-                painterResource(R.drawable.play), "Pause",
-                Modifier
-                    .align(Alignment.Center)
-                    .size(iconSize),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            LaunchedEffect(showPause) { delay(tiemShow); showPause = false }
-        }
-
-        if (showRewind) {
-            Icon(
-                painterResource(R.drawable.rewind), "Rewind",
-                Modifier
-                    .align(Alignment.CenterStart)
-                    .size(iconSize),
-                tint = MaterialTheme.colorScheme.secondary
-            )
-            LaunchedEffect(showRewind) { delay(tiemShow); showRewind = false }
-        }
-
-        if (showForward) {
-            Icon(
-                painterResource(R.drawable.fast_forward), "Forward",
-                Modifier
-                    .align(Alignment.CenterEnd)
-                    .size(iconSize),
-                tint = MaterialTheme.colorScheme.secondary
-            )
-            LaunchedEffect(showForward) { delay(tiemShow); showForward = false }
-        }
-
-        if (showVolume) {
-            Column(
-                modifier = Modifier.align(Alignment.BottomCenter),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                val volumeIcon = when {
-                    volumeLevel == 0f -> R.drawable.speaker_simple_slash
-                    volumeLevel < 0.33f -> R.drawable.speaker_simple_none
-                    volumeLevel < 0.66f -> R.drawable.speaker_simple_low
-                    else -> R.drawable.speaker_simple_high
-                }
-
-                Icon(
-                    painter = painterResource(volumeIcon),
-                    contentDescription = "Volumen",
-                    modifier = Modifier.size(iconSize),
-                    tint = MaterialTheme.colorScheme.tertiary
-                )
-
-                Text(
-                    text = "${(volumeLevel * 100).toInt()}%",
-                    fontSize = 28.sp,
-                    color = MaterialTheme.colorScheme.tertiary
-                )
-            }
-
-            LaunchedEffect(volumeKey) {
-                delay(tiemShow)
-                showVolume = false
-            }
-        }
-
-        if (showSeek) {
-            Column(
-                modifier = Modifier.align(Alignment.TopCenter),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                val seekIcon = if (seekOffset > 0) R.drawable.fast_forward else R.drawable.rewind
-
-                Icon(
-                    painter = painterResource(seekIcon),
-                    contentDescription = "Seek",
-                    modifier = Modifier.size(iconSize),
-                    tint = MaterialTheme.colorScheme.secondary
-                )
-
-                Text(
-                    text = "${seekOffset.toInt()}s",
-                    fontSize = 28.sp,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-            }
-
-            LaunchedEffect(seekKey) {
-                delay(2000)
-                showSeek = false
-                seekOffset = 0f
-            }
-        }
-    }
-}
 
 

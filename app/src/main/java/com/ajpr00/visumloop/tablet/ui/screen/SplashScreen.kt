@@ -17,21 +17,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.ajpr00.visumloop.tablet.R
-import com.ajpr00.visumloop.tablet.presentation.viewmodel.SplashUiState
-import com.ajpr00.visumloop.tablet.presentation.viewmodel.SplashViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
 @Composable
 fun SplashScreen(
-    goToLoginGraph: () -> Unit,
     goToMainGraph: () -> Unit,
-    vm: SplashViewModel = hiltViewModel()
 ) {
-    //val state by vm.uiState.collectAsState()
-
     // Animaciones visuales
     val scale = remember { Animatable(0f) }
     val alphaAnim = remember { Animatable(1f) }
@@ -41,17 +34,18 @@ fun SplashScreen(
         launch { alphaAnim.animateTo(1f, tween(1500)) }
     }
 
-    // Decisión de navegación
     LaunchedEffect(Unit) {
-        delay(5000)
-        when (SplashUiState.GoToMain) {
-            SplashUiState.GoToLogin -> goToLoginGraph()
-            SplashUiState.GoToMain -> goToMainGraph()
-            else -> {} // Loading → solo muestra animación
-        }
+
+        delay(1) //Todo cambio provisional para que se vea mejor
+        goToMainGraph()
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(Color(0xFFFFE6BA)), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFFFE6BA)),
+        contentAlignment = Alignment.Center
+    ) {
         Image(
             painter = painterResource(id = R.drawable.img_splash),
             contentDescription = "Logo",

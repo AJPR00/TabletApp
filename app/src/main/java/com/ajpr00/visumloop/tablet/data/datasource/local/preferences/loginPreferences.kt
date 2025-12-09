@@ -49,6 +49,11 @@ class LoginPreferences @Inject constructor(
             if (authCode != null) prefs[AUTH_CODE] = authCode
         }
     }
+    suspend fun saveToken( token: String) {
+        context.settingDataStore.edit { prefs ->
+            prefs[ID_TOKEN] = token
+        }
+    }
 
     suspend fun clearSettingDataStore() {
         context.settingDataStore.edit { prefs ->

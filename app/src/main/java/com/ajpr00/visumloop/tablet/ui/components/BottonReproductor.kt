@@ -49,15 +49,15 @@ import kotlinx.coroutines.launch
 @Composable
 fun PanelMenuOpciones(
     shape: Shape,
-    oneBox: () -> Unit,
-    twoBox: () -> Unit,
-    threeBox: () -> Unit,
-    fourBox: () -> Unit,
-    fiveBox: () -> Unit,
-    sixBox: (isClose: Boolean) -> Unit,
-    sevenBox: () -> Unit,
-    eightBox: (isClose: Boolean) -> Unit,
-    nineBox: (isClose: Boolean) -> Unit,
+    configuracion: () -> Unit,
+    info: () -> Unit,
+    login: () -> Unit,
+    ftp: () -> Unit,
+    vacio: () -> Unit,
+    dropBox: (isClose: Boolean) -> Unit,
+    misArchivos: () -> Unit,
+    favorito: (isClose: Boolean) -> Unit,
+    googleDrive: (isClose: Boolean) -> Unit,
     onLock: () -> Unit,
     onClosedMenuApp: (isClose: Boolean) -> Unit
 ) {
@@ -103,51 +103,57 @@ fun PanelMenuOpciones(
         ) {
             // Columna izquierda
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                CustomButtonPanel(
-                    size = size,
-                    icon = Icons.TwoTone.FastRewind,
-                    label = "Login",
-                    shape = shape,
-                    onClick = oneBox
-                )
-                CustomButtonPanel(
-                    size = size,
-                    icon = Icons.TwoTone.SkipPrevious,
-                    label = "Driver Cargar",
-                    shape = shape,
-                    onClick = twoBox
-                )
-                CustomButtonPanel(
-                    size = size,
-                    icon = ImageVector.vectorResource(R.drawable.user_circle_fill),
-                    label = "login",
-                    shape = shape,
-                    onClick = threeBox
-                )
-            }
 
-            // Columna central
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 CustomButtonPanel(
                     size = size,
                     icon = ImageVector.vectorResource(R.drawable.tree_structure_fill),
                     label = "FTP",
                     shape = shape,
-                    onClick = fourBox
+                    onClick = ftp
                 )
+
                 CustomButtonPanel(
                     size = size,
-                    icon = Icons.TwoTone.MenuBook,
-                    label = "MENU",
+                    icon = ImageVector.vectorResource(R.drawable.folder_star_fill),
+                    label = "Favoritos",
                     shape = shape,
-                    onClick = fiveBox
+                    onClick = { favorito(true) }
                 )
+
                 CustomButtonPanel(
                     size = size,
-                    icon = ImageVector.vectorResource(R.drawable.dropbox_logo_fill),
-                    label = "Dropbox",
+                    icon = ImageVector.vectorResource(R.drawable.config),
+                    label = "Configuracion",
                     shape = shape,
-                    onClick = { sixBox(true) }
+                    onClick = configuracion
+                )
+            }
+
+            // Columna central
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+                CustomButtonPanel(
+                    size = size,
+                    icon = ImageVector.vectorResource(R.drawable.google_drive_logo_fill),
+                    label = "Google Drive",
+                    shape = shape,
+                    onClick = { googleDrive(true) }
+                )
+
+                CustomButtonPanel(
+                    size = size,
+                    icon = ImageVector.vectorResource(R.drawable.user_circle_fill),
+                    label = "login",
+                    shape = shape,
+                    onClick = login
+                )
+
+                CustomButtonPanel(
+                    size = size,
+                    icon = ImageVector.vectorResource(R.drawable.info),
+                    label = "Acerca de",
+                    shape = shape,
+                    onClick = info
                 )
             }
 
@@ -155,24 +161,26 @@ fun PanelMenuOpciones(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 CustomButtonPanel(
                     size = size,
+                    icon = ImageVector.vectorResource(R.drawable.dropbox_logo_fill),
+                    label = "Dropbox",
+                    shape = shape,
+                    onClick = { dropBox(true) }
+                )
+
+                CustomButtonPanel(
+                    size = size,
                     icon = ImageVector.vectorResource(R.drawable.folder_open_fill),
                     label = "Mis Archivos",
                     shape = shape,
-                    onClick = sevenBox
+                    onClick = misArchivos
                 )
+
                 CustomButtonPanel(
                     size = size,
-                    icon = ImageVector.vectorResource(R.drawable.folder_star_fill),
-                    label = "Favoritos",
+                    icon = Icons.TwoTone.MenuBook,
+                    label = "",
                     shape = shape,
-                    onClick = { eightBox(true) }
-                )
-                CustomButtonPanel(
-                    size = size,
-                    icon = ImageVector.vectorResource(R.drawable.google_drive_logo_fill),
-                    label = "Google Drive",
-                    shape = shape,
-                    onClick = { nineBox(true) }
+                    onClick = vacio
                 )
             }
         }
