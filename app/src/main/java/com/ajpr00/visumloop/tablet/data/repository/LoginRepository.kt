@@ -11,7 +11,7 @@ class LoginRepository @Inject constructor() {
         FirebaseAuth.getInstance()
     }
 
-    suspend fun login(email: String, password: String): Result<Unit> {
+    suspend fun loginEmail(email: String, password: String): Result<Unit> {
         return try {
             firebaseAuth.signInWithEmailAndPassword(email, password).await()
             Result.success(Unit)

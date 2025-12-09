@@ -8,5 +8,7 @@ data class LoginState(
     val authCode: String? = null,
     val password: String = "",
     val showPassword: Boolean = false,
-    val driveToken: String? = null
+    val driveToken: String? = null,
+    val loading: Boolean = false,
+    val errorMessage: String? = null
 )

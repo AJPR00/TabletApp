@@ -50,12 +50,10 @@ fun NavigationCore(innerPadding: PaddingValues) {
                 val viewModelLoginViewModel: LoginViewModel = hiltViewModel(parentEntry)
                 LoginScreen(
                     viewModel = viewModelLoginViewModel,
-                    onLoginGoogle = { } ,
                     onLoginEmail =  { navController.navigate(MainGraph) },
                     goToMainGraph =  { navController.navigate(MainGraph) },
-                    goToLoginGraph =  { },
-                    viewModelAuth = hiltViewModel(),
-                    viewModelMediaItme = hiltViewModel(),
+                    viewModelMediaItem = hiltViewModel()
+
                                     )
             }
         }
