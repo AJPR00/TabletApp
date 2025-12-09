@@ -15,6 +15,8 @@ import androidx.navigation.navigation
 import com.ajpr00.visumloop.tablet.presentation.viewmodel.LoginViewModel
 import com.ajpr00.visumloop.tablet.presentation.viewmodel.MediaBackgroundViewModel
 import com.ajpr00.visumloop.tablet.presentation.viewmodel.MediaItemsViewModel
+import com.ajpr00.visumloop.tablet.presentation.viewmodel.RegisterViewModel
+import com.ajpr00.visumloop.tablet.ui.components.FromRegister
 import com.ajpr00.visumloop.tablet.ui.components.MediaList
 import com.ajpr00.visumloop.tablet.ui.components.MenuGestoReproductor
 import com.ajpr00.visumloop.tablet.ui.components.MenuApp
@@ -31,7 +33,7 @@ fun NavigationCore(innerPadding: PaddingValues) {
 
     NavHost(
         navController = navController,
-        startDestination = Splash, // navGraph principal
+        startDestination = LoginGraph, // Todo Cambiar al SplashScreen(ModoDebig)
         modifier = Modifier.padding(innerPadding)
     ) {
         composable<Splash> { backStackEntry ->
@@ -43,19 +45,38 @@ fun NavigationCore(innerPadding: PaddingValues) {
         // Subgrafo de login
         navigation<LoginGraph>(startDestination = LoginScreen) {
 
-            composable<LoginScreen> {backStackEntry ->
+            composable<LoginScreen> { backStackEntry ->
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry(LoginGraph::class.qualifiedName!!)
                 }
                 val viewModelLoginViewModel: LoginViewModel = hiltViewModel(parentEntry)
                 LoginScreen(
+                    modifier = Modifier,
                     viewModel = viewModelLoginViewModel,
-                    onLoginEmail =  { navController.navigate(MainGraph) },
-                    goToMainGraph =  { navController.navigate(MainGraph) },
-                    viewModelMediaItem = hiltViewModel()
-
-                                    )
+                    goToMainGraph = { navController.navigate(MainGraph) },
+                    goToFromRegistro = { navController.navigate(RegisterScreen) },
+                    goToRecuperarPass = { navController.navigate(ForgotPasswordScreen) }
+                )
             }
+            composable<RegisterScreen> { backStackEntry ->
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry(LoginGraph::class.qualifiedName!!)
+                }
+                val viewModelLoginViewModel: RegisterViewModel = hiltViewModel(parentEntry)
+                FromRegister(
+                    modifier = Modifier,
+                    viewModel = viewModelLoginViewModel,
+                    goToBack = { navController.popBackStack() }
+                )
+            }
+            composable<ForgotPasswordScreen> { backStackEntry ->
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry(LoginGraph::class.qualifiedName!!)
+                }
+                val viewModelLoginViewModel: LoginViewModel = hiltViewModel(parentEntry)
+                //FromForgotPassword(viewModel = viewModelLoginViewModel)
+            }
+
         }
 
         navigation<MainGraph>(startDestination = ScreenPrincipal) { // Se crea un nuevo backStack ajeno al principal
@@ -78,11 +99,23 @@ fun NavigationCore(innerPadding: PaddingValues) {
                                     onPaused = { viewModelMediaBackground.togglePlayPause() },
                                     onPrevMedia = { viewModelMediaBackground.prevMedia() },
                                     onNextMedia = { viewModelMediaBackground.nextMedia() },
-                                    onRewind = { viewModelMediaBackground.rewind()},
-                                    onForward = { viewModelMediaBackground.forward()},
-                                    onSeekForward = { delta -> viewModelMediaBackground.forward(delta) },
-                                    onSeekBackward = { delta -> viewModelMediaBackground.rewind(delta) },
-                                    onVolumeChange = { delta -> viewModelMediaBackground.setVolume(viewModelMediaBackground.option.value.volume + delta) },
+                                    onRewind = { viewModelMediaBackground.rewind() },
+                                    onForward = { viewModelMediaBackground.forward() },
+                                    onSeekForward = { delta ->
+                                        viewModelMediaBackground.forward(
+                                            delta
+                                        )
+                                    },
+                                    onSeekBackward = { delta ->
+                                        viewModelMediaBackground.rewind(
+                                            delta
+                                        )
+                                    },
+                                    onVolumeChange = { delta ->
+                                        viewModelMediaBackground.setVolume(
+                                            viewModelMediaBackground.option.value.volume + delta
+                                        )
+                                    },
                                     onLockScreen = { viewModelMediaBackground.togglesLockScreen() },
                                     onShowMenu = { viewModelMediaBackground.isShowMenuApp(it) },
                                     resetTimer = { viewModelMediaBackground.updateLastInteraction() }
@@ -98,15 +131,23 @@ fun NavigationCore(innerPadding: PaddingValues) {
                                             shape = RoundedCornerShape(10),
                                             configuracion = { /*TODO*/ },
                                             info = { /*TODO*/ },
-                                            login = {navController.navigate(LoginGraph) },
+                                            login = { navController.navigate(LoginGraph) },
                                             ftp = { /*TODO*/ },
                                             vacio = { /*TODO*/ },
                                             dropBox = { viewModelMediaBackground.isShowSidePanel(it) },
                                             misArchivos = { },
                                             favorito = { viewModelMediaBackground.isShowSidePanel(it) },
-                                            googleDrive = { viewModelMediaBackground.isShowSidePanel(it) },
+                                            googleDrive = {
+                                                viewModelMediaBackground.isShowSidePanel(
+                                                    it
+                                                )
+                                            },
                                             onLock = { viewModelMediaBackground.togglesLockScreen() },
-                                            onClosedMenuApp = { viewModelMediaBackground.isShowMenuApp(it) }
+                                            onClosedMenuApp = {
+                                                viewModelMediaBackground.isShowMenuApp(
+                                                    it
+                                                )
+                                            }
                                         )
                                     }
                                 )
@@ -116,7 +157,7 @@ fun NavigationCore(innerPadding: PaddingValues) {
                                     viewModelMediaItems = viewModelMediaItems,
                                     viewModelMediaBackground = viewModelMediaBackground,
 
-                                )
+                                    )
                             }
                         )
                     }

@@ -89,7 +89,7 @@ fun MediaList(
                 shape = RoundedCornerShape(12.dp)
             )
             .background(
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+                color = MaterialTheme.colorScheme.primary,
                 shape = RoundedCornerShape(12.dp)
             ),
     ) {

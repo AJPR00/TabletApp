@@ -104,7 +104,7 @@ fun PanelMenuOpciones(
             // Columna izquierda
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = ImageVector.vectorResource(R.drawable.tree_structure_fill),
                     label = "FTP",
@@ -112,7 +112,7 @@ fun PanelMenuOpciones(
                     onClick = ftp
                 )
 
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = ImageVector.vectorResource(R.drawable.folder_star_fill),
                     label = "Favoritos",
@@ -120,7 +120,7 @@ fun PanelMenuOpciones(
                     onClick = { favorito(true) }
                 )
 
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = ImageVector.vectorResource(R.drawable.config),
                     label = "Configuracion",
@@ -132,7 +132,7 @@ fun PanelMenuOpciones(
             // Columna central
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = ImageVector.vectorResource(R.drawable.google_drive_logo_fill),
                     label = "Google Drive",
@@ -140,7 +140,7 @@ fun PanelMenuOpciones(
                     onClick = { googleDrive(true) }
                 )
 
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = ImageVector.vectorResource(R.drawable.user_circle_fill),
                     label = "login",
@@ -148,7 +148,7 @@ fun PanelMenuOpciones(
                     onClick = login
                 )
 
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = ImageVector.vectorResource(R.drawable.info),
                     label = "Acerca de",
@@ -159,7 +159,7 @@ fun PanelMenuOpciones(
 
             // Columna derecha
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = ImageVector.vectorResource(R.drawable.dropbox_logo_fill),
                     label = "Dropbox",
@@ -167,7 +167,7 @@ fun PanelMenuOpciones(
                     onClick = { dropBox(true) }
                 )
 
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = ImageVector.vectorResource(R.drawable.folder_open_fill),
                     label = "Mis Archivos",
@@ -175,7 +175,7 @@ fun PanelMenuOpciones(
                     onClick = misArchivos
                 )
 
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = Icons.TwoTone.MenuBook,
                     label = "",
@@ -188,7 +188,7 @@ fun PanelMenuOpciones(
 }
 
 
-@Composable
+/*@Composable
 fun MenuReproductorVideo(
     modifier: Modifier = Modifier,
     tapPosition: Offset,
@@ -229,13 +229,13 @@ fun MenuReproductorVideo(
         ) {
             // Columna izquierda: retroceder
             Column {
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = Icons.TwoTone.FastRewind, label = "(-15) ",
                     color = color,
                     onClick = onRewind
                 )
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = Icons.TwoTone.SkipPrevious, label = "Prev",
                     color = color,
@@ -245,7 +245,7 @@ fun MenuReproductorVideo(
 
             // Columna central: play/pause + mute
             Column {
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                     label = "Play/Pause",
@@ -253,13 +253,13 @@ fun MenuReproductorVideo(
                     onClick = onPlayPause
                 )
 
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = Icons.AutoMirrored.TwoTone.MenuBook, label = "MENU",
                     color = color,
                     onClick = onMenu
                 )
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = if (volume == 0f) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp,
                     label = "Mute",
@@ -270,14 +270,14 @@ fun MenuReproductorVideo(
 
             // Columna derecha: avanzar
             Column {
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = Icons.Filled.FastForward,
                     label = "(+15)",
                     color = color,
                     onClick = onForward
                 )
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = Icons.TwoTone.SkipNext,
                     label = "Next",
@@ -328,7 +328,7 @@ fun MenuReproductorImage(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             Column {
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = Icons.TwoTone.SkipPrevious, label = "Prev",
                     color = color,
@@ -336,14 +336,14 @@ fun MenuReproductorImage(
                 )
             }
             Column {
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                     label = "Play/Pause",
                     color = color,
                     onClick = onPlayPause
                 )
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = Icons.AutoMirrored.TwoTone.MenuBook, label = "MENU",
                     color = color,
@@ -351,7 +351,7 @@ fun MenuReproductorImage(
                 )
             }
             Column {
-                CustomButtonPanel(
+                ButtonCustonPanel(
                     size = size,
                     icon = Icons.TwoTone.SkipNext,
                     label = "Next",
@@ -362,10 +362,10 @@ fun MenuReproductorImage(
             }
         }
     }
-}
+}*/
 
 @Composable
-fun CustomButtonPanel(
+fun ButtonCustonPanel(
     modifier: Modifier = Modifier.padding(5.dp),
     shape: Shape = RoundedCornerShape(50),
     size: Dp,
