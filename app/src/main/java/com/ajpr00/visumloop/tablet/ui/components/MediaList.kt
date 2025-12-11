@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.ajpr00.visumloop.tablet.domain.model.FormatType
 import com.ajpr00.visumloop.tablet.domain.model.MediaContent
-import com.ajpr00.visumloop.tablet.presentation.viewmodel.MediaBackgroundViewModel
+import com.ajpr00.visumloop.tablet.presentation.viewmodel.ReproducorViewModel
 import com.ajpr00.visumloop.tablet.presentation.viewmodel.MediaItemsViewModel
 
 /*@Composable
@@ -68,7 +68,7 @@ fun MediaList(
 @Composable
 fun MediaList(
     viewModelMediaItems: MediaItemsViewModel,
-    viewModelMediaBackground: MediaBackgroundViewModel,
+    viewModelMediaBackground: ReproducorViewModel,
     label: String = "",
 ) {
     val items by viewModelMediaItems.mediaItems.collectAsState()

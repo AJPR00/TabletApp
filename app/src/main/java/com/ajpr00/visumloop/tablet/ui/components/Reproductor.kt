@@ -18,7 +18,7 @@ import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import com.ajpr00.visumloop.tablet.domain.model.FormatType
 import com.ajpr00.visumloop.tablet.domain.model.transitionFor
-import com.ajpr00.visumloop.tablet.presentation.viewmodel.MediaBackgroundViewModel
+import com.ajpr00.visumloop.tablet.presentation.viewmodel.ReproducorViewModel
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.geometry.Offset
@@ -31,7 +31,7 @@ import androidx.compose.ui.geometry.Offset
  */
 @OptIn(UnstableApi::class, ExperimentalAnimationApi::class)
 @Composable
-fun Reproductor(viewModel: MediaBackgroundViewModel) {
+fun Reproductor(viewModel: ReproducorViewModel) {
 
     val TAG = "MediaBackground"
     val context = LocalContext.current

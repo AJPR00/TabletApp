@@ -25,7 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.ajpr00.visumloop.tablet.R
-import com.ajpr00.visumloop.tablet.presentation.viewmodel.MediaBackgroundViewModel
+import com.ajpr00.visumloop.tablet.presentation.viewmodel.ReproducorViewModel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun MenuOverlayScreen(
-    viewModelMediaBackground: MediaBackgroundViewModel,
+    viewModelMediaBackground: ReproducorViewModel,
     menuGestoReproducion: @Composable () -> Unit,
     menuApp: @Composable () -> Unit,
     panelSelectorMedia: @Composable () -> Unit

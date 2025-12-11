@@ -2,22 +2,25 @@ package com.ajpr00.visumloop.tablet.presentation.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.ajpr00.visumloop.tablet.data.datasource.local.preferences.LoginPreferences
-import com.ajpr00.visumloop.tablet.data.repository.LoginRepository
+import com.ajpr00.visumloop.tablet.data.repository.GoogleAuthRepository
 import com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento
 import com.ajpr00.visumloop.tablet.presentation.state.RegisterState
 import com.ajpr00.visumloop.tablet.util.validarEmail
 import com.ajpr00.visumloop.tablet.util.validarPassword
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
-    private val repository: LoginRepository,
+    private val repository: GoogleAuthRepository,
     private val loginPreferences: LoginPreferences
 ) : ViewModel() {
 
@@ -34,6 +37,7 @@ class RegisterViewModel @Inject constructor(
      * Si todo va bien, emitimos un mensaje de éxito. Si falla, emitimos un mensaje de error.
      */
     fun registrarEmailPass(email: String, password: String) {
+        _eventState.value = EstadoEvento.Cargando
         Log.d("RegisterViewModel", "Intentando registrar usuario con email: $email")
         FirebaseAuth.getInstance()
             .createUserWithEmailAndPassword(email, password)
@@ -64,8 +68,11 @@ class RegisterViewModel @Inject constructor(
                     addEvento("Error comprobando existencia de usuario")
                 }
             }
+        viewModelScope.launch {
+            delay(5000)
+            _eventState.value = EstadoEvento.Exito
+        }
     }
-
 
     fun addEvento(error: String) {
         val current = _eventState.value
@@ -155,4 +162,25 @@ class RegisterViewModel @Inject constructor(
         }
         return valid
     }
+
+    fun recuperarPassword(email: String) {
+        _eventState.value = EstadoEvento.Cargando
+        FirebaseAuth.getInstance()
+            .sendPasswordResetEmail(email)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    addEvento("Correo de recuperación enviado a $email")
+                    _eventState.value = EstadoEvento.Exito
+                } else {
+                    addEvento("Error al enviar correo de recuperación")
+                   }
+
+                // 👇 Resetear después de mostrar resultado
+                viewModelScope.launch {
+                    delay(5000)
+                    _eventState.value = EstadoEvento.Inicial
+                }
+            }
+    }
+
 }

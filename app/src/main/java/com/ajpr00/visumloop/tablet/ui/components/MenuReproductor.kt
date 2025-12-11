@@ -275,3 +275,180 @@ fun MenuGestoReproductor(
         }
     }
 }
+
+
+/*@Composable
+fun MenuReproductorVideo(
+    modifier: Modifier = Modifier,
+    tapPosition: Offset,
+    color: Color,
+    isPlaying: Boolean,
+    volume: Float,
+    onPlayPause: () -> Unit,
+    onMute: () -> Unit,
+    onPrev: () -> Unit,
+    onNext: () -> Unit,
+    onForward: () -> Unit,
+    onRewind: () -> Unit,
+    onMenu: () -> Unit
+) {
+    var menuWidth by remember { mutableStateOf(0) }
+    var menuHeight by remember { mutableStateOf(0) }
+
+    BoxWithConstraints(
+        modifier = modifier
+            .onGloballyPositioned { coords ->
+                menuWidth = coords.size.width
+                menuHeight = coords.size.height
+            }
+            .offset {
+                // Cálculo para **centrar** el menú en el tap
+                val centeredX = tapPosition.x - menuWidth / 2f
+                val centeredY = tapPosition.y - menuHeight / 2f
+
+                IntOffset(centeredX.toInt(), centeredY.toInt())
+            }) {
+        val size = maxHeight * 0.1f // tamaño relativo al alto del padre
+
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .background(Color.Transparent),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            // Columna izquierda: retroceder
+            Column {
+                ButtonCustonPanel(
+                    size = size,
+                    icon = Icons.TwoTone.FastRewind, label = "(-15) ",
+                    color = color,
+                    onClick = onRewind
+                )
+                ButtonCustonPanel(
+                    size = size,
+                    icon = Icons.TwoTone.SkipPrevious, label = "Prev",
+                    color = color,
+                    onClick = onPrev
+                )
+            }
+
+            // Columna central: play/pause + mute
+            Column {
+                ButtonCustonPanel(
+                    size = size,
+                    icon = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                    label = "Play/Pause",
+                    color = color,
+                    onClick = onPlayPause
+                )
+
+                ButtonCustonPanel(
+                    size = size,
+                    icon = Icons.AutoMirrored.TwoTone.MenuBook, label = "MENU",
+                    color = color,
+                    onClick = onMenu
+                )
+                ButtonCustonPanel(
+                    size = size,
+                    icon = if (volume == 0f) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp,
+                    label = "Mute",
+                    color = color,
+                    onClick = onMute
+                )
+            }
+
+            // Columna derecha: avanzar
+            Column {
+                ButtonCustonPanel(
+                    size = size,
+                    icon = Icons.Filled.FastForward,
+                    label = "(+15)",
+                    color = color,
+                    onClick = onForward
+                )
+                ButtonCustonPanel(
+                    size = size,
+                    icon = Icons.TwoTone.SkipNext,
+                    label = "Next",
+                    color = color,
+                    onClick = onNext
+                )
+
+            }
+        }
+    }
+}
+
+
+@Composable
+fun MenuReproductorImage(
+    modifier: Modifier = Modifier,
+    tapPosition: Offset,
+    color: Color,
+    isPlaying: Boolean,
+    onPlayPause: () -> Unit,
+    onPrev: () -> Unit,
+    onNext: () -> Unit,
+    onMenu: () -> Unit
+) {
+    var menuWidth by remember { mutableStateOf(0) }
+    var menuHeight by remember { mutableStateOf(0) }
+
+    BoxWithConstraints(
+        modifier = modifier
+            .onGloballyPositioned { coords ->
+                menuWidth = coords.size.width
+                menuHeight = coords.size.height
+            }
+            .offset {
+                // Cálculo para **centrar** el menú en el tap
+                val centeredX = tapPosition.x - menuWidth / 2f
+                val centeredY = tapPosition.y - menuHeight / 2f
+
+                IntOffset(centeredX.toInt(), centeredY.toInt())
+            }) {
+
+        val size = maxHeight * 0.1f // tamaño relativo al alto del padre
+
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .background(Color.Transparent),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Column {
+                ButtonCustonPanel(
+                    size = size,
+                    icon = Icons.TwoTone.SkipPrevious, label = "Prev",
+                    color = color,
+                    onClick = onPrev
+                )
+            }
+            Column {
+                ButtonCustonPanel(
+                    size = size,
+                    icon = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                    label = "Play/Pause",
+                    color = color,
+                    onClick = onPlayPause
+                )
+                ButtonCustonPanel(
+                    size = size,
+                    icon = Icons.AutoMirrored.TwoTone.MenuBook, label = "MENU",
+                    color = color,
+                    onClick = onMenu
+                )
+            }
+            Column {
+                ButtonCustonPanel(
+                    size = size,
+                    icon = Icons.TwoTone.SkipNext,
+                    label = "Next",
+                    color = color,
+                    onClick = onNext
+                )
+
+            }
+        }
+    }
+}*/

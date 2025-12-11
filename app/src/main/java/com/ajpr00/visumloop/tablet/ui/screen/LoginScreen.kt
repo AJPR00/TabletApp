@@ -1,9 +1,9 @@
 package com.ajpr00.visumloop.tablet.ui.screen
 
-import android.app.Activity
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,16 +13,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,13 +37,15 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.ajpr00.visumloop.tablet.R
+import com.ajpr00.visumloop.tablet.domain.model.AccesLoginType
+import com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento
 import com.ajpr00.visumloop.tablet.presentation.viewmodel.LoginViewModel
 import com.ajpr00.visumloop.tablet.ui.components.CustomButton
 import com.firebase.ui.auth.AuthUI
-import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
+import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.api.services.drive.DriveScopes
-import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun LoginScreen(
@@ -50,44 +53,71 @@ fun LoginScreen(
     goToMainGraph: () -> Unit,
     goToFromRegistro: () -> Unit,
     goToRecuperarPass: () -> Unit,
-    modifier: Modifier
+    modifier: Modifier,
+    accesLoginType: AccesLoginType
 ) {
     Log.d("LoginUI", "🔄 LoginScreen recomposed")
 
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsState()
-    val evento by viewModel.mensaje.collectAsState()
+    val uiStateEvent by viewModel.eventState.collectAsState()
 
     var isEmail by rememberSaveable { mutableStateOf(false) }
+    val isLocalLoggedIn by viewModel.isLocalLogged.collectAsState()
+
+    /*    val launcherLogin = rememberLauncherForActivityResult(
+            contract = FirebaseAuthUIActivityResultContract()
+        ) { result ->
+
+            val response = result.idpResponse
+
+            if (result.resultCode == Activity.RESULT_OK) {
+                Log.d("LoginFlow", "Login correcto")
+                val account = GoogleSignIn.getLastSignedInAccount(context)
+                viewModel.onGoogleAccountReceived(account, context)
+
+            } else {
+                if (response == null) {
+                    viewModel.addEvento("Login cancelado")
+                    Log.w("LoginFlow", "Login cancelado")
+                } else {
+                    Log.e("LoginFlow", "Error de login: ${response.error?.errorCode}")
+                }
+            }
+        }*/
 
     val launcherLogin = rememberLauncherForActivityResult(
-        contract = FirebaseAuthUIActivityResultContract()
+        contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-
-        val response = result.idpResponse
-
-        if (result.resultCode == Activity.RESULT_OK) {
-            Log.d("LoginFlow", "Login correcto")
-            val account = GoogleSignIn.getLastSignedInAccount(context)
-            viewModel.onGoogleAccountReceived(account, context)
-
-        } else {
-            if (response == null) {
-                viewModel.setMensaje("Login cancelado")
-                Log.w("LoginFlow", "Login cancelado")
-            } else {
-                Log.e("LoginFlow", "Error de login: ${response.error?.errorCode}")
-            }
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            viewModel.loginGoogleFirebase(account)
+        } catch (e: ApiException) {
+            Log.e("Login", "Error login Google", e)
         }
     }
 
-    fun startGoogleLogin() {
+    fun startAccountLocal() {
+        // Hace que el Sistema lance la actividad de login definida en el Intent, en este caso de firebaseAUth
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestEmail()
+            .requestIdToken(context.getString(R.string.default_web_client_id))
+            .build()
+
+        val googleSignInClient = GoogleSignIn.getClient(context, gso)
+        val signInIntent = googleSignInClient.signInIntent
+        launcherLogin.launch(signInIntent)
+    }
+
+    fun startGoogleLoginForDrive() {
+        // Son los mensajes de permiso que se pediran a los usuario al logearse
         val providers = arrayListOf(
             AuthUI.IdpConfig.GoogleBuilder()
                 .setScopes(listOf(DriveScopes.DRIVE_READONLY))
                 .build()
         )
-
+        // Hace que el Sistema lance la actividad de login definida en el Intent, en este caso de firebaseAUth
         val intent = AuthUI.getInstance()
             .createSignInIntentBuilder()
             .setAvailableProviders(providers)
@@ -118,16 +148,23 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            /**************************************BotonGoogle********************************/
             if (!isEmail) {
                 CustomButton(
                     icono = R.drawable.google_icon,
                     label = "Iniciar sesión con Google",
                     onClick = {
                         Log.d("LoginUI", "Google login pulsado")
-                        startGoogleLogin()
+                        if (accesLoginType == AccesLoginType.LOCAL) {
+                            startAccountLocal()
+                        } else {
+                            startGoogleLoginForDrive()
+                        }
+
                     }
                 )
             }
+            /**********************************************************************************/
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -171,32 +208,49 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            CustomButton(
-                enabled = if (isEmail) (!state.email.isNullOrBlank() && !state.password.isNullOrBlank()) else true,
-                icono = R.drawable.email_ic,
-                label = if (!isEmail) "Iniciar sesión con Email" else "Iniciar sesión",
-                onClick = {
-                    if (!isEmail) {
-                        isEmail = true
-                    } else if (!state.email.isNullOrBlank() && !state.password.isNullOrBlank()) {
-                        val auth = FirebaseAuth.getInstance()
-                        auth.signInWithEmailAndPassword(state.email!!, state.password)
-                            .addOnCompleteListener { task ->
-                                if (task.isSuccessful) {
-                                    goToMainGraph()
-                                } else {
-                                    Toast.makeText(
-                                        context,
-                                        "Email o contraseña incorrectos",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            }
-                    } else {
-                        viewModel.setMensaje("Se requiere Email y Contraseña")
+            /* CustomButton(
+                 enabled = if (isEmail) (!state.email.isNullOrBlank() && !state.password.isNullOrBlank()) else true,
+                 icono = R.drawable.email_ic,
+                 label = if (!isEmail) "Iniciar sesión con Email" else "Iniciar sesión",
+                 onClick = {
+                     if (!isEmail) {
+                         isEmail = true
+                     } else if (!state.email.isNullOrBlank() && !state.password.isNullOrBlank()) {
+                         val auth = FirebaseAuth.getInstance()
+                         auth.signInWithEmailAndPassword(state.email!!, state.password)
+                             .addOnCompleteListener { task ->
+                                 if (task.isSuccessful) {
+                                     goToMainGraph()
+                                 } else {
+                                     viewModel.addEvento("Email o contraseña incorrectos")
+                                 }
+                             }
+                     } else {
+                         viewModel.addEvento("Se requiere Email y Contraseña")
+                     }
+                 }
+             )*/
+
+            if (accesLoginType == AccesLoginType.LOCAL) {
+                CustomButton(
+                    enabled = if (isEmail) (!state.email.isNullOrBlank() && !state.password.isNullOrBlank()) else true,
+                    icono = R.drawable.email_ic,
+                    label = if (!isEmail) "Iniciar sesión con Email" else "Iniciar sesión",
+                    onClick = {
+                        if (!isEmail) {
+                            isEmail = true
+                        } else {
+                            viewModel.loginEmailFirebase(
+                                email = state.email,
+                                password = state.password,
+                                onSuccess = { goToMainGraph() },
+                                onError = { msg -> viewModel.addEvento(msg) }
+                            )
+                        }
                     }
-                }
-            )
+                )
+            }
+
 
             if (isEmail) {
                 Spacer(modifier = Modifier.height(12.dp))
@@ -215,11 +269,32 @@ fun LoginScreen(
                 modifier = Modifier
                     .clickable { goToMainGraph() }
             )
-
         }
-        LaunchedEffect(evento) {
-            Toast.makeText(context, evento, Toast.LENGTH_LONG).show()
 
+
+        when (uiStateEvent) {
+            is EstadoEvento.Inicial -> Unit
+
+            is EstadoEvento.Cargando -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(48.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 4.dp
+                )
+            }
+
+            is EstadoEvento.Exito -> {
+                Toast.makeText(context, "Correo enviado correctamente", Toast.LENGTH_SHORT).show()
+                goToMainGraph()
+            }
+
+            is EstadoEvento.Mensajes -> {
+                val errores = (uiStateEvent as EstadoEvento.Mensajes).mensajes
+                errores.forEach { error ->
+                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                }
+                viewModel.clearErrors()
+            }
         }
     }
 }

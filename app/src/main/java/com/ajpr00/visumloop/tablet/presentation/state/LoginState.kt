@@ -1,7 +1,8 @@
 package com.ajpr00.visumloop.tablet.presentation.state
 
 data class LoginState(
-    val isLoggedIn: Boolean = false,
+    val isLoggedLocal: Boolean = false,
+    val isLoggedDrive: Boolean = false,
     val email: String? = null,
     val nombreCompleto: String? = null,
     val idToken: String? = null,

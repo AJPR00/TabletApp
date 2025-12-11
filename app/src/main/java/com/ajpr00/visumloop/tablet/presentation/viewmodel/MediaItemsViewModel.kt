@@ -5,21 +5,27 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ajpr00.visumloop.tablet.data.datasource.local.preferences.LoginPreferences
 import com.ajpr00.visumloop.tablet.domain.model.MediaContent
 import com.ajpr00.visumloop.tablet.data.repository.MediaRepository
 import com.ajpr00.visumloop.tablet.domain.model.MediaResult
 import com.ajpr00.visumloop.tablet.util.detectFormatType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import okhttp3.internal.wait
 
 @HiltViewModel
 class MediaItemsViewModel @Inject constructor(
     private val repositoryMedia: MediaRepository,
+    private val loginPreferences: LoginPreferences
 ) : ViewModel() {
 
     // Estado observable con la lista de MediaContent
@@ -29,6 +35,9 @@ class MediaItemsViewModel @Inject constructor(
     private val _errors = MutableStateFlow<List<String>>(emptyList())
     val errors: StateFlow<List<String>> = _errors
 
+    val isLocalLogged: StateFlow<Boolean> = repositoryMedia.isLocalLoggedIn
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     private var driveToken: String? = null
 
     fun setDriveToken(token: String) {
@@ -36,21 +45,24 @@ class MediaItemsViewModel @Inject constructor(
         Log.d("MediaItemsVM", "Drive token guardado")
     }
 
-    fun loadFromDrive(token: String? = driveToken) {
-        if (token == null) {
-            Log.e("MediaItemsVM", "Drive token no definido")
-            return
-        }
+    fun loadFromDrive() {
         viewModelScope.launch {
-            val mediaResult = repositoryMedia.listMediaFilesDrive(token)
+            val tokenValue = loginPreferences.idTokenDrive.firstOrNull()
+
+            if (tokenValue == null) {
+                Log.e("MediaItemsVM", "Drive token no definido")
+                return@launch
+            }
+
+            val mediaResult = repositoryMedia.listMediaFilesDrive(tokenValue)
             Log.d("MediaItemsVM", "Cargando archivos desde Google Drive...$mediaResult")
             when (mediaResult) {
                 is MediaResult.Success -> _mediaItems.update { mediaResult.files.toList() }
                 is MediaResult.Error -> _errors.value = _errors.value + mediaResult.message
             }
         }
-        Log.d("MediaItemsVM", "Cargando archivos desde Google Drive...${mediaItems.value}")
     }
+
 
     // Cargar desde FTP
     fun loadFromFtp() {
@@ -117,5 +129,30 @@ class MediaItemsViewModel @Inject constructor(
     fun selectMedia(media: MediaContent) {
         Log.d("MediaItemsVM", "Seleccionado para reproducción: ${media.name}")
         // Aquí podrías emitir un evento o actualizar otro StateFlow con el media seleccionado
+    }
+
+    fun clearErrors() {
+        _errors.value = emptyList()
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            repositoryMedia.logout()
+        }
+    }
+    fun logoutLocal() {
+        viewModelScope.launch {
+            repositoryMedia.logoutLocal()
+        }
+    }
+    fun logoutDrive() {
+        viewModelScope.launch {
+            repositoryMedia.logoutDrive()
+        }
+    }
+    fun logoutAll() {
+        viewModelScope.launch {
+            repositoryMedia.logoutAll()
+        }
     }
 }

@@ -17,7 +17,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            TabletAppTheme {
+            TabletAppTheme(
+                darkTheme = false,
+                dynamicColor = false
+            ) {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     NavigationCore(innerPadding)
                 }

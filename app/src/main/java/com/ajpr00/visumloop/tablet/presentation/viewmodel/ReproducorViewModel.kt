@@ -3,10 +3,7 @@ package com.ajpr00.visumloop.tablet.presentation.viewmodel
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import androidx.compose.runtime.State
 import androidx.lifecycle.viewModelScope
 import com.ajpr00.visumloop.tablet.data.repository.MediaRepository
 import com.ajpr00.visumloop.tablet.domain.model.FormatType
@@ -47,7 +44,7 @@ import javax.inject.Inject
  */
 
 @HiltViewModel
-class MediaBackgroundViewModel @Inject constructor(
+class ReproducorViewModel @Inject constructor(
     private val repository: MediaRepository
 ) : ViewModel() {
 

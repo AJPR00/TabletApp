@@ -1,37 +1,27 @@
 package com.ajpr00.visumloop.tablet.data.repository
 
+import com.ajpr00.visumloop.tablet.data.datasource.local.preferences.LoginPreferences
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
-class LoginRepository @Inject constructor() {
+class EmailAuthRepository @Inject constructor(
+    private val loginPreferences: LoginPreferences
+
+){
 
     private val firebaseAuth: FirebaseAuth by lazy {
         FirebaseAuth.getInstance()
     }
 
+    // Login con email/contraseña
     suspend fun loginEmail(email: String, password: String): Result<Unit> {
         return try {
             firebaseAuth.signInWithEmailAndPassword(email, password).await()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    fun logout() {
-        firebaseAuth.signOut()
-    }
-
-    suspend fun loginWithGoogle(idToken: String): Result<Unit> {
-        return try {
-            val credential = GoogleAuthProvider.getCredential(idToken, null)
-            firebaseAuth.signInWithCredential(credential).await()
+            loginPreferences.saveLocalSession(username = email, email = email)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 }
-

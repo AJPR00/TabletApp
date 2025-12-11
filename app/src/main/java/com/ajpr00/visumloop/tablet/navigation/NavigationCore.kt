@@ -1,8 +1,8 @@
 package com.ajpr00.visumloop.tablet.navigation
 
+import android.util.Log
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
@@ -12,16 +12,17 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
+import androidx.navigation.toRoute
 import com.ajpr00.visumloop.tablet.presentation.viewmodel.LoginViewModel
-import com.ajpr00.visumloop.tablet.presentation.viewmodel.MediaBackgroundViewModel
+import com.ajpr00.visumloop.tablet.presentation.viewmodel.ReproducorViewModel
 import com.ajpr00.visumloop.tablet.presentation.viewmodel.MediaItemsViewModel
 import com.ajpr00.visumloop.tablet.presentation.viewmodel.RegisterViewModel
 import com.ajpr00.visumloop.tablet.ui.components.FromRegister
 import com.ajpr00.visumloop.tablet.ui.components.MediaList
 import com.ajpr00.visumloop.tablet.ui.components.MenuGestoReproductor
 import com.ajpr00.visumloop.tablet.ui.components.MenuApp
-import com.ajpr00.visumloop.tablet.ui.components.PanelMenuOpciones
 import com.ajpr00.visumloop.tablet.ui.components.Reproductor
+import com.ajpr00.visumloop.tablet.ui.screen.FromRecover
 import com.ajpr00.visumloop.tablet.ui.screen.MenuOverlayScreen
 import com.ajpr00.visumloop.tablet.ui.screen.ReproductorScreen
 import com.ajpr00.visumloop.tablet.ui.screen.SplashScreen
@@ -33,7 +34,7 @@ fun NavigationCore(innerPadding: PaddingValues) {
 
     NavHost(
         navController = navController,
-        startDestination = LoginGraph, // Todo Cambiar al SplashScreen(ModoDebig)
+        startDestination = Splash, // Todo Cambiar al SplashScreen(ModoDebig)
         modifier = Modifier.padding(innerPadding)
     ) {
         composable<Splash> { backStackEntry ->
@@ -47,37 +48,41 @@ fun NavigationCore(innerPadding: PaddingValues) {
 
             composable<LoginScreen> { backStackEntry ->
                 val parentEntry = remember(backStackEntry) {
-                    navController.getBackStackEntry(LoginGraph::class.qualifiedName!!)
+                    navController.getBackStackEntry(LoginGraph::class)
                 }
-                val viewModelLoginViewModel: LoginViewModel = hiltViewModel(parentEntry)
+
+                val args = parentEntry.toRoute<LoginGraph>()
+                Log.d("LoginGraph", "args: ${args.acessType}")
+
+                val viewModelLoginViewModel: LoginViewModel = hiltViewModel()
+
                 LoginScreen(
                     modifier = Modifier,
                     viewModel = viewModelLoginViewModel,
+                    accesLoginType = args.acessType,
                     goToMainGraph = { navController.navigate(MainGraph) },
                     goToFromRegistro = { navController.navigate(RegisterScreen) },
-                    goToRecuperarPass = { navController.navigate(ForgotPasswordScreen) }
+                    goToRecuperarPass = { navController.navigate(FromRecover) }
                 )
             }
-            composable<RegisterScreen> { backStackEntry ->
-                val parentEntry = remember(backStackEntry) {
-                    navController.getBackStackEntry(LoginGraph::class.qualifiedName!!)
-                }
-                val viewModelLoginViewModel: RegisterViewModel = hiltViewModel(parentEntry)
-                FromRegister(
-                    modifier = Modifier,
-                    viewModel = viewModelLoginViewModel,
-                    goToBack = { navController.popBackStack() }
-                )
-            }
-            composable<ForgotPasswordScreen> { backStackEntry ->
-                val parentEntry = remember(backStackEntry) {
-                    navController.getBackStackEntry(LoginGraph::class.qualifiedName!!)
-                }
-                val viewModelLoginViewModel: LoginViewModel = hiltViewModel(parentEntry)
-                //FromForgotPassword(viewModel = viewModelLoginViewModel)
-            }
-
         }
+
+        composable<RegisterScreen> { backStackEntry ->
+            val viewModelLoginViewModel: RegisterViewModel = hiltViewModel()
+            FromRegister(
+                modifier = Modifier,
+                viewModel = viewModelLoginViewModel,
+                goToBack = { navController.popBackStack() }
+            )
+        }
+        composable<FromRecover> { backStackEntry ->
+            val viewModelLoginViewModel: RegisterViewModel = hiltViewModel()
+            FromRecover(
+                viewModel = viewModelLoginViewModel,
+                goToBack = { navController.popBackStack() }
+            )
+        }
+
 
         navigation<MainGraph>(startDestination = ScreenPrincipal) { // Se crea un nuevo backStack ajeno al principal
 
@@ -85,7 +90,7 @@ fun NavigationCore(innerPadding: PaddingValues) {
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry(MainGraph::class.qualifiedName!!)
                 }
-                val viewModelMediaBackground: MediaBackgroundViewModel = hiltViewModel(parentEntry)
+                val viewModelMediaBackground: ReproducorViewModel = hiltViewModel(parentEntry)
                 val viewModelMediaItems: MediaItemsViewModel = hiltViewModel(parentEntry)
 
                 ReproductorScreen(
@@ -124,32 +129,8 @@ fun NavigationCore(innerPadding: PaddingValues) {
                             menuApp = {
                                 MenuApp(
                                     viewModelMediaBackground = viewModelMediaBackground,
-                                    viewModelAuth = hiltViewModel(),
                                     viewModelMediaItme = viewModelMediaItems,
-                                    panelContent = {
-                                        PanelMenuOpciones(
-                                            shape = RoundedCornerShape(10),
-                                            configuracion = { /*TODO*/ },
-                                            info = { /*TODO*/ },
-                                            login = { navController.navigate(LoginGraph) },
-                                            ftp = { /*TODO*/ },
-                                            vacio = { /*TODO*/ },
-                                            dropBox = { viewModelMediaBackground.isShowSidePanel(it) },
-                                            misArchivos = { },
-                                            favorito = { viewModelMediaBackground.isShowSidePanel(it) },
-                                            googleDrive = {
-                                                viewModelMediaBackground.isShowSidePanel(
-                                                    it
-                                                )
-                                            },
-                                            onLock = { viewModelMediaBackground.togglesLockScreen() },
-                                            onClosedMenuApp = {
-                                                viewModelMediaBackground.isShowMenuApp(
-                                                    it
-                                                )
-                                            }
-                                        )
-                                    }
+                                    goToLogin = { navController.navigate(LoginGraph(acessType = it)) },
                                 )
                             },
                             panelSelectorMedia = {

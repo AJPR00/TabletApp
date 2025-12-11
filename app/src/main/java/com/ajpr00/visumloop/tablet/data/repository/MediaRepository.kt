@@ -9,6 +9,7 @@ import com.ajpr00.visumloop.tablet.data.mapper.toDomain
 import com.ajpr00.visumloop.tablet.data.mapper.toEntity
 import com.ajpr00.visumloop.tablet.domain.model.MediaContent
 import com.ajpr00.visumloop.tablet.domain.model.MediaResult
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -20,6 +21,11 @@ class MediaRepository @Inject constructor(
     private val driveDataSource: DataSourceGoogleDrive,
     private val loginPreferences: LoginPreferences
 ) {
+    private val firebaseAuth: FirebaseAuth by lazy {
+        FirebaseAuth.getInstance()
+    }
+    val isLocalLoggedIn: Flow<Boolean> = loginPreferences.idTokenLocal
+        .map { !it.isNullOrEmpty() }
 
     suspend fun filterIsFavorite(list: List<MediaContent>): List<MediaContent> {
         // Obtener la lista de favoritos de la BD
@@ -86,5 +92,32 @@ class MediaRepository @Inject constructor(
     suspend fun listMediaFilesLocalFiltered(localFiles: List<MediaContent>): List<MediaContent> {
         val files = filterRepet(localFiles)
         return filterIsFavorite(files)
+    }
+
+    // Logout general (Firebase)
+    fun logout() {
+        Log.d("GoogleAuthRepository", "Realizando logout en Firebase")
+        firebaseAuth.signOut()
+    }
+
+    // Logout específico Local
+    suspend fun logoutLocal() {
+        Log.d("GoogleAuthRepository", "Realizando logout local y Firebase")
+        firebaseAuth.signOut()
+        loginPreferences.clearLocalSession()
+    }
+
+    // Logout específico Drive
+    suspend fun logoutDrive() {
+        Log.d("GoogleAuthRepository", "Realizando logout Drive y Firebase")
+        firebaseAuth.signOut()
+        loginPreferences.clearDriveSession()
+    }
+
+    // Logout total (Firebase + DataStore completo)
+    suspend fun logoutAll() {
+        Log.d("GoogleAuthRepository", "Realizando logout total (Firebase + DataStore)")
+        firebaseAuth.signOut()
+        loginPreferences.clearAll()
     }
 }
