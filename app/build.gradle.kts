@@ -126,14 +126,10 @@ dependencies {
     // Kotlinx Serialization
     implementation(libs.kotlinx.serialization.json)
 
-    // Google Play Services Auth (FirebaseUI / Google Sign-In)
-    implementation(libs.play.services.auth)
-
     // FirebaseUI Auth
     implementation(libs.firebase.ui.auth)
 
     // Firebase
-    implementation(platform(libs.firebase.bom))
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
 
@@ -142,6 +138,16 @@ dependencies {
     implementation(libs.google.http.client)
     implementation(libs.google.http.client.gson)
     implementation(libs.google.api.client.android)
+
+    // Credential Manager
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+
+    // Facebook
+    implementation(libs.facebook.login)
+
+    // Google Identity Services
+    implementation(libs.google.identity)
 
     // DataStore
     implementation(libs.androidx.datastore.preferences)

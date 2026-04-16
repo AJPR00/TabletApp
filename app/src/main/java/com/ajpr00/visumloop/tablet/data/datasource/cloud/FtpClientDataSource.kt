@@ -7,7 +7,7 @@ import com.ajpr00.visumloop.tablet.domain.model.FtpConfig
 import jakarta.inject.Inject
 import org.apache.commons.net.ftp.FTPClient
 
-class FtpDataSource @Inject constructor(
+class FtpClientDataSource @Inject constructor(
     private val config: FtpConfig
 ) {
     private val ftpClient = FTPClient()

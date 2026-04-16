@@ -1,4 +1,4 @@
-package com.ajpr00.visumloop.tablet.navigation
+package com.ajpr00.visumloop.tablet.ui.navigation
 
 import com.ajpr00.visumloop.tablet.domain.model.AccesLoginType
 import kotlinx.serialization.Serializable

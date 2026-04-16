@@ -5,27 +5,31 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ajpr00.visumloop.tablet.data.datasource.local.preferences.LoginPreferences
 import com.ajpr00.visumloop.tablet.domain.model.MediaContent
-import com.ajpr00.visumloop.tablet.data.repository.MediaRepository
+import com.ajpr00.visumloop.tablet.data.repository.impl.MediaRepositoryImpl
 import com.ajpr00.visumloop.tablet.domain.model.MediaResult
+import com.ajpr00.visumloop.tablet.domain.usecase.AddMediaUseCase
+import com.ajpr00.visumloop.tablet.domain.usecase.ListMediaDriveUseCase
+import com.ajpr00.visumloop.tablet.domain.usecase.ListMediaFTPUseCase
+import com.ajpr00.visumloop.tablet.domain.usecase.ProcessLocalMediaUseCase
+import com.ajpr00.visumloop.tablet.domain.usecase.ToggleFavoriteUseCase
 import com.ajpr00.visumloop.tablet.util.detectFormatType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @HiltViewModel
 class MediaItemsViewModel @Inject constructor(
-    private val repositoryMedia: MediaRepository,
-    private val loginPreferences: LoginPreferences
+    private val listMediaDriveUseCase: ListMediaDriveUseCase,
+    private val listMediaFTPUseCase: ListMediaFTPUseCase,
+    private val processLocalMediaUseCase: ProcessLocalMediaUseCase,
+    private val addMediaUseCase: AddMediaUseCase,
+    private val toggleFavoriteUseCase: ToggleFavoriteUseCase
 ) : ViewModel() {
 
     // Estado observable con la lista de MediaContent
@@ -35,9 +39,6 @@ class MediaItemsViewModel @Inject constructor(
     private val _errors = MutableStateFlow<List<String>>(emptyList())
     val errors: StateFlow<List<String>> = _errors
 
-    val isLocalLogged: StateFlow<Boolean> = repositoryMedia.isLocalLoggedIn
-        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
-
     private var driveToken: String? = null
 
     fun setDriveToken(token: String) {
@@ -46,6 +47,15 @@ class MediaItemsViewModel @Inject constructor(
     }
 
     fun loadFromDrive() {
+        viewModelScope.launch {
+            when (val result = listMediaDriveUseCase()) {
+                is MediaResult.Success -> _mediaItems.value = result.files
+                is MediaResult.Error -> _errors.value += result.message
+            }
+        }
+    }
+
+  /*  fun loadFromDrive() {
         viewModelScope.launch {
             val tokenValue = loginPreferences.idTokenDrive.firstOrNull()
 
@@ -61,7 +71,7 @@ class MediaItemsViewModel @Inject constructor(
                 is MediaResult.Error -> _errors.value = _errors.value + mediaResult.message
             }
         }
-    }
+    }*/
 
 
     // Cargar desde FTP
@@ -69,7 +79,7 @@ class MediaItemsViewModel @Inject constructor(
         Log.d("MediaItemsVM", "Cargando archivos desde FTP...")
         viewModelScope.launch {
             try {
-                val files = repositoryMedia.listMediaFilesFTPFiltered()
+                val files = listMediaFTPUseCase()
                 _mediaItems.value = files
                 Log.d("MediaItemsVM", "Archivos FTP cargados: ${files.size}")
             } catch (e: Exception) {
@@ -80,7 +90,7 @@ class MediaItemsViewModel @Inject constructor(
 
 
     /** Procesa la selección de medias desde el selector de archivos */
-    fun loadMediaLocal(context: Context, uris: List<Uri>) {
+   /* fun loadMediaLocal(context: Context, uris: List<Uri>) {
         Log.d("MediaBackgroundVM", "Se han seleccionado ${uris.size} medias")
 
         val newMedia = uris.map { uri ->
@@ -102,10 +112,16 @@ class MediaItemsViewModel @Inject constructor(
                 repositoryMedia.addBd(it)
             }
         }
+    }*/
+    fun loadMediaLocal(context: Context, uris: List<Uri>) {
+        viewModelScope.launch {
+            val medias = processLocalMediaUseCase(context, uris)
+            medias.forEach { addMediaUseCase(it) }
+        }
     }
 
     // Marcar/desmarcar favoritos
-    fun toggleFavorite(media: MediaContent) {
+   /* fun toggleFavorite(media: MediaContent) {
         viewModelScope.launch {
             if (media.isFavorite) repositoryMedia.deleteMedia(media)
             else {
@@ -123,6 +139,11 @@ class MediaItemsViewModel @Inject constructor(
                 }
             }
         }
+    }*/
+    fun toggleFavorite(media: MediaContent) {
+        viewModelScope.launch {
+            toggleFavoriteUseCase(media)
+        }
     }
 
     // Seleccionar un media para reproducir
@@ -133,26 +154,5 @@ class MediaItemsViewModel @Inject constructor(
 
     fun clearErrors() {
         _errors.value = emptyList()
-    }
-
-    fun logout() {
-        viewModelScope.launch {
-            repositoryMedia.logout()
-        }
-    }
-    fun logoutLocal() {
-        viewModelScope.launch {
-            repositoryMedia.logoutLocal()
-        }
-    }
-    fun logoutDrive() {
-        viewModelScope.launch {
-            repositoryMedia.logoutDrive()
-        }
-    }
-    fun logoutAll() {
-        viewModelScope.launch {
-            repositoryMedia.logoutAll()
-        }
     }
 }

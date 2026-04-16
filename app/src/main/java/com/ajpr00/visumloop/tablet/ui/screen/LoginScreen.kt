@@ -36,6 +36,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import com.ajpr00.visumloop.tablet.BuildConfig
 import com.ajpr00.visumloop.tablet.R
 import com.ajpr00.visumloop.tablet.domain.model.AccesLoginType
 import com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento
@@ -45,7 +48,9 @@ import com.firebase.ui.auth.AuthUI
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.api.services.drive.DriveScopes
+import java.util.UUID
 
 @Composable
 fun LoginScreen(
@@ -63,7 +68,6 @@ fun LoginScreen(
     val uiStateEvent by viewModel.eventState.collectAsState()
 
     var isEmail by rememberSaveable { mutableStateOf(false) }
-    val isLocalLoggedIn by viewModel.isLocalLogged.collectAsState()
 
     /*    val launcherLogin = rememberLauncherForActivityResult(
             contract = FirebaseAuthUIActivityResultContract()
@@ -86,7 +90,7 @@ fun LoginScreen(
             }
         }*/
 
-    val launcherLogin = rememberLauncherForActivityResult(
+   /* val launcherLogin = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
@@ -96,9 +100,10 @@ fun LoginScreen(
         } catch (e: ApiException) {
             Log.e("Login", "Error login Google", e)
         }
-    }
+    }*/
 
-    fun startAccountLocal() {
+
+    /* fun startAccountLocal() {
         // Hace que el Sistema lance la actividad de login definida en el Intent, en este caso de firebaseAUth
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestEmail()
@@ -108,9 +113,10 @@ fun LoginScreen(
         val googleSignInClient = GoogleSignIn.getClient(context, gso)
         val signInIntent = googleSignInClient.signInIntent
         launcherLogin.launch(signInIntent)
-    }
+    }*/
 
-    fun startGoogleLoginForDrive() {
+/*    fun startGoogleLoginForDrive() {
+
         // Son los mensajes de permiso que se pediran a los usuario al logearse
         val providers = arrayListOf(
             AuthUI.IdpConfig.GoogleBuilder()
@@ -124,7 +130,7 @@ fun LoginScreen(
             .build()
 
         launcherLogin.launch(intent)
-    }
+    }*/
 
     Box(
         modifier = modifier.fillMaxSize(),
@@ -151,16 +157,32 @@ fun LoginScreen(
             /**************************************BotonGoogle********************************/
             if (!isEmail) {
                 CustomButton(
-                    icono = R.drawable.google_icon,
-                    label = "Iniciar sesión con Google",
+                    icono = R.drawable.google_icon_webp,
+                    label = "Login con Google",
                     onClick = {
                         Log.d("LoginUI", "Google login pulsado")
                         if (accesLoginType == AccesLoginType.LOCAL) {
-                            startAccountLocal()
+                            Log.d("LoginUI", "Google login local")
+                            viewModel.onGoogleLoginClick(context)
                         } else {
-                            startGoogleLoginForDrive()
+                            Log.d("LoginUI", "Google login no disponible")
                         }
+                    }
+                )
 
+                Spacer(modifier = Modifier.height(24.dp))
+
+                CustomButton(
+                    icono = R.drawable.facebook_icon_webp,
+                    label = "Login con Facebook",
+                    onClick = {
+                        Log.d("LoginUI", "Facebook login pulsado")
+                        if (accesLoginType == AccesLoginType.LOCAL) {
+                            Log.d("LoginUI", "Facebook login local")
+                            //viewModel.onFacebookLoginClick(context)
+                        } else {
+                            Log.d("LoginUI", "Facebook login no disponible")
+                        }
                     }
                 )
             }
@@ -169,7 +191,6 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             if (isEmail) {
-
                 Text(
                     "Atrás",
                     modifier = Modifier
@@ -240,17 +261,16 @@ fun LoginScreen(
                         if (!isEmail) {
                             isEmail = true
                         } else {
-                            viewModel.loginEmailFirebase(
+                          /*  viewModel.loginEmailFirebase(
                                 email = state.email,
                                 password = state.password,
                                 onSuccess = { goToMainGraph() },
                                 onError = { msg -> viewModel.addEvento(msg) }
-                            )
+                            )*/
                         }
                     }
                 )
             }
-
 
             if (isEmail) {
                 Spacer(modifier = Modifier.height(12.dp))
@@ -270,7 +290,6 @@ fun LoginScreen(
                     .clickable { goToMainGraph() }
             )
         }
-
 
         when (uiStateEvent) {
             is EstadoEvento.Inicial -> Unit

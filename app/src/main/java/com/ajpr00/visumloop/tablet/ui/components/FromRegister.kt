@@ -37,9 +37,6 @@ import androidx.compose.ui.unit.dp
 import com.ajpr00.visumloop.tablet.R
 import com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento
 import com.ajpr00.visumloop.tablet.presentation.viewmodel.RegisterViewModel
-import com.ajpr00.visumloop.tablet.util.validarEmail
-import com.ajpr00.visumloop.tablet.util.validarPassword
-import kotlinx.coroutines.delay
 
 @Composable
 fun FromRegister(
@@ -49,11 +46,8 @@ fun FromRegister(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
-    val uiStateEvent by viewModel.eventState.collectAsState()
+    val uiEvent by viewModel.eventState.collectAsState()
 
-
-    var isEmailOK by rememberSaveable { mutableStateOf(false) }
-    var isPassOK by rememberSaveable { mutableStateOf(false) }
     var showPassConfirm by rememberSaveable { mutableStateOf(false) }
 
     Box(
@@ -88,16 +82,13 @@ fun FromRegister(
             OutlinedTextField(
                 value = uiState.email ?: "",
                 onValueChange = { viewModel.updateEmail(it) },
-                label = { Text("Email") },
-                supportingText = {
-                    if (!validarEmail(uiState.email) && isEmailOK)
-                        Text("Formato de email incorrecto")
-                }
+                label = { Text("Email") }
             )
+
             OutlinedTextField(
                 value = uiState.confirmEmail ?: "",
                 onValueChange = { viewModel.updateConfirmEmail(it) },
-                label = { Text("Confirmar Email") },
+                label = { Text("Confirmar Email") }
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -108,10 +99,6 @@ fun FromRegister(
                 onValueChange = { viewModel.updatePassword(it) },
                 label = { Text("Contraseña") },
                 singleLine = true,
-                supportingText = {
-                    if (!validarPassword(uiState.password) && uiState.password.length >= 8 && isPassOK)
-                        Text("La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial")
-                },
                 visualTransformation = if (uiState.showPassword)
                     VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
@@ -151,20 +138,13 @@ fun FromRegister(
             Spacer(modifier = Modifier.height(20.dp))
 
             CustomButton(
-                enabled = !uiState.email.isNullOrBlank() && !uiState.confirmEmail.isNullOrBlank() && uiState.password.isNotBlank() && uiState.confirmPassword.isNotBlank(),
+                enabled = uiState.email?.isNotBlank() == true &&
+                        uiState.confirmEmail?.isNotBlank() == true &&
+                        uiState.password.isNotBlank() &&
+                        uiState.confirmPassword.isNotBlank(),
                 icono = R.drawable.email_ic,
                 label = "Registrarse",
-                onClick = {
-                    isEmailOK = true
-                    isPassOK = true
-                    if (viewModel.isEmailValid() && viewModel.isPasswordValid()) {
-                        viewModel.comprobarYRegistrar(
-                            email = uiState.email!!,
-                            password = uiState.password
-                        )
-                        EstadoEvento.Exito
-                    }
-                }
+                onClick = { viewModel.registrar() }
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -175,10 +155,8 @@ fun FromRegister(
             )
         }
 
-
-        when (uiStateEvent) {
-            is EstadoEvento.Inicial -> {
-            }
+        when (uiEvent) {
+            is EstadoEvento.Inicial -> Unit
 
             is EstadoEvento.Cargando -> {
                 CircularProgressIndicator(
@@ -193,12 +171,13 @@ fun FromRegister(
             }
 
             is EstadoEvento.Mensajes -> {
-                val errores = (uiStateEvent as EstadoEvento.Mensajes).mensajes
-                errores.forEach { error ->
-                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                val mensajes = (uiEvent as EstadoEvento.Mensajes).mensajes
+                mensajes.forEach { msg ->
+                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                 }
                 viewModel.clearErrors()
             }
         }
     }
 }
+

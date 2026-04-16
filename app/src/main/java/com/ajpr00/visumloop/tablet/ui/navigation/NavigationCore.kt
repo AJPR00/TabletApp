@@ -1,4 +1,4 @@
-package com.ajpr00.visumloop.tablet.navigation
+package com.ajpr00.visumloop.tablet.ui.navigation
 
 import android.util.Log
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,12 +13,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
+import com.ajpr00.visumloop.tablet.presentation.viewmodel.AuthViewModel
 import com.ajpr00.visumloop.tablet.presentation.viewmodel.LoginViewModel
 import com.ajpr00.visumloop.tablet.presentation.viewmodel.ReproducorViewModel
 import com.ajpr00.visumloop.tablet.presentation.viewmodel.MediaItemsViewModel
 import com.ajpr00.visumloop.tablet.presentation.viewmodel.RegisterViewModel
+import com.ajpr00.visumloop.tablet.presentation.viewmodel.SplashViewModel
 import com.ajpr00.visumloop.tablet.ui.components.FromRegister
-import com.ajpr00.visumloop.tablet.ui.components.MediaList
+import com.ajpr00.visumloop.tablet.ui.components.ScreenMediaExplorer
 import com.ajpr00.visumloop.tablet.ui.components.MenuGestoReproductor
 import com.ajpr00.visumloop.tablet.ui.components.MenuApp
 import com.ajpr00.visumloop.tablet.ui.components.Reproductor
@@ -34,11 +36,13 @@ fun NavigationCore(innerPadding: PaddingValues) {
 
     NavHost(
         navController = navController,
-        startDestination = Splash, // Todo Cambiar al SplashScreen(ModoDebig)
+        startDestination = Splash, // Todo Cambiar al SplashScreen(ModoDebug)
         modifier = Modifier.padding(innerPadding)
     ) {
         composable<Splash> { backStackEntry ->
+            val viewModelSplash: SplashViewModel = hiltViewModel()
             SplashScreen(
+                viewModel = viewModelSplash,
                 goToMainGraph = { navController.navigate(MainGraph) },
             )
         }
@@ -83,8 +87,8 @@ fun NavigationCore(innerPadding: PaddingValues) {
             )
         }
 
-
-        navigation<MainGraph>(startDestination = ScreenPrincipal) { // Se crea un nuevo backStack ajeno al principal
+        // Subgrafo Princial
+        navigation<MainGraph>(startDestination = ScreenPrincipal) { // Cada subGrafo tiene su propio backStack
 
             composable<ScreenPrincipal> { backStackEntry ->
                 val parentEntry = remember(backStackEntry) {
@@ -92,8 +96,10 @@ fun NavigationCore(innerPadding: PaddingValues) {
                 }
                 val viewModelMediaBackground: ReproducorViewModel = hiltViewModel(parentEntry)
                 val viewModelMediaItems: MediaItemsViewModel = hiltViewModel(parentEntry)
+                val viewModelAuth: AuthViewModel = hiltViewModel(parentEntry)
 
-                ReproductorScreen(
+
+                    ReproductorScreen(
                     goToReproductor = { Reproductor(viewModelMediaBackground) },
                     goToMenuOverlayScreen = {
                         MenuOverlayScreen(
@@ -131,13 +137,13 @@ fun NavigationCore(innerPadding: PaddingValues) {
                                     viewModelMediaBackground = viewModelMediaBackground,
                                     viewModelMediaItme = viewModelMediaItems,
                                     goToLogin = { navController.navigate(LoginGraph(acessType = it)) },
+                                    viewModelAuth = viewModelAuth,
                                 )
                             },
                             panelSelectorMedia = {
-                                MediaList(
+                                ScreenMediaExplorer(
                                     viewModelMediaItems = viewModelMediaItems,
                                     viewModelMediaBackground = viewModelMediaBackground,
-
                                     )
                             }
                         )

@@ -16,7 +16,6 @@ hiltNavigationCompose = "1.3.0"
 navigationCompose = "2.9.6"
 kotlinSerialization = "1.9.0"
 foundationLayout = "1.9.5"
-playServicesAuth = "21.4.0"
 
 # Google API / Drive
 googleApiClient = "2.8.1"
@@ -24,9 +23,16 @@ googleDriveApi = "v3-rev20220815-2.0.0"
 googleHttpClient = "2.0.2"
 googleHttpClientGson = "2.0.2"
 
+# Credential Manager / Google Identity
+credentials = "1.5.0"
+googleid = "1.1.1" # revisa la última versión estable en Maven Central
+
+#Facebook
+facebook-login = "18.1.3"
+
 # Data & Firebase
 datastore = "1.1.1"
-firebaseBom = "33.5.1"
+firebaseBom = "34.7.0"
 googleServices = "4.4.2"
 firebaseUiAuth = "9.1.1"   # FirebaseUI Auth para login simplificado
 
@@ -73,7 +79,6 @@ navigation-compose = { module = "androidx.navigation:navigation-compose", versio
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinSerialization" }
 androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 
-play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
 
 # Google API / Drive
 google-api-client-android = { group = "com.google.api-client", name = "google-api-client-android", version.ref = "googleApiClient" }
@@ -81,10 +86,20 @@ google-api-services-drive = { group = "com.google.apis", name = "google-api-serv
 google-http-client = { group = "com.google.http-client", name = "google-http-client", version.ref = "googleHttpClient" }
 google-http-client-gson = { group = "com.google.http-client", name = "google-http-client-gson", version.ref = "googleHttpClientGson" }
 
+# Credential Manager
+androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
+androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
+
+# Google Identity Services
+google-identity = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
+
 # Firebase
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 firebase-ui-auth = { group = "com.firebaseui", name = "firebase-ui-auth", version.ref = "firebaseUiAuth" }
+
+# Facebook
+facebook-login = { module = "com.facebook.android:facebook-login", version.ref = "facebook-login" }
 
 # DataStore
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }

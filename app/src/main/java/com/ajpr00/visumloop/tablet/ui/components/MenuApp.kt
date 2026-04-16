@@ -5,7 +5,9 @@ import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -13,20 +15,34 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.twotone.MenuBook
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.VectorPainter
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import coil.compose.rememberAsyncImagePainter
 import com.ajpr00.visumloop.tablet.R
 import com.ajpr00.visumloop.tablet.domain.model.AccesLoginType
+import com.ajpr00.visumloop.tablet.presentation.viewmodel.AuthViewModel
 import com.ajpr00.visumloop.tablet.presentation.viewmodel.ReproducorViewModel
 import com.ajpr00.visumloop.tablet.presentation.viewmodel.MediaItemsViewModel
 import kotlinx.coroutines.coroutineScope
@@ -37,31 +53,42 @@ import kotlinx.coroutines.launch
 fun MenuApp(
     viewModelMediaBackground: ReproducorViewModel,
     viewModelMediaItme: MediaItemsViewModel,
+    viewModelAuth: AuthViewModel,
     goToLogin: (ascessType: AccesLoginType) -> Unit,
 ) {
     val context = LocalContext.current
-    val isLocalLoggedIn by viewModelMediaItme.isLocalLogged.collectAsState()
+    val isLocalLoggedIn by viewModelAuth.isLoggedIn.collectAsState()
+    val user by viewModelAuth.currentUser.collectAsState()
 
     Log.d("MenuApp", "isLocalLoggedIn: $isLocalLoggedIn")
+    Log.d("MenuApp", "avatar: $user")
+
+
+    val avatarPainter = if (isLocalLoggedIn && user?.avatarUrl?.isNotEmpty() == true) {
+        rememberAsyncImagePainter(user?.avatarUrl)
+    } else {
+        painterResource(R.drawable.user_circle_fill)
+    }
 
     val launcherMedia = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenMultipleDocuments()
     ) { uris: List<Uri> ->
-
         uris.forEach { uri ->
             val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
             context.contentResolver.takePersistableUriPermission(uri, flags)
         }
         viewModelMediaItme.loadMediaLocal(context, uris)
     }
+
     PanelMenuApp(
         configuracion = { /*TODO*/ },
         info = { /*TODO*/ },
         vacio = { /*TODO*/ },
-        misArchivos = {launcherMedia.launch(arrayOf("image/*", "video/*")) },
+        misArchivos = { launcherMedia.launch(arrayOf("image/*", "video/*")) },
         favorito = { viewModelMediaBackground.isShowSidePanel(it) },
         login = {
-            if (!isLocalLoggedIn) goToLogin(AccesLoginType.LOCAL) else viewModelMediaItme.logoutAll() },
+            if (!isLocalLoggedIn) goToLogin(AccesLoginType.LOCAL) else viewModelAuth.logout()
+        },
         ftp = {
             //goToLogin(AccesLoginType.FTP)
             viewModelMediaBackground.isShowSidePanel(it)
@@ -76,7 +103,7 @@ fun MenuApp(
         },
         onClosedMenuApp = { viewModelMediaBackground.isShowMenuApp(it) },
         onLock = { viewModelMediaBackground.togglesLockScreen() },
-        isLocalLoggedIn = isLocalLoggedIn
+        avatarIcon = avatarPainter
     )
 
 
@@ -115,7 +142,7 @@ private fun PanelMenuApp(
     googleDrive: (isClose: Boolean) -> Unit,
     onLock: () -> Unit,
     onClosedMenuApp: (isClose: Boolean) -> Unit,
-    isLocalLoggedIn: Boolean
+    avatarIcon: Painter
 ) {
     BoxWithConstraints(
         modifier = Modifier
@@ -162,7 +189,7 @@ private fun PanelMenuApp(
 
                 ButtonCustonPanel(
                     size = size,
-                    icon = ImageVector.vectorResource(R.drawable.tree_structure_fill),
+                    icon = painterResource(R.drawable.tree_structure_fill),
                     label = "FTP",
                     shape = shape,
                     onClick = { ftp(true) }
@@ -170,7 +197,7 @@ private fun PanelMenuApp(
 
                 ButtonCustonPanel(
                     size = size,
-                    icon = ImageVector.vectorResource(R.drawable.folder_star_fill),
+                    icon = painterResource(R.drawable.folder_star_fill),
                     label = "Favoritos",
                     shape = shape,
                     onClick = { favorito(true) }
@@ -178,7 +205,7 @@ private fun PanelMenuApp(
 
                 ButtonCustonPanel(
                     size = size,
-                    icon = ImageVector.vectorResource(R.drawable.config),
+                    icon = painterResource(R.drawable.config),
                     label = "Configuracion",
                     shape = shape,
                     onClick = configuracion
@@ -190,7 +217,7 @@ private fun PanelMenuApp(
 
                 ButtonCustonPanel(
                     size = size,
-                    icon = ImageVector.vectorResource(R.drawable.google_drive_logo_fill),
+                    icon = painterResource(R.drawable.google_drive_logo_fill),
                     label = "Google Drive",
                     shape = shape,
                     onClick = { googleDrive(true) }
@@ -198,7 +225,7 @@ private fun PanelMenuApp(
 
                 ButtonCustonPanel(
                     size = size,
-                    icon = if(isLocalLoggedIn)ImageVector.vectorResource(R.drawable.user_circle_check_fill) else ImageVector.vectorResource(R.drawable.user_circle_fill),
+                    icon = avatarIcon,
                     label = "login",
                     shape = shape,
                     onClick = login
@@ -206,7 +233,7 @@ private fun PanelMenuApp(
 
                 ButtonCustonPanel(
                     size = size,
-                    icon = ImageVector.vectorResource(R.drawable.info),
+                    icon = painterResource(R.drawable.info),
                     label = "Acerca de",
                     shape = shape,
                     onClick = info
@@ -217,7 +244,7 @@ private fun PanelMenuApp(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 ButtonCustonPanel(
                     size = size,
-                    icon = ImageVector.vectorResource(R.drawable.dropbox_logo_fill),
+                    icon = painterResource(R.drawable.dropbox_logo_fill),
                     label = "Dropbox",
                     shape = shape,
                     onClick = { dropBox(true) }
@@ -225,7 +252,7 @@ private fun PanelMenuApp(
 
                 ButtonCustonPanel(
                     size = size,
-                    icon = ImageVector.vectorResource(R.drawable.folder_open_fill),
+                    icon = painterResource(R.drawable.folder_open_fill),
                     label = "Mis Archivos",
                     shape = shape,
                     onClick = misArchivos
@@ -233,12 +260,66 @@ private fun PanelMenuApp(
 
                 ButtonCustonPanel(
                     size = size,
-                    icon = Icons.TwoTone.MenuBook,
+                    icon = painterResource(R.drawable.folder_open_fill),
                     label = "",
                     shape = shape,
                     onClick = vacio
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun ButtonCustonPanel(
+    modifier: Modifier = Modifier.padding(5.dp),
+    shape: Shape = RoundedCornerShape(50),
+    size: Dp,
+    icon: Painter,
+    iconSize: Dp = 90.dp,
+    label: String,
+    color: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+    onClick: () -> Unit
+) {
+    TextButton(
+        onClick = onClick,
+        modifier = modifier.size(size),
+        shape = shape,
+        colors = ButtonDefaults.textButtonColors(
+            containerColor = color,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        )
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+            /** Usamos Icon para recursos vectoriales porque permiten aplicar tint y mantienen su forma.
+            Usamos Image para imágenes no vectoriales (como avatares remotos) porque respetan sus colores,
+            se ajustan mejor al recorte circular y permiten ContentScale.Crop para llenar el espacio.*/
+
+            val esVector = icon is VectorPainter
+
+            if (esVector) {
+                // 👉 Iconos vectoriales: tint + no circular
+                Icon(
+                    painter = icon,
+                    contentDescription = label,
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(iconSize)
+                )
+            } else {
+                // 👉 Imágenes NO vectoriales: sin tint + circular + ajustada
+                Image(
+                    painter = icon,
+                    contentDescription = label,
+                    modifier = Modifier
+                        .size(iconSize)
+                        .clip(CircleShape)
+                        .border(2.dp, Color.White, CircleShape),
+                    contentScale = ContentScale.Crop   // 👈 CLAVE: ajusta la imagen al círculo
+                )
+            }
+
+            Text(text = label, textAlign = TextAlign.Center)
         }
     }
 }

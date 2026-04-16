@@ -5,9 +5,14 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ajpr00.visumloop.tablet.data.repository.MediaRepository
 import com.ajpr00.visumloop.tablet.domain.model.FormatType
 import com.ajpr00.visumloop.tablet.domain.model.MediaContent
+import com.ajpr00.visumloop.tablet.domain.usecase.AddMediaUseCase
+import com.ajpr00.visumloop.tablet.domain.usecase.DeleteMediaUseCase
+import com.ajpr00.visumloop.tablet.domain.usecase.GetAllMediaUseCase
+import com.ajpr00.visumloop.tablet.domain.usecase.ListMediaDriveUseCase
+import com.ajpr00.visumloop.tablet.domain.usecase.ListMediaFTPUseCase
+import com.ajpr00.visumloop.tablet.domain.usecase.ProcessLocalMediaUseCase
 import com.ajpr00.visumloop.tablet.presentation.state.EstadoMenus
 import com.ajpr00.visumloop.tablet.presentation.state.ReproductorConfig
 import com.ajpr00.visumloop.tablet.util.detectFormatType
@@ -45,8 +50,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ReproducorViewModel @Inject constructor(
-    private val repository: MediaRepository
-) : ViewModel() {
+    private val getAllMediaUseCase: GetAllMediaUseCase,
+    private val addMediaUseCase: AddMediaUseCase,
+    private val processLocalMediaUseCase: ProcessLocalMediaUseCase
+) : ViewModel(){
 
     // Configuración del reproductor (volumen, mute, estado de reproducción, etc.)
     private val _option = MutableStateFlow(ReproductorConfig())
@@ -60,7 +67,7 @@ class ReproducorViewModel @Inject constructor(
     val isVideo = _isVideo
 
     val mediaList: StateFlow<List<MediaContent>> =
-        repository.getAllMediaBd()
+        getAllMediaUseCase()
             .stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(5000),
@@ -126,7 +133,7 @@ class ReproducorViewModel @Inject constructor(
     }
 
     /** Procesa la selección de medias desde el selector de archivos */
-    fun onMediasSelected(context: Context, uris: List<Uri>) {
+   /* fun onMediasSelected(context: Context, uris: List<Uri>) {
         Log.d("MediaBackgroundVM", "Se han seleccionado ${uris.size} medias")
 
         val newMedia = uris.map { uri ->
@@ -145,8 +152,14 @@ class ReproducorViewModel @Inject constructor(
         viewModelScope.launch {
             newMedia.forEach {
                 Log.d("MediaBackgroundVM", "Insertando media en BD: $it")
-                repository.addBd(it)
+                addMediaUseCase(it)
             }
+        }
+    }*/
+    fun onMediasSelected(context: Context, uris: List<Uri>) {
+        viewModelScope.launch {
+            val medias = processLocalMediaUseCase(context, uris)
+            medias.forEach { addMediaUseCase(it) }
         }
     }
 

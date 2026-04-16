@@ -3,13 +3,13 @@ package com.ajpr00.visumloop.tablet.presentation.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ajpr00.visumloop.tablet.data.datasource.local.preferences.LoginPreferences
-import com.ajpr00.visumloop.tablet.data.repository.GoogleAuthRepository
+import com.ajpr00.visumloop.tablet.domain.usecase.CheckUserExistsUseCase
+import com.ajpr00.visumloop.tablet.domain.usecase.RegisterUserUseCase
+import com.ajpr00.visumloop.tablet.domain.usecase.SendPasswordResetUseCase
 import com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento
 import com.ajpr00.visumloop.tablet.presentation.state.RegisterState
 import com.ajpr00.visumloop.tablet.util.validarEmail
 import com.ajpr00.visumloop.tablet.util.validarPassword
-import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,8 +20,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
-    private val repository: GoogleAuthRepository,
-    private val loginPreferences: LoginPreferences
+    private val registerUserUseCase: RegisterUserUseCase,
+    private val checkUserExistsUseCase: CheckUserExistsUseCase,
+    private val sendPasswordResetUseCase: SendPasswordResetUseCase
 ) : ViewModel() {
 
     // Estado principal del registro: aquí guardamos email, password, confirmaciones, etc.
@@ -36,41 +37,52 @@ class RegisterViewModel @Inject constructor(
      * Función que intenta registrar un usuario con Firebase usando email y password.
      * Si todo va bien, emitimos un mensaje de éxito. Si falla, emitimos un mensaje de error.
      */
-    fun registrarEmailPass(email: String, password: String) {
-        _eventState.value = EstadoEvento.Cargando
-        Log.d("RegisterViewModel", "Intentando registrar usuario con email: $email")
-        FirebaseAuth.getInstance()
-            .createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    Log.d("RegisterViewModel", "✅ Registro exitoso en Firebase")
-                    addEvento("Cuenta creada correctamente")
-                } else {
-                    Log.e("RegisterViewModel", "❌ Error al registrar: ${task.exception?.message}")
-                    addEvento("Error al registrar usuario")
-                }
+    fun registrar() {
+        val email = _uiState.value.email
+        val password = _uiState.value.password
+
+        if (!isEmailValid() || !isPasswordValid()) return
+
+        viewModelScope.launch {
+            _eventState.value = EstadoEvento.Cargando
+            Log.d("RegisterViewModel", "Intentando registrar usuario con email: $email")
+            val exists = checkUserExistsUseCase(email)
+
+            if (exists) {
+                Log.d("RegisterViewModel", "El usuario ya existe")
+                addEvento("El usuario ya existe")
+                return@launch
             }
+
+            val result = registerUserUseCase(email, password)
+
+            if (result.isSuccess) {
+                Log.d("RegisterViewModel", "✅ Registro exitoso en Firebase")
+                addEvento("Cuenta creada correctamente")
+                _eventState.value = EstadoEvento.Exito
+
+            } else {
+                Log.e("RegisterViewModel", "❌ Error al registrar usuario en Firebase: ${result.exceptionOrNull()?.message}")
+                addEvento("Error al registrar usuario")
+            }
+        }
+
     }
 
-    fun comprobarYRegistrar(email: String, password: String) {
-        val auth = FirebaseAuth.getInstance()
-        auth.fetchSignInMethodsForEmail(email)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val signInMethods = task.result?.signInMethods
-                    if (signInMethods.isNullOrEmpty()) {
-                        registrarEmailPass(email, password)
-                    } else {
-                        // Ya existe → mensaje para la UI
-                        addEvento("El usuario ya existe, inicia sesión o recupera tu contraseña")
-                    }
-                } else {
-                    addEvento("Error comprobando existencia de usuario")
-                }
-            }
+    fun recuperarPassword(email: String) {
         viewModelScope.launch {
+            _eventState.value = EstadoEvento.Cargando
+
+            val result = sendPasswordResetUseCase(email)
+
+            if (result.isSuccess) {
+                addEvento("Correo de recuperación enviado a $email")
+                _eventState.value =  EstadoEvento.Exito
+            } else {
+                addEvento("Error al enviar correo de recuperación")
+            }
             delay(5000)
-            _eventState.value = EstadoEvento.Exito
+            _eventState.value = EstadoEvento.Inicial
         }
     }
 
@@ -161,26 +173,6 @@ class RegisterViewModel @Inject constructor(
             Log.d("RegisterViewModel", "Contraseñas válidas y coinciden")
         }
         return valid
-    }
-
-    fun recuperarPassword(email: String) {
-        _eventState.value = EstadoEvento.Cargando
-        FirebaseAuth.getInstance()
-            .sendPasswordResetEmail(email)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    addEvento("Correo de recuperación enviado a $email")
-                    _eventState.value = EstadoEvento.Exito
-                } else {
-                    addEvento("Error al enviar correo de recuperación")
-                   }
-
-                // 👇 Resetear después de mostrar resultado
-                viewModelScope.launch {
-                    delay(5000)
-                    _eventState.value = EstadoEvento.Inicial
-                }
-            }
     }
 
 }

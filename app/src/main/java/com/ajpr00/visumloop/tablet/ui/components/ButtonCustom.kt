@@ -1,7 +1,11 @@
 package com.ajpr00.visumloop.tablet.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -12,10 +16,25 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.ajpr00.visumloop.tablet.R
+import com.ajpr00.visumloop.tablet.domain.model.AccesLoginType
+
+@Preview(showBackground = true)
+@Composable
+fun CustomButtonPreview() {
+    CustomButton(
+        icono = R.drawable.facebook_icon_webp,
+        label = "Login con Facebook",
+        onClick = {}
+    )
+}
 
 @Composable
 fun CustomButton(
@@ -35,19 +54,25 @@ fun CustomButton(
         shape = CircleShape,
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = MaterialTheme.colorScheme.surface,   // fondo neutro
-        )
+        ),
     ) {
-        Icon(
-            modifier = Modifier.size(24.dp),
-            tint = Color.Unspecified,
-            painter = painterResource(icono),
-            contentDescription = null
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium
-        )
+        Row(modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            ) {
+            Icon(
+                modifier = Modifier.size(24.dp).weight(0.1f),
+                tint = Color.Unspecified,
+                painter = painterResource(icono),
+                contentDescription = null
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(modifier = Modifier.weight(0.8f),
+                textAlign = TextAlign.Center,
+                text = label,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
     }
 }
 

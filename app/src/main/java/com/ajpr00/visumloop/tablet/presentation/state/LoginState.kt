@@ -11,4 +11,5 @@ data class LoginState(
     val showPassword: Boolean = false,
     val driveToken: String? = null,
     val loading: Boolean = false,
+    val imageUrl: String? = null
 )

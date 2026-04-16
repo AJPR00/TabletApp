@@ -32,7 +32,6 @@ import com.ajpr00.visumloop.tablet.presentation.viewmodel.RegisterViewModel
 import com.ajpr00.visumloop.tablet.ui.components.CustomButton
 import com.ajpr00.visumloop.tablet.util.validarEmail
 
-
 @Composable
 fun FromRecover(
     modifier: Modifier = Modifier,

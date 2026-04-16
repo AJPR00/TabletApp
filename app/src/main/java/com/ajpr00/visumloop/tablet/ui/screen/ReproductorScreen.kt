@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
-
 @SuppressLint("MultipleAwaitPointerEventScopes")
 @Composable
 fun ReproductorScreen(
@@ -15,14 +14,16 @@ fun ReproductorScreen(
     goToReproductor: @Composable () -> Unit,
     goToMenuOverlayScreen: @Composable () -> Unit
 ) {
+    val TAG = "ReproductorScreen"
+
     Box(
         modifier = modifier
             .fillMaxSize()
     ) {
         goToReproductor()
-        Log.d("ReproductorScreen", "gotoReproductor()")
+        Log.d(TAG, "showReproductor activo → navegamos a Reproductor")
 
         goToMenuOverlayScreen()
-        Log.d("ReproductorScreen", "showMenu activo → navegamos a MenuOverlay")
+        Log.d(TAG, "showMenu activo → navegamos a MenuOverlay")
     }
 }

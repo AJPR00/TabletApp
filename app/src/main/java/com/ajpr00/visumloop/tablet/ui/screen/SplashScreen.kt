@@ -9,22 +9,25 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import com.ajpr00.visumloop.tablet.R
+import com.ajpr00.visumloop.tablet.presentation.viewmodel.SplashViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
 fun SplashScreen(
+    viewModel: SplashViewModel,
     goToMainGraph: () -> Unit,
 ) {
+    val context = LocalContext.current
+
     // Animaciones visuales
     val scale = remember { Animatable(0f) }
     val alphaAnim = remember { Animatable(1f) }
@@ -35,7 +38,6 @@ fun SplashScreen(
     }
 
     LaunchedEffect(Unit) {
-
         delay(1) //Todo cambio provisional para que se vea mejor
         goToMainGraph()
     }

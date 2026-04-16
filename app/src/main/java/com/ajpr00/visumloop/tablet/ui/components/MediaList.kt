@@ -66,7 +66,7 @@ fun MediaList(
     }
 }*/
 @Composable
-fun MediaList(
+fun ScreenMediaExplorer(
     viewModelMediaItems: MediaItemsViewModel,
     viewModelMediaBackground: ReproducorViewModel,
     label: String = "",

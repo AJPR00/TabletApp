@@ -140,9 +140,7 @@ fun MenuOverlayScreen(
                 enter = slideInHorizontally { full -> full },
                 exit = slideOutHorizontally { full -> full }
             ) {
-                Row(
-
-                ) {
+                Row {
                     // Columna izquierda → menuApp
                     Box(
                         modifier = Modifier
