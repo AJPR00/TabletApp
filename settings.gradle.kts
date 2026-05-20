@@ -20,5 +20,9 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "TabletApp"
-include(":app")
- 
+include(":tablet")
+include(":mobile")
+include(":ui_common")
+include(":presentation_common")
+include(":data")
+include(":core")

@@ -1,0 +1,14 @@
+package com.ajpr00.core.domain.usecase
+
+import com.ajpr00.core.domain.model.UserGoogle
+import com.ajpr00.core.domain.repository.AuthRepository
+import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
+
+class ObserveCurrentUserUseCase @Inject constructor(
+    private val repo: AuthRepository
+) {
+    operator fun invoke(): Flow<UserGoogle?> {
+        return repo.currentUser
+    }
+}

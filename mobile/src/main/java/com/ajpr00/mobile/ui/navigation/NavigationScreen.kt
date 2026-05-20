@@ -1,0 +1,30 @@
+package com.ajpr00.mobile.ui.navigation
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+object Splash
+
+@Serializable
+object MainGraph
+
+@Serializable
+object PanelControl
+
+@Serializable
+object MenuOpciones
+
+@Serializable
+object About
+
+@Serializable
+object LoginGraph
+
+@Serializable
+object LoginScreen
+
+@Serializable
+object RegisterScreen
+
+@Serializable
+object FromRecover
