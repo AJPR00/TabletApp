@@ -13,3 +13,10 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Archivos que no quiero subir
+*.puml
+*.txt
+estructura.txt
+puerba uml.puml
+ksp.log
