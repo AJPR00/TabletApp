@@ -45,7 +45,7 @@ class TabletServer @Inject constructor(
                 println("DEBUG → id=$id")
 
                 if (id != null) {
-                    val media = repository.getMediaById(id)
+                    val media = repository.getMediaByIdSync(id)
                     println("DEBUG → media=$media")
                     println("DEBUG → path=${media?.path}")
 
@@ -72,7 +72,7 @@ class TabletServer @Inject constructor(
                 val id = uri.removePrefix("/thumbnail/").toIntOrNull()
 
                 if (id != null) {
-                    val media = repository.getMediaById(id)
+                    val media = repository.getMediaByIdSync(id)
                     if (media != null) {
                         val file = File(media.path)
                         if (file.exists()) {
@@ -107,7 +107,7 @@ class TabletServer @Inject constructor(
                 val mime = session.headers["content-type"] ?: "application/octet-stream"
 
                 // Nombre original del archivo subido
-                val originalName = session.parms["file"] ?: "uploaded_file"
+                val originalName = session.parameters["file"]?.firstOrNull() ?: "uploaded_file"
                 val extension = originalName.substringAfterLast('.', "")
 
                 runBlocking {

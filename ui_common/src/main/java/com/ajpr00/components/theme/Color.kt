@@ -1,4 +1,4 @@
-package com.ajpr00.tablet.ui.theme
+package com.ajpr00.components.theme
 
 import androidx.compose.ui.graphics.Color
 

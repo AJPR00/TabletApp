@@ -41,6 +41,7 @@ fun MenuOverlayScreen(
 ) {
     Log.d("Flow", "▶ Entrando en MenuOverlayScreen")
     val estado by viewModelMediaBackground.stadoVisualMenu.collectAsState()
+    val eventoState by viewModelMediaBackground.eventoState.collectAsState()
     var showLockIcon by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(estado.lastInteraction, estado.showSidePanel, estado.showMenuApp) {

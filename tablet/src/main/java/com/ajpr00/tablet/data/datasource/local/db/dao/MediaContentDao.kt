@@ -9,11 +9,11 @@ interface MediaContentDao {
     @Query("SELECT * FROM media_content")
     fun getAllMedia(): Flow<List<MediaContentEntity>>
 
-    /*@Query("SELECT * FROM media_content")
-    suspend fun getAll(): List<MediaContentEntity>*/
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(media: MediaContentEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(list: List<MediaContentEntity>)
 
     @Update
     suspend fun update(media: MediaContentEntity)
@@ -22,5 +22,12 @@ interface MediaContentDao {
     suspend fun delete(media: MediaContentEntity)
 
     @Query("SELECT * FROM media_content WHERE id = :id")
-    suspend fun getById(id: Int): MediaContentEntity?
+    suspend fun getById(id: String): MediaContentEntity?
+
+    @Query("SELECT * FROM media_content")
+    suspend fun getAllOnce(): List<MediaContentEntity>
+
+    @Query("DELETE FROM media_content WHERE id = :id")
+    suspend fun deleteById(id: Int)
+
 }

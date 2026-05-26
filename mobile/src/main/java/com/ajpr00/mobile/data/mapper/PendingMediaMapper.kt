@@ -8,7 +8,8 @@ fun PendingMediaEntity.toDomain() = PendingMedia(
     type = type,
     status = status,
     createdAt = createdAt,
-    retries = retries
+    retries = retries,
+    deviceId = deviceId
 )
 
 fun PendingMedia.toEntity() = PendingMediaEntity(
@@ -18,5 +19,6 @@ fun PendingMedia.toEntity() = PendingMediaEntity(
     type = type,
     status = status,
     createdAt = createdAt,
-    retries = retries
+    retries = retries,
+    deviceId = deviceId
 )
