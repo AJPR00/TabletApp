@@ -41,11 +41,12 @@ import com.ajpr00.mobile.qr.setupCamera
  */
 @Composable
 fun QrScannerScreen(
+    modifier: Modifier = Modifier,
     viewModel: QrScannerViewModel,
     onConnectionReady: (TabletConnectionData) -> Unit,
     onCancel: () -> Unit
 ) {
-    Log.d("QR_UI", "📱 Entrando en QrScannerScreen")
+    Log.d("QR_UI", "Entrando en QrScannerScreen")
 
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -53,58 +54,47 @@ fun QrScannerScreen(
     // Si ya tenemos datos → cerramos el dialog y seguimos el flujo.
     val connection = viewModel.connectionData.collectAsState().value
     connection?.let {
-        Log.d("QR_UI", "✅ Datos QR recibidos desde ViewModel: $it")
+        Log.d("QR_UI", "Datos QR recibidos desde ViewModel: $it")
         onConnectionReady(it)
     }
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
 
-    Dialog(onDismissRequest = {
-        Log.d("QR_UI", "❌ Dialog cerrado por el usuario")
-        onCancel()
-    }) {
+        /**
+         * AndroidView nos permite meter una vista nativa dentro de Compose.
+         * Aquí metemos un PreviewView, que es donde CameraX dibuja la cámara.
+         */
+        AndroidView(
+            modifier = Modifier
+                .fillMaxSize(),
+            factory = { ctx ->
 
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            tonalElevation = 8.dp,
-            modifier = Modifier.padding(16.dp).size(340.dp)
-        ) {
+                Log.d("QR_UI", "🎥 Creando PreviewView")
+                val previewView = buildPreviewView(ctx)
 
-            Box(
-                modifier = Modifier.fillMaxSize().padding(50.dp),
-                contentAlignment = Alignment.Center
-            ) {
-
-                /**
-                 * AndroidView nos permite meter una vista nativa dentro de Compose.
-                 * Aquí metemos un PreviewView, que es donde CameraX dibuja la cámara.
-                 */
-                AndroidView(
-                    modifier = Modifier.fillMaxSize().padding(bottom = 50.dp),
-                    factory = { ctx ->
-
-                        Log.d("QR_UI", "🎥 Creando PreviewView")
-                        val previewView = buildPreviewView(ctx)
-
-                        Log.d("QR_UI", "⚙️ Iniciando configuración de CameraX")
-                        setupCamera(
-                            context = ctx,
-                            lifecycleOwner = lifecycleOwner,
-                            previewView = previewView,
-                            onQrDetected = { qr ->
-                                Log.d("QR_UI", "🎯 QR detectado desde Analyzer: $qr")
-                                viewModel.onQrDetected(qr)
-                            }
-                        )
-                        previewView
+                Log.d("QR_UI", "⚙️ Iniciando configuración de CameraX")
+                setupCamera(
+                    context = ctx,
+                    lifecycleOwner = lifecycleOwner,
+                    previewView = previewView,
+                    onQrDetected = { qr ->
+                        Log.d("QR_UI", "QR detectado desde Analyzer: $qr")
+                        viewModel.onQrDetected(qr)
                     }
                 )
-                OutlinedButton(
-                    modifier = Modifier.align(Alignment.BottomEnd),
-                    onClick = {
-                        viewModel.reset()
-                        onCancel()
-                    }
-                ) { Text("Cancelar") }
+                previewView
             }
-        }
+        )
+        OutlinedButton(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(32.dp),
+            onClick = {
+                viewModel.reset()
+                onCancel()
+            }
+        ) { Text("Cancelar") }
     }
 }
