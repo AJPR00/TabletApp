@@ -33,9 +33,6 @@
       <SelectionState runConfigName="UiComponentsTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="floatingBottomBar_botones_tienen_tamano_minimo()">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
     </selectionStates>
   </component>
 </project>
