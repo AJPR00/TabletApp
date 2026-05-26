@@ -1,0 +1,189 @@
+@startuml
+class com.ajpr00.visumloop.tablet.presentation.state.ReproductorConfig {
+}
+class com.ajpr00.visumloop.tablet.presentation.viewmodel.LoginViewModel {
+}
+class com.ajpr00.visumloop.tablet.presentation.viewmodel.ReproducorViewModel {
+}
+class com.ajpr00.visumloop.tablet.ui.components.null {
++ void onPlaybackStateChanged(Int)
+}
+
+class com.ajpr00.visumloop.tablet.presentation.state.EstadoMenus {
+}
+class com.ajpr00.visumloop.tablet.data.datasource.cloud.FtpDataSource {
+}
+enum com.ajpr00.visumloop.tablet.domain.model.AccesLoginType {
+}
+class com.ajpr00.visumloop.tablet.domain.model.FtpConfig {
+}
+class com.ajpr00.visumloop.tablet.navigation.ScreenPrincipal {
+}
+class com.ajpr00.visumloop.tablet.navigation.Reproductor {
+}
+class com.ajpr00.visumloop.tablet.navigation.MenuOpciones {
+}
+class com.ajpr00.visumloop.tablet.navigation.LoginScreen {
+}
+class com.ajpr00.visumloop.tablet.navigation.LoginDrive {
+}
+class com.ajpr00.visumloop.tablet.navigation.LoginGraph {
+}
+class com.ajpr00.visumloop.tablet.navigation.RegisterScreen {
+}
+class com.ajpr00.visumloop.tablet.navigation.FromRecover {
+}
+class com.ajpr00.visumloop.tablet.navigation.About {
+}
+class com.ajpr00.visumloop.tablet.navigation.Splash {
+}
+class com.ajpr00.visumloop.tablet.navigation.MainGraph {
+}
+class com.ajpr00.visumloop.tablet.domain.model.MediaResult$Success {
+}
+class com.ajpr00.visumloop.tablet.domain.model.MediaResult$Error {
+}
+class com.ajpr00.visumloop.tablet.domain.model.MediaResult {
+}
+class com.ajpr00.visumloop.tablet.presentation.viewmodel.RegisterViewModel {
+}
+class com.ajpr00.visumloop.tablet.domain.model.MediaContent {
+}
+class com.ajpr00.visumloop.tablet.data.repository.AppleAuthRepository {
+}
+class com.ajpr00.visumloop.tablet.data.repository.FtpAuthRepository {
+}
+class com.ajpr00.visumloop.tablet.MyReleaseApplication {
++ void onCreate()
+}
+
+class com.ajpr00.visumloop.tablet.data.datasource.cloud.DataSourceGoogleDrive {
+- String clientId
+- String clientSecret
+- String redirectUri
+-  http
+- String? exchangeAuthCode(String)
++ void null()
++ List<MediaContent> listDriveFiles(String)
++ void null()
+}
+
+
+class com.ajpr00.visumloop.tablet.di.FtpModule {
++ FtpConfig provideFtpConfig()
+}
+
+class com.ajpr00.visumloop.tablet.di.DatabaseModule$null {
+}
+class com.ajpr00.visumloop.tablet.di.DatabaseModule {
++ AppDatabase provideDatabase(Context)
++ MediaContentDao provideMediaContentDao(AppDatabase)
+}
+
+class com.ajpr00.visumloop.tablet.data.repository.DropboxAuthRepository {
+}
+abstract class com.ajpr00.visumloop.tablet.data.datasource.local.db.AppDatabase {
++ MediaContentDao mediaContentDao()
+}
+
+interface com.ajpr00.visumloop.tablet.data.datasource.local.db.dao.MediaContentDao {
++ Flow<List<MediaContentEntity>> getAllMedia()
++ void insert(MediaContentEntity)
++ void update(MediaContentEntity)
++ void delete(MediaContentEntity)
+}
+
+class com.ajpr00.visumloop.tablet.MainActivity {
++ void onCreate(Bundle?)
+}
+
+enum com.ajpr00.visumloop.tablet.domain.model.FormatType {
+}
+class com.ajpr00.visumloop.tablet.presentation.viewmodel.MediaItemsViewModel {
+}
+class com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento$Exito {
+}
+class com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento$Cargando {
+}
+class com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento$Inicial {
+}
+class com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento$Mensajes {
+}
+class com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento {
+}
+class com.ajpr00.visumloop.tablet.data.datasource.local.db.entity.MediaContentEntity {
+}
+class com.ajpr00.visumloop.tablet.presentation.viewmodel.SplashViewModel {
++  TAG
++ Boolean startGoogleLogin(UserGoogle?)
+}
+
+
+class com.ajpr00.visumloop.tablet.data.repository.MediaRepository {
+}
+class com.ajpr00.visumloop.tablet.domain.model.TransitionOption$Fade {
+}
+class com.ajpr00.visumloop.tablet.domain.model.TransitionOption$Slide {
+}
+class com.ajpr00.visumloop.tablet.domain.model.TransitionOption$Scale {
+}
+class com.ajpr00.visumloop.tablet.domain.model.TransitionOption {
+}
+class com.ajpr00.visumloop.tablet.data.repository.GoogleAuthRepository {
+}
+class com.ajpr00.visumloop.tablet.ui.theme.ColorFamily {
+}
+class com.ajpr00.visumloop.tablet.domain.exception.EventException {
+}
+class com.ajpr00.visumloop.tablet.data.repository.EmailAuthRepository {
+}
+class com.ajpr00.visumloop.tablet.domain.model.UserGoogle {
+}
+class com.ajpr00.visumloop.tablet.data.datasource.local.preferences.LoginPreferences {
+}
+class com.ajpr00.visumloop.tablet.data.datasource.local.preferences.null {
+-  TAG
+-  USERNAME_LOCAL
+-  AVATAR_LOCAL
+-  EMAIL_LOCAL
+-  ID_TOKEN_LOCAL
+-  AUTH_CODE_LOCAL
+-  EMAIL_DRIVE
+-  ID_TOKEN_DRIVE
+-  AUTH_CODE_DRIVE
+-  IS_DARK_MODE
+-  LANGUAGE
+}
+
+class com.ajpr00.visumloop.tablet.presentation.state.RegisterState {
+}
+class com.ajpr00.visumloop.tablet.presentation.state.LoginState {
+}
+
+
+com.ajpr00.visumloop.tablet.ui.components.Listener <|.. com.ajpr00.visumloop.tablet.ui.components.null
+com.ajpr00.visumloop.tablet.domain.model.MediaResult +.. com.ajpr00.visumloop.tablet.domain.model.MediaResult$Success
+com.ajpr00.visumloop.tablet.domain.model.MediaResult <|-- com.ajpr00.visumloop.tablet.domain.model.MediaResult$Success
+com.ajpr00.visumloop.tablet.domain.model.MediaResult +.. com.ajpr00.visumloop.tablet.domain.model.MediaResult$Error
+com.ajpr00.visumloop.tablet.domain.model.MediaResult <|-- com.ajpr00.visumloop.tablet.domain.model.MediaResult$Error
+android.app.Application <|-- com.ajpr00.visumloop.tablet.MyReleaseApplication
+com.ajpr00.visumloop.tablet.di.DatabaseModule +.. com.ajpr00.visumloop.tablet.di.DatabaseModule$null
+androidx.room.RoomDatabase <|-- com.ajpr00.visumloop.tablet.data.datasource.local.db.AppDatabase
+androidx.activity.ComponentActivity <|-- com.ajpr00.visumloop.tablet.MainActivity
+com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento +.. com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento$Exito
+com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento <|-- com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento$Exito
+com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento +.. com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento$Cargando
+com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento <|-- com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento$Cargando
+com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento +.. com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento$Inicial
+com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento <|-- com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento$Inicial
+com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento +.. com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento$Mensajes
+com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento <|-- com.ajpr00.visumloop.tablet.presentation.state.EstadoEvento$Mensajes
+androidx.lifecycle.ViewModel <|-- com.ajpr00.visumloop.tablet.presentation.viewmodel.SplashViewModel
+com.ajpr00.visumloop.tablet.domain.model.TransitionOption +.. com.ajpr00.visumloop.tablet.domain.model.TransitionOption$Fade
+com.ajpr00.visumloop.tablet.domain.model.TransitionOption <|-- com.ajpr00.visumloop.tablet.domain.model.TransitionOption$Fade
+com.ajpr00.visumloop.tablet.domain.model.TransitionOption +.. com.ajpr00.visumloop.tablet.domain.model.TransitionOption$Slide
+com.ajpr00.visumloop.tablet.domain.model.TransitionOption <|-- com.ajpr00.visumloop.tablet.domain.model.TransitionOption$Slide
+com.ajpr00.visumloop.tablet.domain.model.TransitionOption +.. com.ajpr00.visumloop.tablet.domain.model.TransitionOption$Scale
+com.ajpr00.visumloop.tablet.domain.model.TransitionOption <|-- com.ajpr00.visumloop.tablet.domain.model.TransitionOption$Scale
+com.ajpr00.visumloop.tablet.domain.exception.Exception <|-- com.ajpr00.visumloop.tablet.domain.exception.EventException
+@enduml

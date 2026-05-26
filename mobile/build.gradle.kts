@@ -92,6 +92,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.tooling.preview)
 
+    // Mapper Gson
+    implementation(libs.retrofit.converter.gson)
+
     // DataStore Preferences
     implementation(libs.androidx.datastore.preferences)
 
@@ -123,4 +126,26 @@ dependencies {
 
     // Desugaring
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+
+    // --- TEST UNITARIOS ---
+    testImplementation(libs.junit)
+
+    // --- TEST INSTRUMENTADOS ---
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+
+    // --- COMPOSE UI TESTING ---
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+
+    // Necesario para createComposeRule()
+    debugImplementation(libs.androidx.ui.test.manifest)
+
+    // LectorQR
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+
+    implementation(libs.zxing.core)
 }

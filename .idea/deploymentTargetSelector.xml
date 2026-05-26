@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="tablet">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-05-18T00:16:33.057320200Z">
+        <DropdownSelection timestamp="2026-05-23T23:28:40.377577100Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\AJPR00\.android\avd\Tablet_24_Serv.Google.avd" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=19807777" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -15,7 +15,7 @@
       </SelectionState>
       <SelectionState runConfigName="mobile">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-05-19T10:47:43.388119700Z">
+        <DropdownSelection timestamp="2026-05-24T15:59:47.398785300Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="PhysicalDevice" identifier="serial=19807777" />
@@ -28,6 +28,12 @@
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
       <SelectionState runConfigName="ScreenPanelControlPreview">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="UiComponentsTest">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="floatingBottomBar_botones_tienen_tamano_minimo()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

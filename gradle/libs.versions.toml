@@ -1,11 +1,3 @@
-###############################################
-#                VERSIONES                    #
-###############################################
-# Aquí defines las versiones de cada librería.
-# La idea es tener TODO centralizado para evitar
-# versiones duplicadas y conflictos raros.
-###############################################
-
 [versions]
 
 # --- Android / Kotlin base ---
@@ -84,13 +76,12 @@ desugar = "2.0.3"                  # Permite usar APIs modernas en Android viejo
 appcompat = "1.7.1"
 material = "1.13.0"
 
+# --- CameraX ---
+camerax = "1.4.0"
 
-###########################################################
-#                    LIBRERÍAS                           #
-###########################################################
-# Aquí defines cada dependencia con su grupo y nombre.
-# Luego en los módulos solo usas: libs.xxx
-###########################################################
+# --- CrearQR ---
+zxing = "3.5.3"
+
 
 [libraries]
 
@@ -202,10 +193,14 @@ material = { group = "com.google.android.material", name = "material", version.r
 # --- Servidor local (NanoHTTPD) ---
 nanohttpd = { module = "org.nanohttpd:nanohttpd", version = "2.3.1" }   # Servidor HTTP ligero para LAN. Perfecto para tablets viejas.
 
+# --- CameraX ---
+androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "camerax" }
+androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camerax" }
+androidx-camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "camerax" }
+androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "camerax" }
 
-###########################################################
-#                    PLUGINS                              #
-###########################################################
+# --- CrearQR ---
+zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 
 [plugins]
 

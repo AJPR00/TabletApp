@@ -4,8 +4,11 @@ import android.content.Context
 import androidx.room.Room
 import com.ajpr00.tablet.data.datasource.local.MediaLocalDataSource
 import com.ajpr00.tablet.data.datasource.local.MediaLocalDataSourceImpl
+import com.ajpr00.tablet.data.datasource.local.PlaylistLocalDataSource
+import com.ajpr00.tablet.data.datasource.local.PlaylistLocalDataSourceImpl
 import com.ajpr00.tablet.data.datasource.local.db.AppDatabase
 import com.ajpr00.tablet.data.datasource.local.db.dao.MediaContentDao
+import com.ajpr00.tablet.data.datasource.local.db.dao.PlaylistDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -32,6 +35,10 @@ object TabletDatabaseModule {
     fun provideMediaContentDao(db: AppDatabase): MediaContentDao =
         db.mediaContentDao()
 
+    @Provides
+    fun providePlaylistDao(db: AppDatabase): PlaylistDao =
+        db.playlistDao()
+
 
     @Module
     @InstallIn(SingletonComponent::class)
@@ -40,8 +47,15 @@ object TabletDatabaseModule {
         @Provides
         @Singleton
         fun provideMediaLocalDataSource(
-            dao: MediaContentDao
-        ): MediaLocalDataSource = MediaLocalDataSourceImpl(dao)
-    }
+            daoMedia: MediaContentDao,
+            daoPlaylist: PlaylistDao
+        ): MediaLocalDataSource =
+            MediaLocalDataSourceImpl(daoMedia, daoPlaylist)
 
+        @Provides
+        fun providePlaylistLocalDataSource(
+            dao: PlaylistDao
+        ): PlaylistLocalDataSource =
+            PlaylistLocalDataSourceImpl(dao)
+    }
 }

@@ -96,7 +96,7 @@ class DataSourceGoogleDrive @Inject constructor(
                 val type = detectFormatType(mime = mime)
 
                 MediaContent(
-                    id = name.hashCode(),
+                    id = name.hashCode().toString(),
                     name = name,
                     path = thumb,
                     type = type,

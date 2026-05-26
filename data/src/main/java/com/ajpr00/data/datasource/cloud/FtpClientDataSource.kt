@@ -49,7 +49,7 @@ class FtpClientDataSource @Inject constructor(
                     // Creamos nuestro modelo de dominio para que el repo lo entienda
                     result.add(
                         MediaContent(
-                            id = file.hashCode(),
+                            id = file.hashCode().toString(),
                             name = file.name,
                             path = file.name, // aquí podrías construir la ruta completa si lo necesitas
                             type = type,
