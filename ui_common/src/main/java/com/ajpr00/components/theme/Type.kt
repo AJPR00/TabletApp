@@ -1,10 +1,10 @@
-package com.ajpr00.tablet.ui.theme
+package com.ajpr00.components.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.googlefonts.Font
 import androidx.compose.ui.text.googlefonts.GoogleFont
-import com.ajpr00.tablet.R
+import com.ajpr00.uicommon.R
 
 val provider = GoogleFont.Provider(
     providerAuthority = "com.google.android.gms.fonts",

@@ -1,4 +1,4 @@
-package com.ajpr00.tablet.ui.theme
+package com.ajpr00.components.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -252,7 +252,7 @@ val unspecified_scheme = ColorFamily(
 )
 
 @Composable
-fun TabletAppTheme(
+fun VisumLoopAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,

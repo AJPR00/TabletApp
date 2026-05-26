@@ -28,3 +28,10 @@ object RegisterScreen
 
 @Serializable
 object FromRecover
+
+@Serializable
+object RegisterDevice
+
+@Serializable
+object QrScanner
+

@@ -40,7 +40,7 @@ fun NavigationCore(innerPadding: PaddingValues) {
         composable<Splash> { backStackEntry ->
             val viewModelSplash: SplashViewModel = hiltViewModel()
             SplashScreenTablet(
-                goToMainGraph = { navController.navigate(MainGraph) },
+                goToMainGraph = { navController.navigate(LoginGraph) },
             )
         }
 

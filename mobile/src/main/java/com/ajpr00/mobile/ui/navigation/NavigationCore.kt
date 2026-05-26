@@ -26,11 +26,15 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import com.ajpr00.mobile.presentation.viewmodel.PanelControlViewModel
+import com.ajpr00.mobile.presentation.viewmodel.QrScannerViewModel
+import com.ajpr00.mobile.presentation.viewmodel.RegisterDeviceViewModel
 import com.ajpr00.mobile.ui.components.DrawerMenu
 import com.ajpr00.mobile.ui.components.FloatingBottomBar
 import com.ajpr00.mobile.ui.components.TopBar
 import com.ajpr00.mobile.ui.screen.LoginScreenMobile
+import com.ajpr00.mobile.ui.screen.QrScannerScreen
 import com.ajpr00.mobile.ui.screen.RecoverPasswordMobile
+import com.ajpr00.mobile.ui.screen.RegisterDeviceScreen
 import com.ajpr00.mobile.ui.screen.RegisterMobile
 import com.ajpr00.mobile.ui.screen.ScreenPanelControl
 import com.ajpr00.mobile.ui.screen.SplashScreenMobile
@@ -211,9 +215,41 @@ fun NavigationCore() {
                             },
                             onAgregarDispositivo = {
                                 Log.d("NAV", "⬆️ PanelControl → AgregarDispositivo")
+                                navController.navigate(RegisterDevice)
                             }
                         )
                     }
+
+                    composable<RegisterDevice> {
+                        val viewModelRegisterDevice: RegisterDeviceViewModel = hiltViewModel()
+                        RegisterDeviceScreen(
+                            viewModel = viewModelRegisterDevice,
+                            onScanQR = { navController.navigate(QrScanner) },
+                            onRegistrar = {
+                                navController.popBackStack() // cerrar pantalla al registrar
+                            },
+                            onCancelar = {
+                                navController.popBackStack() // cerrar pantalla al cancelar
+                            }
+                        )
+                    }
+
+                    composable<QrScanner> {
+                        val viewModelQrScanner: QrScannerViewModel = hiltViewModel()
+                        Log.d("NAV", "⬆️ PanelControl → QrScanner")
+                        QrScannerScreen(
+                            viewModel = viewModelQrScanner,
+                            onConnectionReady = {
+                                Log.d("NAV", "⬆️ PanelControl → QrScanner → onConnectionReady")
+                                navController.popBackStack()
+                            },
+                            onCancel = {
+                                Log.d("NAV", "⬆️ PanelControl → QrScanner → onCancel")
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+
                 }
             }
         }

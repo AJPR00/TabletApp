@@ -31,6 +31,7 @@ import com.ajpr00.mobile.ui.components.DispositivoCard
 import com.ajpr00.mobile.ui.components.FabAdd
 import com.ajpr00.mobile.ui.model.DispositivoUi
 import com.ajpr00.components.components.TextoConDivisor
+import com.ajpr00.core.domain.model.EstadoDispositivo
 import com.ajpr00.core.domain.model.PendingMedia
 
 @Composable
@@ -44,6 +45,24 @@ fun ScreenPanelControl(
     onConfiguracion: () -> Unit,
     onAgregarDispositivo: () -> Unit,
 ) {
+
+    val dispositivosPrueba = listOf(
+        DispositivoUi(
+            id = "1",
+            nombre = "Tablet Sala",
+            nivelBatery = 50,
+            icono = R.drawable.ic_tablet,
+            estado = EstadoDispositivo.ONLINE
+        ),
+        DispositivoUi(
+            id = "1",
+            nombre = "Tablet Sala",
+            nivelBatery = 100,
+            icono = R.drawable.ic_table_disabled,
+            estado = EstadoDispositivo.OFFLINE
+        )
+    )
+
 
     val dispositivos by viewModel.dispositivos.collectAsState()
     val mediaList by viewModel.pendingMedia.collectAsState()
@@ -185,7 +204,7 @@ private fun PanelMenu(
                 size = size,
                 title = "Dispositivos disponibles:",
                 onFabClick = addDispositivo,
-                icon = painterResource(id = R.drawable.ic_tablet_nknown),
+                icon = painterResource(id = com.ajpr00.uicommon.R.drawable.ic_add_tablet24),
                 dispositivos = dispositivos
             )
         }
@@ -224,10 +243,11 @@ fun DeviceListSection(
 
         FabAdd(
             modifier = Modifier
-                .size(46.dp)
+                .size(60.dp)
                 .align(Alignment.BottomEnd)
                 .offset((-10).dp, 1.dp),
             icon = icon,
+            icDesc = "Agregar dispositivo",
             onClick = onFabClick ?: {}
         )
     }

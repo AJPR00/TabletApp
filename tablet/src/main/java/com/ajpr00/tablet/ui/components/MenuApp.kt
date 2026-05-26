@@ -64,7 +64,7 @@ fun MenuApp(
             val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
             context.contentResolver.takePersistableUriPermission(uri, flags)
         }
-        viewModelMediaItme.importSelectedMedia(uris)
+        viewModelMediaItme.importSelectedMedia(uris,"Lista Unica")
     }
 
     PanelMenuApp(

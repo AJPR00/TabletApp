@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,7 +55,7 @@ fun FloatingBottomBar(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = navBarPadding.calculateBottomPadding())
-            .padding(bottom = 16.dp), //Respeta la barra del sistema
+            .padding(bottom = 16.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
         val barWidth = maxWidth * 0.45f
@@ -67,17 +68,20 @@ fun FloatingBottomBar(
                 .height(barHeight)
                 .clip(shape)
                 .background(Color.Yellow.copy(alpha = 0.20f))
-
         ) {
-            IconButton(onClick = configuracion) {
+            IconButton(
+                onClick = configuracion,
+                modifier = Modifier.minimumInteractiveComponentSize()
+            ) {
                 Icon(Icons.Default.Settings, contentDescription = "Configuración")
             }
+
             IconButton(
                 onClick = deleteDispositivos,
+                modifier = Modifier.minimumInteractiveComponentSize()
             ) {
                 Icon(Icons.Default.Delete, contentDescription = "Eliminar")
             }
         }
-
     }
 }
