@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import com.ajpr00.components.components.showToast
 import com.ajpr00.presentation_common.viewmodel.RegisterViewModel
 import com.ajpr00.components.screen.RegisterContent
 import com.ajpr00.presentation_common.state.Estado
@@ -20,7 +21,7 @@ fun RegisterTablet(
 
     LaunchedEffect(Unit) {
         viewModel.eventos.collect { mensaje ->
-            Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
+            showToast(context, mensaje)
         }
     }
 

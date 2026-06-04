@@ -1,7 +1,6 @@
 package com.ajpr00.tablet.ui.screen
 
 import android.annotation.SuppressLint
-import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -9,6 +8,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import com.ajpr00.components.components.showToast
 import com.ajpr00.presentation_common.viewmodel.AuthViewModel
 import com.ajpr00.tablet.presentation.viewmodel.MediaItemsViewModel
 import com.ajpr00.tablet.presentation.viewmodel.ReproducorViewModel
@@ -29,19 +29,19 @@ fun ReproductorScreen(
 
     LaunchedEffect(Unit) {
         viewModelMediaBackground.eventos.collect { mensaje ->
-            Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
+            showToast(context, mensaje)
         }
     }
 
     LaunchedEffect(Unit) {
         viewModelMediaItems.eventos.collect { mensaje ->
-            Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
+            showToast(context, mensaje)
         }
     }
 
     LaunchedEffect(Unit) {
         viewModelAuth.eventos.collect { mensaje ->
-            Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
+            showToast(context, mensaje)
         }
     }
 

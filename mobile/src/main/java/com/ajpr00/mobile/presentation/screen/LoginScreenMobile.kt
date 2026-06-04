@@ -55,7 +55,6 @@ fun LoginScreenMobile(
             onGoToRecoverPassword = goToRecuperarPass,
             onExit = goToMainGraph,
             loading = event is Estado.Cargando,
-            messages = if (event is Estado.Mensajes) (event as Estado.Mensajes).mensajes else emptyList()
         )
         HorizontalDivider(modifier = Modifier.padding(16.dp))
         CustomButtonLogin(

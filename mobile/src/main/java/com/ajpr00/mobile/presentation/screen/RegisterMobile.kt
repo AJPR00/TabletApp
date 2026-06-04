@@ -33,21 +33,5 @@ fun RegisterMobile(
         onRegisterClick = viewModel::registrar,
         onBackClick = goToBack,
         loading = uiEvent is EstadoEvento.Cargando,
-        messages = if (uiEvent is EstadoEvento.Mensajes)
-            (uiEvent as EstadoEvento.Mensajes).mensajes
-        else emptyList()
-    )
-
-    when (uiEvent) {
-        is EstadoEvento.Exito -> goToBack()
-
-        is EstadoEvento.Mensajes -> {
-            (uiEvent as EstadoEvento.Mensajes).mensajes.forEach {
-                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-            }
-            viewModel.clearErrors()
-        }
-
-        else -> Unit
-    }
+       )
 }
