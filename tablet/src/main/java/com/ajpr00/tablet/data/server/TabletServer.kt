@@ -3,6 +3,7 @@ package com.ajpr00.tablet.data.server
 import android.util.Log
 import com.ajpr00.core.domain.model.FormatType
 import com.ajpr00.core.domain.model.api.*
+import com.ajpr00.core.domain.repository.preference.PreferencesRepository
 import com.ajpr00.core.domain.usecase.media.DeleteMediaSyncUseCase
 import com.ajpr00.core.domain.usecase.media.GetAllMediaSyncUseCase
 import com.ajpr00.core.domain.usecase.media.GetMediaByIdSyncUseCase
@@ -10,224 +11,203 @@ import com.ajpr00.data.useCase.ImportMediaFromServerUseCase
 import com.ajpr00.data.util.ImageUtils
 import com.ajpr00.data.util.VideoUtils
 import com.ajpr00.tablet.data.mapper.toRemote
+import com.ajpr00.tablet.data.network.MdnsPublisher   // 👈 IMPORTANTE
 import com.google.gson.Gson
 import fi.iki.elonen.NanoHTTPD
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import javax.inject.Inject
 
 /**
- * NanoHTTPD trabaja de forma síncrona: cada petición usa 1 hilo del pool (≈10 hilos).
- * Con runBlocking se bloquea ese hilo del servidor: el sistema no puede pausarlo, moverlo ni liberarlo.
- * El servidor sigue siendo síncrono; runBlocking solo adapta corrutinas a ejecución bloqueante.
+ * TabletServer
+ * ---------------------------------------------------------
+ * Este es el servidor HTTP que vive dentro de la tablet.
+ * Aquí es donde NanoHTTPD escucha peticiones en el puerto 8080.
  *
- * Con corrutinas el sistema puede pausar, mover y liberar; con runBlocking el hilo queda bloqueado y el sistema pierde ese privilegio
+ * Ahora también será el encargado de arrancar mDNS,
+ * para que la tablet se anuncie sola en la red.
  */
-
 class TabletServer @Inject constructor(
-    private val getMediaByIdSync : GetMediaByIdSyncUseCase,
+    private val getMediaByIdSync: GetMediaByIdSyncUseCase,
     private val deleteMediaSyncUseCase: DeleteMediaSyncUseCase,
     private val getAllMediaSyncUseCase: GetAllMediaSyncUseCase,
     private val importMediaFromServerUseCase: ImportMediaFromServerUseCase,
+    private val mdnsPublisher: MdnsPublisher,
+    private val prefsRepository: PreferencesRepository
 ) : NanoHTTPD(8080) {
+
+    private var isClientConnected = false
+    private var lastRequestTime = System.currentTimeMillis()
+
 
     private val gson = Gson()
     private val TAG = "TabletServer"
 
-    override fun serve(session: IHTTPSession): Response {
+    /**
+     * start()
+     * ---------------------------------------------------------
+     * Esto se ejecuta cuando el servidor arranca.
+     * Aquí aprovechamos para encender mDNS.
+     */
+    override fun start() {
+        super.start()
+        Log.d(TAG, "Servidor HTTP iniciado en el puerto 8080")
 
-        return try {
+        val id = runBlocking { prefsRepository.getTabletId().first() }
+        val name = runBlocking { prefsRepository.getTabletName().first() }
 
-            val uri = session.uri
-            Log.d(TAG, "→ Petición recibida: $uri")
+        mdnsPublisher.start(id = id, name = name, port = 8080)
 
-            when {
-                uri == "/ping" -> {
-                    jsonResponse("OK")
+        Thread {
+            while (true) {
+                val now = System.currentTimeMillis()
+                val diff = now - lastRequestTime
+
+                if (isClientConnected && diff > 10_000) { // 10 segundos sin peticiones
+                    Log.d(TAG, "⏳ Cliente desconectado → reactivando mDNS")
+                    isClientConnected = false
+                    mdnsPublisher.start(id = id, name = name, port = 8080)
                 }
 
+                Thread.sleep(2000)
+            }
+        }.start()
+    }
+
+
+    /**
+     * stop()
+     * ---------------------------------------------------------
+     * Esto se ejecuta cuando el servidor se detiene.
+     * Aquí apagamos mDNS.
+     */
+    override fun stop() {
+        Log.d(TAG, "Deteniendo mDNS…")
+        mdnsPublisher.stop()
+
+        Log.d(TAG, "Deteniendo servidor NanoHTTPD…")
+        super.stop()
+    }
+
+    /**
+     * serve()
+     * ---------------------------------------------------------
+     * Aquí se gestionan TODAS las rutas HTTP.
+     * Cada vez que el móvil hace una petición, entra aquí.
+     */
+    override fun serve(session: IHTTPSession): Response {
+        return try {
+            lastRequestTime = System.currentTimeMillis()
+
+            if (!isClientConnected) {
+                isClientConnected = true
+                Log.d(TAG, "📱 Cliente conectado → apagando mDNS")
+                mdnsPublisher.stop()
+            }
+
+            val uri = session.uri
+            Log.d(TAG, " Petición recibida: $uri")
+
+            when {
+                uri == "/ping" -> jsonResponse("OK")
+
                 uri == "/info" -> {
-                    try {
-                        val info = DeviceInfo(
-                            id = "tablet-123",
-                            name = "Tablet del Salón",
-                            port = 8080,
-                        )
+                    Log.d(TAG, "Enviando info del dispositivo…")
 
-                        val response = ApiResponse(
-                            status = "OK",
-                            data = info
-                        )
+                    val id = runBlocking { prefsRepository.getTabletId().first() }
+                    val name = runBlocking { prefsRepository.getTabletName().first() }
 
-                        jsonResponse(gson.toJson(response))
-
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error en /info: ${e.message}")
-                        jsonResponse("""{"status":"ERROR","error":"internal error"}""",
-                            Response.Status.INTERNAL_ERROR)
-                    }
+                    val info = DeviceInfo(
+                        id = id,
+                        name = name,
+                        port = 8080,
+                    )
+                    jsonResponse(gson.toJson(ApiResponse("OK", info)))
                 }
 
                 uri == "/list_media" -> {
-                    try {
-                        val list = getAllMediaSyncUseCase().map { it.toRemote() }
-                        val response = ApiResponse(
-                            status = "OK",
-                            data = ListMediaData(items = list)
-                        )
-
-                        jsonResponse(gson.toJson(response))
-
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error en /list_media: ${e.message}")
-                        jsonResponse("""{"status":"ERROR","error":"internal error"}""",
-                            Response.Status.INTERNAL_ERROR)
-                    }
+                    Log.d(TAG, "Listando media…")
+                    val list = getAllMediaSyncUseCase().map { it.toRemote() }
+                    jsonResponse(gson.toJson(ApiResponse("OK", ListMediaData(list))))
                 }
 
                 uri.startsWith("/delete/") -> {
-                    try {
-                        val id = uri.removePrefix("/delete/")
-
-                        if (id.isBlank()) {
-                            Log.e(TAG, "ID inválido en /delete")
-                            val error = ApiResponse<DeleteResult>(
-                                status = "ERROR",
-                                error = "invalid id"
-                            )
-                            return jsonResponse(gson.toJson(error), Response.Status.BAD_REQUEST)
-                        }
-
-                        deleteMediaSyncUseCase(id)
-
-                        val response = ApiResponse(
-                            status = "OK",
-                            data = DeleteResult(deleted = id)
-                        )
-
-                        jsonResponse(gson.toJson(response))
-
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error en /delete: ${e.message}")
-                        jsonResponse("""{"status":"ERROR","error":"internal error"}""",
-                            Response.Status.INTERNAL_ERROR)
-                    }
+                    val id = uri.removePrefix("/delete/")
+                    Log.d(TAG, "Eliminando media con id=$id")
+                    deleteMediaSyncUseCase(id)
+                    jsonResponse(gson.toJson(ApiResponse("OK", DeleteResult(id))))
                 }
 
                 uri.startsWith("/media/") -> {
-                    try {
-                        val id = uri.removePrefix("/media/")
-
-                        if (id.isBlank()) {
-                            Log.e(TAG, "ID inválido en /media")
-                            return jsonResponse("""{"error":"invalid id"}""",
-                                Response.Status.BAD_REQUEST)
+                    val id = uri.removePrefix("/media/")
+                    Log.d(TAG, " Descargando media con id=$id")
+                    val media = getMediaByIdSync(id)
+                    if (media != null) {
+                        val file = File(media.path)
+                        if (file.exists()) {
+                            val mime = getMimeType(file)
+                            return newFixedLengthResponse(
+                                Response.Status.OK,
+                                mime,
+                                file.inputStream(),
+                                file.length()
+                            )
                         }
-
-                        val media = getMediaByIdSync(id)
-                        if (media != null) {
-                            val file = File(media.path)
-                            if (file.exists()) {
-                                val mime = getMimeType(file)
-                                return newFixedLengthResponse(
-                                    Response.Status.OK,
-                                    mime,
-                                    file.inputStream(),
-                                    file.length()
-                                )
-                            }
-                        }
-
-                        jsonResponse("""{"error":"image not found"}""",
-                            Response.Status.NOT_FOUND)
-
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error en /media: ${e.message}")
-                        jsonResponse("""{"error":"internal error"}""",
-                            Response.Status.INTERNAL_ERROR)
                     }
+                    jsonResponse("""{"error":"not found"}""", Response.Status.NOT_FOUND)
                 }
 
                 uri.startsWith("/thumbnail/") -> {
-                    try {
-                        val id = uri.removePrefix("/thumbnail/")
-                        val media = getMediaByIdSync(id)
-
-                        if (media != null) {
-                            val file = File(media.path)
-
-                            if (file.exists()) {
-
-                                val thumbFile = when (media.type) {
-                                    FormatType.IMAGE -> ImageUtils.generateThumbnail(file)
-                                    FormatType.VIDEO -> VideoUtils.generateVideoThumbnail(file)
-                                    else -> return jsonResponse("""{"error":"unsupported type"}""")
-                                }
-
-                                return newFixedLengthResponse(
-                                    Response.Status.OK,
-                                    "image/jpeg",
-                                    thumbFile.inputStream(),
-                                    thumbFile.length()
-                                )
+                    val id = uri.removePrefix("/thumbnail/")
+                    Log.d(TAG, "Generando thumbnail de id=$id")
+                    val media = getMediaByIdSync(id)
+                    if (media != null) {
+                        val file = File(media.path)
+                        if (file.exists()) {
+                            val thumb = when (media.type) {
+                                FormatType.IMAGE -> ImageUtils.generateThumbnail(file)
+                                FormatType.VIDEO -> VideoUtils.generateVideoThumbnail(file)
+                                else -> return jsonResponse("""{"error":"unsupported"}""")
                             }
+                            return newFixedLengthResponse(
+                                Response.Status.OK,
+                                "image/jpeg",
+                                thumb.inputStream(),
+                                thumb.length()
+                            )
                         }
-
-                        return jsonResponse("""{"error":"not found"}""")
-
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        return jsonResponse("""{"error":"internal error"}""")
                     }
+                    jsonResponse("""{"error":"not found"}""")
                 }
 
-
                 uri == "/upload" && session.method == Method.POST -> {
-                    try {
-                        val files = HashMap<String, String>()
-                        session.parseBody(files)
+                    Log.d(TAG, "Recibiendo archivo por /upload…")
+                    val files = HashMap<String, String>()
+                    session.parseBody(files)
+                    val tempPath =
+                        files["file"] ?: return jsonResponse("""{"error":"file missing"}""")
+                    val tempFile = File(tempPath)
+                    val mime = session.headers["content-type"] ?: "application/octet-stream"
+                    val originalName = session.parameters["file"]?.firstOrNull() ?: "uploaded_file"
+                    val extension = originalName.substringAfterLast('.', "")
 
-                        val tempPath = files["file"]
-                            ?: return jsonResponse("""{"error":"file missing"}""")
-
-                        val tempFile = File(tempPath)
-                        val mime = session.headers["content-type"] ?: "application/octet-stream"
-
-                        val originalName = session.parameters["file"]?.firstOrNull() ?: "uploaded_file"
-                        val extension = originalName.substringAfterLast('.', "")
-
-                        runBlocking {
-                            importMediaFromServerUseCase(tempFile, mime, extension)
-                        }
-
-                        val response = ApiResponse(
-                            status = "OK",
-                            data = UploadResult(uploaded = true)
-                        )
-
-                        jsonResponse(gson.toJson(response))
-
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error en /upload: ${e.message}")
-                        jsonResponse("""{"error":"internal error"}""",
-                            Response.Status.INTERNAL_ERROR)
+                    runBlocking {
+                        importMediaFromServerUseCase(tempFile, mime, extension)
                     }
+
+                    jsonResponse(gson.toJson(ApiResponse("OK", UploadResult(true))))
                 }
 
                 else -> {
                     Log.e(TAG, "Ruta no encontrada: $uri")
-                    val error = ApiResponse<Unit>(
-                        status = "ERROR",
-                        error = "not found"
-                    )
-                    jsonResponse(gson.toJson(error), Response.Status.NOT_FOUND)
+                    jsonResponse("""{"error":"not found"}""", Response.Status.NOT_FOUND)
                 }
             }
 
         } catch (e: Exception) {
             Log.e(TAG, "Error general en serve(): ${e.message}")
-            jsonResponse("""{"status":"ERROR","error":"internal server error"}""",
-                Response.Status.INTERNAL_ERROR)
+            jsonResponse("""{"error":"internal error"}""", Response.Status.INTERNAL_ERROR)
         }
     }
 
