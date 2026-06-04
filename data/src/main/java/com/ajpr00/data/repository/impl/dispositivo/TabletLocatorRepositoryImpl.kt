@@ -3,10 +3,12 @@ package com.ajpr00.data.repository.impl.dispositivo
 import android.util.Log
 import com.ajpr00.core.domain.model.Dispositivo
 import com.ajpr00.core.domain.model.EstadoDispositivo
+import com.ajpr00.core.domain.model.mDNS.MdnsServiceInfo
 import com.ajpr00.core.domain.repository.dispositivo.TabletLocatorRepository
 import com.ajpr00.core.util.NetworkUtils.getBaseIp
 import com.ajpr00.core.util.ordenarHostsPorCercania
 import com.ajpr00.core.util.tryLocate
+import com.ajpr00.data.datasource.network.MdnsResolver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -30,7 +32,9 @@ import javax.inject.Inject
  * 6. Emitimos un IP hacia el ViewModel
  */
 
-class TabletLocatorRepositoryImpl @Inject constructor() : TabletLocatorRepository {
+class TabletLocatorRepositoryImpl @Inject constructor(
+    private val resolver: MdnsResolver
+) : TabletLocatorRepository {
 
     private val TAG = "TabletLocatorRepo"
 
@@ -85,4 +89,8 @@ class TabletLocatorRepositoryImpl @Inject constructor() : TabletLocatorRepositor
                 null
             }
         }
+
+    override fun discoverTablet(): Flow<MdnsServiceInfo> {
+        return resolver.discover()
+    }
 }

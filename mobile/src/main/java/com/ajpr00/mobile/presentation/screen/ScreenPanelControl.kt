@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,6 +58,16 @@ fun ScreenPanelControl(
 
     // ESTADO PARA MOSTRAR LA PANTALLA FLOTANTE
     var showExplorer by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        viewModel.startMdnsDiscovery()
+    }
+
+    val mdnsInfo by viewModel.mdnsState.collectAsState()
+
+    mdnsInfo?.let { info ->
+        Text("Tablet encontrada: ${info.name} (${info.ip}:${info.port})")
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
 
