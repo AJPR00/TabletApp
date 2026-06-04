@@ -74,17 +74,13 @@ desugar = "2.0.3"                  # Permite usar APIs modernas en Android viejo
 
 # --- UI Legacy ---
 appcompat = "1.7.1"
-material = "1.14.0"
+material = "1.13.0"
 
 # --- CameraX ---
-camerax = "1.6.1"
+camerax = "1.4.0"
 
 # --- CrearQR ---
-zxing = "3.5.4"
-
-# --- Localizador Lan ---
-jmdns = "3.6.3"
-
+zxing = "3.5.3"
 
 
 [libraries]
@@ -205,9 +201,6 @@ androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "
 
 # --- CrearQR ---
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
-
-# --- Localizador Lan ---
-jmdns = { module = "org.jmdns:jmdns", version.ref = "jmdns" }
 
 [plugins]
 
