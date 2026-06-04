@@ -7,6 +7,14 @@ import com.ajpr00.core.domain.model.FormatType
 import java.io.File
 import java.io.FileOutputStream
 
+// TODO: Revisar FileManager → posible truncado de vídeos al copiar desde content://
+// - writeUriToFile usa input.copyTo(output) sin buffer grande → riesgo en tablets antiguas
+// - Validar que file.length() coincide con input.available() o tamaño original
+// - Añadir bufferSize = 8 * 1024 en copyTo()
+// - Confirmar que el archivo no se abre en modo truncado mientras se reproduce
+// - Registrar tamaño antes y después de copiar para detectar corrupción silenciosa
+
+
 /**
  * FileManager
  *

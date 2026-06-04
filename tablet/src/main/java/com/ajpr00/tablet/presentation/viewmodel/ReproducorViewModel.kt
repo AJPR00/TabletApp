@@ -5,11 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ajpr00.core.domain.model.FormatType
 import com.ajpr00.core.domain.model.MediaContent
-import com.ajpr00.core.domain.usecase.GetAllMediaUseCase
-import com.ajpr00.presentation_common.state.EstadoEvento
+import com.ajpr00.core.domain.usecase.media.GetAllMediaUseCase
 import com.ajpr00.tablet.presentation.state.EstadoMenus
 import com.ajpr00.tablet.presentation.state.ReproductorConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -25,8 +25,8 @@ class ReproducorViewModel @Inject constructor(
 
     private val TAG = "ReproducorVM"
 
-    private val _EventoState = MutableStateFlow<EstadoEvento>(EstadoEvento.Inicial)
-    val eventoState: StateFlow<EstadoEvento> = _EventoState
+    private val _eventos = MutableSharedFlow<String>()
+    val eventos = _eventos
 
     private val _option = MutableStateFlow(ReproductorConfig())
     val option: StateFlow<ReproductorConfig> = _option
@@ -46,20 +46,20 @@ class ReproducorViewModel @Inject constructor(
             )
 
     private val _currentIndex = MutableStateFlow(0)
+
     val currentIndex: StateFlow<Int> = _currentIndex
-
     private val _currentMedia = MutableStateFlow<MediaContent?>(null)
-    val currentMedia: StateFlow<MediaContent?> = _currentMedia
 
+    val currentMedia: StateFlow<MediaContent?> = _currentMedia
     init {
-        Log.d(TAG, "🟢 ViewModel inicializado")
+        Log.d(TAG, "ViewModel inicializado")
 
         viewModelScope.launch {
             mediaList.collect { list ->
-                Log.d(TAG, "📂 Lista de media actualizada: ${list.size} elementos")
+                Log.d(TAG, "Lista de media actualizada: ${list.size} elementos")
 
                 if (list.isNotEmpty() && currentMedia.value == null) {
-                    Log.d(TAG, "▶️ No había media reproduciéndose → iniciando con índice 0")
+                    Log.d(TAG, "No había media reproduciéndose → iniciando con índice 0")
                     playMediaAt(0)
                 }
             }
@@ -76,19 +76,28 @@ class ReproducorViewModel @Inject constructor(
         _estadoVisualMenu.update { it.copy(showMenuReproductor = isShow) }
     }
 
-    fun isShowMenuApp(isShow: Boolean) {
-        Log.d(TAG, "📱 isShowMenuApp(): $isShow")
-        _estadoVisualMenu.update { it.copy(showMenuApp = isShow) }
+    fun isShowMenuApp() {
+        val newValue = !_estadoVisualMenu.value.showMenuApp
+        Log.d(TAG, "📱 isShowMenuApp(): ${_estadoVisualMenu.value.showMenuApp}")
+        if (newValue)_estadoVisualMenu.update { it.copy(showSidePanel = false) }
+        _estadoVisualMenu.update { it.copy(showMenuApp = !_estadoVisualMenu.value.showMenuApp) }
+
+        if (newValue) enviarEvento("Menú abierto")
+        else enviarEvento("Menú cerrado")
     }
 
-    fun isShowSidePanel(isShow: Boolean) {
-        Log.d(TAG, "📑 isShowSidePanel(): $isShow")
-        _estadoVisualMenu.update { it.copy(showSidePanel = isShow) }
+    fun isShowSidePanel() {
+        val newValue = !_estadoVisualMenu.value.showSidePanel
+        Log.d(TAG, " isShowSidePanel(): $newValue")
+        _estadoVisualMenu.update { it.copy(showSidePanel = newValue) }
+
+        if (newValue) enviarEvento("Pantalla bloqueada")
+        else enviarEvento("Pantalla desbloqueada")
     }
 
     fun togglesLockScreen() {
         val newValue = !_estadoVisualMenu.value.isLockScreen
-        Log.d(TAG, "🔒 togglesLockScreen(): $newValue")
+        Log.d(TAG, "togglesLockScreen(): $newValue")
         _estadoVisualMenu.update { it.copy(isLockScreen = newValue) }
     }
 
@@ -99,13 +108,13 @@ class ReproducorViewModel @Inject constructor(
     }
 
     fun setVolume(newVolume: Float) {
-        Log.d(TAG, "🔊 setVolume(): $newVolume")
+        Log.d(TAG, "setVolume(): $newVolume")
         _option.update { it.copy(volume = newVolume) }
     }
 
     fun playMedia(media: MediaContent) {
         val index = mediaList.value.indexOf(media)
-        Log.d(TAG, "▶️ playMedia(): index=$index → ${media.name}")
+        Log.d(TAG, "playMedia(): index=$index → ${media.name}")
         if (index >= 0) playMediaAt(index)
     }
 
@@ -118,9 +127,9 @@ class ReproducorViewModel @Inject constructor(
             _currentMedia.value = media
             _isVideo.value = media.type == FormatType.VIDEO
 
-            Log.d(TAG, "📀 Reproduciendo: ${media.name} (video=${_isVideo.value})")
+            Log.d(TAG, "Reproduciendo: ${media.name} (video=${_isVideo.value})")
         } else {
-            Log.e(TAG, "❌ playMediaAt(): índice fuera de rango → $index")
+            Log.e(TAG, "playMediaAt(): índice fuera de rango → $index")
         }
     }
 
@@ -131,7 +140,7 @@ class ReproducorViewModel @Inject constructor(
         if (nextIndex < mediaList.value.size) {
             playMediaAt(nextIndex)
         } else {
-            Log.d(TAG, "🔁 Fin de lista → reiniciando")
+            Log.d(TAG, "Fin de lista → reiniciando")
             playMediaAt(0)
         }
     }
@@ -143,18 +152,18 @@ class ReproducorViewModel @Inject constructor(
         if (prevIndex >= 0) {
             playMediaAt(prevIndex)
         } else {
-            Log.d(TAG, "⛔ prevMedia(): ya está en el inicio")
+            Log.d(TAG, "prevMedia(): ya está en el inicio")
         }
     }
 
     fun randomMedia() {
         if (mediaList.value.isEmpty()) {
-            Log.e(TAG, "❌ randomMedia(): lista vacía")
+            Log.e(TAG, "randomMedia(): lista vacía")
             return
         }
 
         val randomIndex = (0 until mediaList.value.size).random()
-        Log.d(TAG, "🎲 randomMedia(): índice aleatorio = $randomIndex")
+        Log.d(TAG, "randomMedia(): índice aleatorio = $randomIndex")
 
         playMediaAt(randomIndex)
     }
@@ -162,10 +171,10 @@ class ReproducorViewModel @Inject constructor(
     fun toggleMute() {
         _option.update { current ->
             if (current.isMuted) {
-                Log.d(TAG, "🔊 toggleMute(): desactivando mute")
+                Log.d(TAG, "toggleMute(): desactivando mute")
                 current.copy(isMuted = false, volume = current.lastVolume)
             } else {
-                Log.d(TAG, "🔇 toggleMute(): activando mute")
+                Log.d(TAG, "toggleMute(): activando mute")
                 current.copy(isMuted = true, lastVolume = current.volume, volume = 0f)
             }
         }
@@ -179,17 +188,28 @@ class ReproducorViewModel @Inject constructor(
     }
 
     fun rewind(seconds: Int = 5) {
-        Log.d(TAG, "⏪ rewind(): -$seconds segundos")
+        Log.d(TAG, "rewind(): -$seconds segundos")
         _option.update { it.copy(rewinds = -seconds) }
     }
 
     fun forward(seconds: Int = 5) {
-        Log.d(TAG, "⏩ forward(): +$seconds segundos")
+        Log.d(TAG, "forward(): +$seconds segundos")
         _option.update { it.copy(rewinds = seconds) }
     }
 
     fun resetRewinds() {
-        Log.d(TAG, "🔄 resetRewinds()")
+        Log.d(TAG, "resetRewinds()")
         _option.update { it.copy(rewinds = 0) }
     }
+
+    fun enviarEvento(mensaje: String) {
+        viewModelScope.launch {
+            _eventos.emit(mensaje)
+        }
+    }
+
+    fun showError(message: String) {
+        enviarEvento("Error: $message")
+    }
+
 }

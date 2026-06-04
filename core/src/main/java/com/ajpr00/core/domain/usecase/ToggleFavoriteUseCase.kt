@@ -1,7 +1,7 @@
 package com.ajpr00.core.domain.usecase
 
 import com.ajpr00.core.domain.model.MediaContent
-import com.ajpr00.core.domain.repository.MediaRepository
+import com.ajpr00.core.domain.repository.media.MediaRepository
 import javax.inject.Inject
 
 class ToggleFavoriteUseCase @Inject constructor(

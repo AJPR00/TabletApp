@@ -189,4 +189,6 @@ dependencies {
 
     implementation(libs.zxing.core)
 
+    // Mapper Gson
+    implementation(libs.retrofit.converter.gson)
 }

@@ -26,14 +26,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.ajpr00.components.cards.MediaCardGrid
-import com.ajpr00.core.domain.model.MediaContent
 
 @Composable
-fun ScreenMediaExplorer(
-    listItmes: List<MediaContent>,
-    onToggleFavorite: (MediaContent) -> Unit,
-    label: String = ""
+fun <T> ScreenMediaExplorer(
+    items: List<T>,
+    label: String = "",
+    itemContent: @Composable (T) -> Unit
 ) {
     var animateIn by remember { mutableStateOf(false) }
 
@@ -79,14 +77,8 @@ fun ScreenMediaExplorer(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    items(listItmes) { item ->
-                        MediaCardGrid(
-                            media = item,
-                            onClick = {},
-                            onToggleFavorite = {
-                                onToggleFavorite(item)
-                            }
-                        )
+                    items(items) { item ->
+                        itemContent(item)
                     }
                 }
             }

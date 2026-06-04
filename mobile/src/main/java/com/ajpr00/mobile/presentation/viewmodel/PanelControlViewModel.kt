@@ -1,145 +1,194 @@
 package com.ajpr00.mobile.presentation.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ajpr00.core.domain.model.Dispositivo
+import com.ajpr00.core.domain.model.EstadoDispositivo
 import com.ajpr00.core.domain.model.PendingMedia
 import com.ajpr00.core.domain.model.PendingStatus
-import com.ajpr00.core.domain.usecase.AddDispositivoUseCase
-import com.ajpr00.core.domain.usecase.AddPendingMediaUseCase
-import com.ajpr00.core.domain.usecase.DeleteDispositivoUseCase
-import com.ajpr00.core.domain.usecase.GetAllPendingMediaUseCase
-import com.ajpr00.core.domain.usecase.GetDispositivosUseCase
-import com.ajpr00.core.domain.usecase.GetNextPendingMediaUseCase
-import com.ajpr00.core.domain.usecase.UpdateDispositivoUseCase
-import com.ajpr00.core.domain.usecase.UpdatePendingMediaStatusUseCase
+import com.ajpr00.core.domain.model.RemoteMedia
+import com.ajpr00.core.domain.usecase.media.AddPendingMediaUseCase
+import com.ajpr00.core.domain.usecase.dispositivo.DeleteDispositivoUseCase
+import com.ajpr00.core.domain.usecase.media.GetAllPendingMediaUseCase
+import com.ajpr00.core.domain.usecase.dispositivo.GetDispositivosUseCase
+import com.ajpr00.core.domain.usecase.media.GetNextPendingMediaUseCase
+import com.ajpr00.core.domain.usecase.dispositivo.UpdateDispositivoUseCase
+import com.ajpr00.core.domain.usecase.media.GetFlowRemoteMediaWithThumbnailsUseCase
+import com.ajpr00.core.domain.usecase.media.UpdatePendingMediaStatusUseCase
+import com.ajpr00.core.util.tryLocate
 import com.ajpr00.mobile.ui.mapper.toDispositivoUi
 import com.ajpr00.mobile.ui.model.DispositivoUi
+import com.ajpr00.visumloop.mobile.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class PanelControlViewModel @Inject constructor(
-    // UseCases del dominio: aquí no hay lógica, solo llamadas limpias a la capa domain.
     private val getDispositivosUseCase: GetDispositivosUseCase,
-    private val addDispositivoUseCase: AddDispositivoUseCase,
     private val deleteDispositivoUseCase: DeleteDispositivoUseCase,
     private val updateDispositivoUseCase: UpdateDispositivoUseCase,
-
-    // UseCases para gestionar la cola de archivos pendientes de enviar.
     private val addPendingMediaUseCase: AddPendingMediaUseCase,
     private val getNextPendingMediaUseCase: GetNextPendingMediaUseCase,
     private val updatePendingMediaStatusUseCase: UpdatePendingMediaStatusUseCase,
     private val getAllPendingMediaUseCase: GetAllPendingMediaUseCase,
-   // private val getListaReposicionUseCase: GetListaReposicionUseCase
-
+    private val getObserveListUseCase: GetFlowRemoteMediaWithThumbnailsUseCase,
 ) : ViewModel() {
+    private val TAG = "PanelControlVM"
 
     // ---------------------------------------------------------
-    //  SELECCIÓN DE DISPOSITIVO
-    // ---------------------------------------------------------
-    // Aquí guardamos qué dispositivo ha seleccionado el usuario.
-    // Es un StateFlow porque la UI necesita reaccionar cuando cambia.
+//  DISPOSITIVO SELECCIONADO
+// ---------------------------------------------------------
     private val _selectedDevice = MutableStateFlow<DispositivoUi?>(null)
     val selectedDevice: StateFlow<DispositivoUi?> = _selectedDevice
 
-    // ---------------------------------------------------------
-    //  LISTA DE ARCHIVOS PENDIENTES DE ENVÍO
-    // ---------------------------------------------------------
-    // Esto escucha la BD en tiempo real. Cada vez que se añade o cambia
-    // un archivo pendiente, la UI se actualiza sola.
-    val pendingMedia = getAllPendingMediaUseCase()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val listRepro: StateFlow<List<RemoteMedia>> =
+        selectedDevice
+            .filterNotNull()
+            .flatMapLatest { device ->
+                getObserveListUseCase(device.ip!!, device.puerto!!)
 
-    // Añadir un archivo a la cola de envío.
-    // Aquí no enviamos nada todavía, solo lo guardamos en BD.
-    fun addMedia(media: PendingMedia) {
+            }
+            .map { list ->
+                Log.d(TAG, "VM_REPRO → Lista recibida del UseCase: ${list.size} elementos")
+                list
+            }
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5000),
+                emptyList()
+            )
+
+    fun selectDevice(device: DispositivoUi) {
         viewModelScope.launch {
-            addPendingMediaUseCase(media)
+            Log.d(TAG, "VM_SELECT → Dispositivo seleccionado: $device")
+
+            _selectedDevice.value = device
         }
     }
 
     // ---------------------------------------------------------
-    //  ENVÍO DE ARCHIVOS AL TABLET
-    // ---------------------------------------------------------
-    // Esta función busca el siguiente archivo pendiente y lo envía.
-    // Si todo va bien → lo marcamos como SENT.
-    // Si falla → en el futuro podríamos marcarlo como FAILED o reintentar.
+//  LISTA DE ARCHIVOS PENDIENTES
+// ---------------------------------------------------------
+    val pendingMedia = getAllPendingMediaUseCase()
+        .map { list ->
+            Log.d(TAG, "VM_PENDING → Lista de pendientes: ${list.size}")
+            list
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun addMedia(media: PendingMedia) {
+        Log.d(TAG, "VM_PENDING → Añadiendo media: $media")
+        viewModelScope.launch { addPendingMediaUseCase(media) }
+    }
+
     fun enviarMedia() {
         viewModelScope.launch {
             val next = getNextPendingMediaUseCase()
+            Log.d(TAG, "VM_PENDING → Siguiente media para enviar: $next")
 
             if (next != null) {
-                // Aquí llamamos a la función que realmente hace el envío.
                 enviarAlTablet(next)
-
-                // Si llegamos aquí, asumimos que se envió bien.
                 updatePendingMediaStatusUseCase(next.id, PendingStatus.SENT)
+                Log.d(TAG, "VM_PENDING → Media marcada como enviada")
             }
         }
     }
 
-    // ---------------------------------------------------------
-    //  SELECCIONAR DISPOSITIVO
-    // ---------------------------------------------------------
-    // Cuando el usuario toca un dispositivo en la UI, lo guardamos aquí.
-    fun selectDevice(device: DispositivoUi) {
-        _selectedDevice.value = device
+    private suspend fun enviarAlTablet(media: PendingMedia): Boolean {
+        Log.d(TAG, "VM_ACTION → Enviando al tablet: $media")
+        return true
     }
 
     // ---------------------------------------------------------
-    //  LISTA DE DISPOSITIVOS
-    // ---------------------------------------------------------
-    // Obtenemos los dispositivos desde domain y los convertimos a UI.
+//  LISTA DE DISPOSITIVOS
+// ---------------------------------------------------------
     val dispositivos: StateFlow<List<DispositivoUi>> =
         getDispositivosUseCase()
-            .map { list -> list.map { it.toDispositivoUi() } }
+            .map { list ->
+                Log.d(TAG, "VM_DEVICES → Dispositivos desde domain: ${list.size}")
+                list.map { it.toDispositivoUi() }
+            }
             .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
-                initialValue = emptyList()
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5000),
+                emptyList()
             )
 
-    // ---------------------------------------------------------
-    //  CRUD DE DISPOSITIVOS
-    // ---------------------------------------------------------
-    fun addDispositivo(dispositivo: Dispositivo) {
-        viewModelScope.launch {
-            addDispositivoUseCase(dispositivo)
-        }
-    }
-
     fun deleteDispositivo(dispositivo: Dispositivo) {
-        viewModelScope.launch {
-            deleteDispositivoUseCase(dispositivo)
-        }
+        Log.d(TAG, "VM_ACTION → Eliminando dispositivo: $dispositivo")
+        viewModelScope.launch { deleteDispositivoUseCase(dispositivo) }
     }
 
     fun updateDispositivo(dispositivo: Dispositivo) {
-        viewModelScope.launch {
-            updateDispositivoUseCase(dispositivo)
+        Log.d(TAG, "VM_ACTION → Actualizando dispositivo: $dispositivo")
+        viewModelScope.launch { updateDispositivoUseCase(dispositivo) }
+    }
+
+    // ---------------------------------------------------------
+//  ONLINE / OFFLINE
+// ---------------------------------------------------------
+    private suspend fun isOnline(ip: String, port: Int): Boolean {
+        return withContext(Dispatchers.IO) {
+            val result = tryLocate(ip, port) != null
+            Log.d(TAG, "VM_ONLINE → Ping a $ip:$port → ${if (result) "ONLINE" else "OFFLINE"}")
+            result
         }
     }
 
     // ---------------------------------------------------------
-    //  ENVÍO REAL AL TABLET (AÚN SIN IMPLEMENTAR)
-    // ---------------------------------------------------------
-    // Esta función será la encargada de hacer la petición HTTP al tablet.
-    // Aquí irá la lógica de OkHttp o Ktor para subir el archivo.
-    // De momento está vacía porque la implementarás más adelante.
-    private suspend fun enviarAlTablet(media: PendingMedia): Boolean {
-        // Aquí irá la magia del envío LAN.
-        // La idea es:
-        // 1. Obtener IP y puerto del dispositivo seleccionado.
-        // 2. Crear un multipart con el archivo.
-        // 3. Hacer POST al servidor del tablet.
-        // 4. Devolver true si todo fue bien.
-        return true
+//  TICKER
+// ---------------------------------------------------------
+    private val ticker = kotlinx.coroutines.flow.flow {
+        while (true) {
+            Log.d(TAG, "VM_TICKER → Tick emitido")
+            emit(Unit)
+            kotlinx.coroutines.delay(5000)
+        }
     }
+
+    // ---------------------------------------------------------
+//  DISPOSITIVOS CON ESTADO
+// ---------------------------------------------------------
+    val dispositivosConEstado: StateFlow<List<DispositivoUi>> =
+        combine(dispositivos, ticker) { lista, _ ->
+
+            Log.d(TAG, "VM_DEVICES → Combinando dispositivos + ticker")
+
+            if (lista.isEmpty()) {
+                Log.d(TAG, "VM_DEVICES → Lista vacía, devolviendo emptyList()")
+                return@combine emptyList()
+            }
+
+            lista.map { dispositivo ->
+                Log.d(TAG, "VM_ONLINE → Comprobando estado de: ${dispositivo.nombre}")
+
+                val online = isOnline(dispositivo.ip ?: "", dispositivo.puerto ?: 0)
+
+                val actualizado = dispositivo.copy(
+                    estado = if (online) EstadoDispositivo.ONLINE else EstadoDispositivo.OFFLINE,
+                    icono = if (online) R.drawable.ic_tablet else R.drawable.ic_table_disabled
+                )
+
+                Log.d(TAG, "VM_ONLINE → Estado actualizado: $actualizado")
+                actualizado
+            }
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            emptyList()
+        )
 }

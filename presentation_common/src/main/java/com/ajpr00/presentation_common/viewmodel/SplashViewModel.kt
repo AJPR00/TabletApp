@@ -3,7 +3,7 @@ package com.ajpr00.presentation_common.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ajpr00.core.domain.usecase.ObserveLoginStateUseCase
+import com.ajpr00.core.domain.usecase.user.ObserveLoginStateUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted

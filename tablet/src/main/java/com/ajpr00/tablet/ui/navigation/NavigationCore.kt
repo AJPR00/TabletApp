@@ -25,7 +25,6 @@ import com.ajpr00.tablet.ui.screen.ReproductorScreen
 import com.ajpr00.presentation_common.viewmodel.AuthViewModel
 import com.ajpr00.presentation_common.viewmodel.LoginViewModel
 import com.ajpr00.presentation_common.viewmodel.RegisterViewModel
-import com.ajpr00.tablet.presentation.server.ServerViewModel
 import com.ajpr00.tablet.ui.screen.SplashScreenTablet
 
 @Composable
@@ -86,58 +85,12 @@ fun NavigationCore(innerPadding: PaddingValues) {
                 val viewModelMediaBackground: ReproducorViewModel = hiltViewModel(parentEntry)
                 val viewModelMediaItems: MediaItemsViewModel = hiltViewModel(parentEntry)
                 val viewModelAuth: AuthViewModel = hiltViewModel(parentEntry)
-                val serverViewModel: ServerViewModel = hiltViewModel(parentEntry)
 
                 ReproductorScreen(
-                    goToReproductor = { Reproductor(viewModelMediaBackground) },
-                    goToMenuOverlayScreen = {
-                        MenuOverlayScreen(
-                            viewModelMediaBackground = viewModelMediaBackground,
-                            menuGestoReproducion = {
-                                MenuGestoReproductor(
-                                    isVideo = viewModelMediaBackground.isVideo.collectAsState().value,
-                                    onPaused = { viewModelMediaBackground.togglePlayPause() },
-                                    onPrevMedia = { viewModelMediaBackground.prevMedia() },
-                                    onNextMedia = { viewModelMediaBackground.nextMedia() },
-                                    onRewind = { viewModelMediaBackground.rewind() },
-                                    onForward = { viewModelMediaBackground.forward() },
-                                    onSeekForward = { delta ->
-                                        viewModelMediaBackground.forward(
-                                            delta
-                                        )
-                                    },
-                                    onSeekBackward = { delta ->
-                                        viewModelMediaBackground.rewind(
-                                            delta
-                                        )
-                                    },
-                                    onVolumeChange = { delta ->
-                                        viewModelMediaBackground.setVolume(
-                                            viewModelMediaBackground.option.value.volume + delta
-                                        )
-                                    },
-                                    onLockScreen = { viewModelMediaBackground.togglesLockScreen() },
-                                    onShowMenu = { viewModelMediaBackground.isShowMenuApp(it) },
-                                    resetTimer = { viewModelMediaBackground.updateLastInteraction() }
-                                )
-                            },
-                            menuApp = {
-                                MenuApp(
-                                    viewModelMediaBackground = viewModelMediaBackground,
-                                    viewModelMediaItme = viewModelMediaItems,
-                                    viewModelServer = serverViewModel,
-                                    goToLogin = { navController.navigate(LoginGraph) },
-                                    viewModelAuth = viewModelAuth,
-                                )
-                            },
-                            panelSelectorMedia = {
-                                ScreenMediaExplorer(
-                                    viewModelMediaItems = viewModelMediaItems,
-                                    viewModelMediaBackground = viewModelMediaBackground,
-                                )
-                            }
-                        )
-                    }
+                    viewModelMediaBackground = viewModelMediaBackground,
+                    viewModelMediaItems = viewModelMediaItems,
+                    viewModelAuth = viewModelAuth,
+                    goToLogin = { navController.navigate(LoginGraph) }
                 )
             }
         }

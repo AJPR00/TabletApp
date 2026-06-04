@@ -41,6 +41,13 @@ android {
             "GOOGLE_REDIRECT_URI",
             "\"https://app-visumlopp.firebaseapp.com/__/auth/handler\""
         )
+
+        buildConfigField(
+            "String",
+            "AES_KEY_HEX",
+            "\"${properties["AES_KEY"]}\""
+        )
+
     }
 
     buildFeatures {

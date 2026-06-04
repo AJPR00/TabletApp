@@ -8,6 +8,8 @@ import com.ajpr00.visumloop.mobile.R
 fun Dispositivo.toDispositivoUi(): DispositivoUi {
     return DispositivoUi(
         id = id,
+        ip = ip,
+        puerto = puerto,
         nombre = nombre,
         nivelBatery = nivelBatery,
         icono = when (estado) {

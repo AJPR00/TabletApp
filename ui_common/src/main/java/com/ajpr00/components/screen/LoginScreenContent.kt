@@ -39,7 +39,6 @@ fun LoginScreenContent(
     password: String,
     showPassword: Boolean,
     isEmailMode: Boolean,
-    messages: List<String>,
     onEmailModeToggle: () -> Unit,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,

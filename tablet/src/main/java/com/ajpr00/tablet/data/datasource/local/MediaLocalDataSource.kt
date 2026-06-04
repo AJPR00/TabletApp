@@ -14,5 +14,5 @@ interface MediaLocalDataSource {
     suspend fun getById(id: String): MediaContentEntity?
     // Métodos síncronos
     suspend fun getAllOnce(): List<MediaContentEntity>
-    suspend fun deleteById(id: Int)
+    suspend fun deleteById(id: String)
 }

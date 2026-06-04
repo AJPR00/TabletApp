@@ -4,6 +4,9 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Permiso obligatorio para servicios foreground -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
     <!-- Permisos para acceder a la galería Android 12 y anteriores (API ≤ 32) -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
 
@@ -35,5 +38,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- ServerService -->
+        <service
+            android:name="com.ajpr00.tablet.data.server.ServerService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
     </application>
 </manifest>

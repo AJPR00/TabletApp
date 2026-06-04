@@ -3,7 +3,7 @@ package com.ajpr00.tablet.data.repositoryImp
 import android.util.Log
 import com.ajpr00.core.domain.model.MediaContent
 import com.ajpr00.core.domain.model.MediaResult
-import com.ajpr00.core.domain.repository.MediaRepository
+import com.ajpr00.core.domain.repository.media.MediaRepository
 import com.ajpr00.data.datasource.cloud.DataSourceGoogleDrive
 import com.ajpr00.data.datasource.cloud.FtpClientDataSource
 import com.ajpr00.tablet.data.datasource.local.MediaLocalDataSource
@@ -15,6 +15,19 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
+/**
+ * Implementación de MediaRepository para la tablet.
+ *
+ * Esta clase reúne todas las fuentes de datos relacionadas con los archivos
+ * multimedia del dispositivo:
+ *
+ *  - Base de datos local (Room)
+ *  - Servidor FTP
+ *  - Google Drive
+ *  - Listas locales ya cargadas
+ *
+ * Su función es unificar el acceso a los medios, independientemente de la fuente.
+ */
 class MediaRepositoryImpl @Inject constructor(
     private val localDataSource: MediaLocalDataSource,
     private val ftpDataSource: FtpClientDataSource,
@@ -107,15 +120,13 @@ class MediaRepositoryImpl @Inject constructor(
             localDataSource.getAllOnce().map { it.toDomain() }
         }
 
-    override fun deleteSync(id: Int) =
+    override fun deleteSync(id: String) =
         runBlocking {
             localDataSource.deleteById(id)
         }
 
-    override fun getMediaByIdSync(id: Int): MediaContent? =
+    override fun getMediaByIdSync(id: String): MediaContent? =
         runBlocking {
             localDataSource.getById(id.toString())?.toDomain()
         }
-
-
 }

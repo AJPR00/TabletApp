@@ -56,5 +56,22 @@ fun isMenorEdad(nacimientoMillis: Long?, anioCarnaval: Int = 2025): Boolean {
     return edad < 18
 }
 
+fun limitDeviceName(input: String, maxLength: Int = 20): Boolean {
+    return input.matches(Regex("^[a-zA-Z0-9 ]{3,$maxLength}$"))
+}
+
+fun isValidIpv4(input: String): Boolean {
+    val ipv4Regex = Regex(
+        "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\\.|$)){4}$"
+    )
+    return ipv4Regex.matches(input)
+}
+
+
+
+
+
+
+
 
 

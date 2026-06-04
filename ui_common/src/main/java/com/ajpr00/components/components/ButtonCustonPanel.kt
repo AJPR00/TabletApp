@@ -3,10 +3,14 @@ package com.ajpr00.components.components
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
@@ -30,52 +34,33 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.ajpr00.uicommon.R
 
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun ButtonCustonPanelPreview() {
-    ButtonCustonPanel(
-        icon = painterResource(id = R.drawable.email_ic),
-        label = "Enviar Imagen",
-        iconSize = 50.dp,
-        onClick = { })
-}
-
 @Composable
 fun ButtonCustonPanel(
-    modifier: Modifier = Modifier
-        .fillMaxSize()
-        .aspectRatio(1f),
-    shape: Shape = RoundedCornerShape(10),
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(12),
     icon: Painter,
-    iconSize: Dp = 90.dp,
+    iconSize: Dp = 64.dp,
     label: String,
     color: Color = MaterialTheme.colorScheme.primary,
     onClick: () -> Unit
 ) {
     ElevatedButton(
-        modifier = modifier,
-        shape = shape,
-        colors = ButtonDefaults.textButtonColors(
+        modifier = modifier
+            .fillMaxWidth()
+            .aspectRatio(1f), shape = shape,
+        colors = ButtonDefaults.elevatedButtonColors(
             containerColor = color,
             contentColor = MaterialTheme.colorScheme.onPrimary
         ),
         onClick = onClick
     ) {
-
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        Box(
+            modifier = Modifier.fillMaxSize().padding(top = 16.dp),
+            contentAlignment = Alignment.TopCenter
         ) {
-            /** Usamos Icon para recursos vectoriales porque permiten aplicar tint y mantienen su forma.
-            Usamos Image para imágenes no vectoriales (como avatares remotos) porque respetan sus colores,
-            se ajustan mejor al recorte circular y permiten ContentScale.Crop para llenar el espacio.*/
-
             val esVector = icon is VectorPainter
 
             if (esVector) {
-                // 👉 Iconos vectoriales: tint + no circular
                 Icon(
                     painter = icon,
                     contentDescription = label,
@@ -83,7 +68,6 @@ fun ButtonCustonPanel(
                     modifier = Modifier.size(iconSize)
                 )
             } else {
-                // 👉 Imágenes NO vectoriales: sin tint + circular + ajustada
                 Image(
                     painter = icon,
                     contentDescription = label,
@@ -91,11 +75,19 @@ fun ButtonCustonPanel(
                         .size(iconSize)
                         .clip(CircleShape)
                         .border(2.dp, Color.White, CircleShape),
-                    contentScale = ContentScale.Crop   // 👈 CLAVE: ajusta la imagen al círculo
+                    contentScale = ContentScale.Crop
                 )
             }
 
-            Text(text = label, textAlign = TextAlign.Center)
+            Text(
+                text = label,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter),
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                style = MaterialTheme.typography.labelMedium
+            )
         }
     }
 }

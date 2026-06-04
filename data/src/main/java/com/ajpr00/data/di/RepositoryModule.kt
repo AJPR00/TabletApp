@@ -1,12 +1,17 @@
 package com.ajpr00.data.di
 
-import com.ajpr00.core.domain.repository.AuthRepository
-import com.ajpr00.core.domain.repository.DropboxRepository
-import com.ajpr00.core.domain.repository.EmailAuthRepository
-import com.ajpr00.core.domain.repository.FacebookRepository
-import com.ajpr00.core.domain.repository.FtpRepository
-import com.ajpr00.core.domain.repository.GoogleAuthRepository
-import com.ajpr00.data.repository.impl.*
+import com.ajpr00.core.domain.repository.login.StateAuthRepository
+import com.ajpr00.core.domain.repository.network.DropboxRepository
+import com.ajpr00.core.domain.repository.login.EmailAuthRepository
+import com.ajpr00.core.domain.repository.login.FacebookAuthRepository
+import com.ajpr00.core.domain.repository.network.FtpRepository
+import com.ajpr00.core.domain.repository.login.GoogleAuthRepository
+import com.ajpr00.data.repository.impl.login.AuthRepositoryImpl
+import com.ajpr00.data.repository.impl.login.EmailAuthRepositoryImpl
+import com.ajpr00.data.repository.impl.login.FacebookRepositoryImpl
+import com.ajpr00.data.repository.impl.login.GoogleAuthRepositoryImpl
+import com.ajpr00.data.repository.impl.network.DropboxRepositoryImpl
+import com.ajpr00.data.repository.impl.network.FtpRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -22,7 +27,7 @@ abstract class RepositoryModule {
     @Singleton
     abstract fun bindAuthRepository(
         impl: AuthRepositoryImpl
-    ): AuthRepository
+    ): StateAuthRepository
 
     //Email Auth
     @Binds
@@ -36,7 +41,7 @@ abstract class RepositoryModule {
     @Singleton
     abstract fun bindFacebookRepository(
         impl: FacebookRepositoryImpl
-    ): FacebookRepository
+    ): FacebookAuthRepository
 
     //Google Auth
     @Binds

@@ -4,9 +4,10 @@ import android.widget.Toast
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import com.ajpr00.components.components.showToast
 import com.ajpr00.presentation_common.viewmodel.RegisterViewModel
 import com.ajpr00.components.screen.RegisterContent
-import com.ajpr00.presentation_common.state.EstadoEvento
+import com.ajpr00.presentation_common.state.Estado
 import com.ajpr00.tablet.R
 
 @Composable
@@ -16,7 +17,13 @@ fun RegisterTablet(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
-    val uiEvent by viewModel.eventState.collectAsState()
+    val uiEvent by viewModel.state.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.eventos.collect { mensaje ->
+            showToast(context, mensaje)
+        }
+    }
 
     RegisterContent(
         logo = painterResource(id = R.drawable.app_nombre_t_tulo1 ),
@@ -32,22 +39,6 @@ fun RegisterTablet(
         onTogglePasswordVisibility = viewModel::togglePasswordVisibility,
         onRegisterClick = viewModel::registrar,
         onBackClick = goToBack,
-        loading = uiEvent is EstadoEvento.Cargando,
-        messages = if (uiEvent is EstadoEvento.Mensajes)
-            (uiEvent as EstadoEvento.Mensajes).mensajes
-        else emptyList()
+        loading = uiEvent is Estado.Cargando,
     )
-
-    when (uiEvent) {
-        is EstadoEvento.Exito -> goToBack()
-
-        is EstadoEvento.Mensajes -> {
-            (uiEvent as EstadoEvento.Mensajes).mensajes.forEach {
-                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-            }
-            viewModel.clearErrors()
-        }
-
-        else -> Unit
-    }
 }
