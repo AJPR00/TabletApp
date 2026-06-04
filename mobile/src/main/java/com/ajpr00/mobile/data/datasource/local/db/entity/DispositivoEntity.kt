@@ -10,5 +10,5 @@ data class DispositivoEntity(
     val ip: String?,
     val puerto: Int?,
     val tipo: String,
-    val token: String
+    val aesKey: String? = "no_key"
 )

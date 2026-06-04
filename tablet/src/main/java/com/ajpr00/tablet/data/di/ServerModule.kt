@@ -1,6 +1,8 @@
 package com.ajpr00.tablet.data.di
 
-import com.ajpr00.core.domain.repository.MediaRepository
+import com.ajpr00.core.domain.usecase.media.DeleteMediaSyncUseCase
+import com.ajpr00.core.domain.usecase.media.GetAllMediaSyncUseCase
+import com.ajpr00.core.domain.usecase.media.GetMediaByIdSyncUseCase
 import com.ajpr00.data.useCase.ImportMediaFromServerUseCase
 import com.ajpr00.tablet.data.server.TabletServer
 import dagger.Module
@@ -16,9 +18,17 @@ object ServerModule {
     @Provides
     @Singleton
     fun provideTabletServer(
-        repository: MediaRepository,
+        getMediaByIdSync: GetMediaByIdSyncUseCase,
+        deleteMediaSyncUseCase: DeleteMediaSyncUseCase,
+        getAllMediaSyncUseCase: GetAllMediaSyncUseCase,
         importMediaFromServerUseCase: ImportMediaFromServerUseCase
     ): TabletServer {
-        return TabletServer(repository, importMediaFromServerUseCase)
+        return TabletServer(
+            getMediaByIdSync,
+            deleteMediaSyncUseCase,
+            getAllMediaSyncUseCase,
+            importMediaFromServerUseCase
+        )
     }
 }
+

@@ -4,7 +4,7 @@
     <selectionStates>
       <SelectionState runConfigName="tablet">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-05-23T23:28:40.377577100Z">
+        <DropdownSelection timestamp="2026-06-03T21:51:06.512398700Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="PhysicalDevice" identifier="serial=19807777" />
@@ -15,7 +15,7 @@
       </SelectionState>
       <SelectionState runConfigName="mobile">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-05-24T15:59:47.398785300Z">
+        <DropdownSelection timestamp="2026-06-03T21:51:09.791485900Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="PhysicalDevice" identifier="serial=19807777" />
@@ -28,9 +28,6 @@
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
       <SelectionState runConfigName="ScreenPanelControlPreview">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
-      <SelectionState runConfigName="UiComponentsTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

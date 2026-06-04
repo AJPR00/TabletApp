@@ -53,7 +53,7 @@ fun ScreenMediaExplorer(
     Box(modifier = Modifier.fillMaxSize()) {
 
         // --------------------------------------------------------------
-        // 🎬 ANIMACIÓN DE ENTRADA Y SALIDA
+        // ANIMACIÓN DE ENTRADA Y SALIDA
         // --------------------------------------------------------------
         // La pantalla entra desde la derecha y sale hacia la derecha.
         // Esto da sensación de "ventana deslizante".
@@ -88,7 +88,7 @@ fun ScreenMediaExplorer(
                 Text(label, modifier = Modifier.align(Alignment.TopCenter))
 
                 // --------------------------------------------------------------
-                // 🧱 GRID DE ELEMENTOS (IMÁGENES Y VÍDEOS)
+                // GRID DE ELEMENTOS (IMÁGENES Y VÍDEOS)
                 // --------------------------------------------------------------
                 // GridCells.Adaptive hace que las tarjetas se ajusten al tamaño
                 // disponible, manteniendo un mínimo de 150dp.
@@ -105,9 +105,8 @@ fun ScreenMediaExplorer(
                         MediaCardGrid(
                             media = item,
                             onClick = {}, // Aquí podrías abrir un detalle
-                            onToggleFavorite = {
-                                // Cambia el estado de favorito en la BD
-                                viewModelMediaItems.toggleFavorite(item)
+                            onToggleAccion = {
+                                viewModelMediaItems.toggleAction(item)
                             }
                         )
                     }

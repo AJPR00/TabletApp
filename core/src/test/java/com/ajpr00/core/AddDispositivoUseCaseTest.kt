@@ -1,8 +1,8 @@
 package com.ajpr00.core
 
 import com.ajpr00.core.domain.model.Dispositivo
-import com.ajpr00.core.domain.repository.DispositivoRepository
-import com.ajpr00.core.domain.usecase.AddDispositivoUseCase
+import com.ajpr00.core.domain.repository.dispositivo.DispositivoRepository
+import com.ajpr00.core.domain.usecase.dispositivo.AddDispositivoUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals

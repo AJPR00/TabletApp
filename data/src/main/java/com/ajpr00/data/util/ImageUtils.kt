@@ -2,6 +2,7 @@ package com.ajpr00.data.util
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -50,3 +51,32 @@ object ImageUtils {
         return thumbFile
     }
 }
+
+object VideoUtils {
+
+    fun generateVideoThumbnail(
+        videoFile: File,
+        quality: Int = 80
+    ): File {
+
+        val retriever = MediaMetadataRetriever()
+        retriever.setDataSource(videoFile.absolutePath)
+
+        val bitmap: Bitmap = retriever.getFrameAtTime(0)
+            ?: throw Exception("No se pudo extraer frame del vídeo")
+
+        val thumbFile = File(
+            videoFile.parent,
+            videoFile.nameWithoutExtension + "_thumb.jpg"
+        )
+
+        FileOutputStream(thumbFile).use { out ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
+        }
+
+        retriever.release()
+
+        return thumbFile
+    }
+}
+

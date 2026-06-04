@@ -23,8 +23,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.ajpr00.components.components.showToast
 import com.ajpr00.tablet.presentation.viewmodel.ReproducorViewModel
 import com.ajpr00.tablet.R
 import kotlinx.coroutines.coroutineScope
@@ -39,10 +41,16 @@ fun MenuOverlayScreen(
     menuApp: @Composable () -> Unit,
     panelSelectorMedia: @Composable () -> Unit
 ) {
+    val context = LocalContext.current
     Log.d("Flow", "▶ Entrando en MenuOverlayScreen")
     val estado by viewModelMediaBackground.stadoVisualMenu.collectAsState()
-    val eventoState by viewModelMediaBackground.eventoState.collectAsState()
     var showLockIcon by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        viewModelMediaBackground.eventos.collect { mensaje ->
+            showToast(context, mensaje)
+        }
+    }
 
     LaunchedEffect(estado.lastInteraction, estado.showSidePanel, estado.showMenuApp) {
         if (estado.showSidePanel || estado.showMenuApp) {
@@ -64,11 +72,11 @@ fun MenuOverlayScreen(
             if (elapsed >= 50000) {
                 // No hubo interacción → cerramos
                 if (estado.showSidePanel) {
-                    viewModelMediaBackground.isShowSidePanel(false)
+                    viewModelMediaBackground.isShowSidePanel()
                     Log.d("FlowRelo", "⏱ Panel lateral cerrado por inactividad")
                 }
                 if (estado.showMenuApp) {
-                    viewModelMediaBackground.isShowMenuApp(false)
+                    viewModelMediaBackground.isShowMenuApp()
                     Log.d("FlowRelo", "⏱ Menú de app cerrado por inactividad")
                 }
             } else {
@@ -83,23 +91,25 @@ fun MenuOverlayScreen(
             .fillMaxSize()
             // Long press y doble tap
             .pointerInput(Unit) {
+                if (estado.isLockScreen) {
+                    viewModelMediaBackground.enviarEvento("Pantalla bloqueada")
+                }
                 coroutineScope {
                     detectTapGestures(
                         onTap = {
                             // Al hacer tap mostramos el candado
-                            if (estado.isLockScreen) {
-                                showLockIcon = true
-                                Log.d("Gestos", "👆 Tap → mostrar candado temporal")
-
-                                // Lanzamos corrutina para ocultarlo en 2s
-                                launch {
-                                    delay(2000)
-                                    showLockIcon = false
-                                    Log.d("Gestos", "⏱ Candado ocultado tras 2s")
-                                }
-                            }
+                            mostrarCandado(
+                                estado.isLockScreen,
+                                { showLockIcon = it },
+                                { block -> launch { block() } }
+                            )
                         },
                         onPress = {
+                            mostrarCandado(
+                                estado.isLockScreen,
+                                { showLockIcon = it },
+                                { block -> launch { block() } }
+                            )
                             viewModelMediaBackground.updateLastInteraction()
                             Log.d("Gestos", "✋ onPress detectado → esperando 3.5s para lock/unlock")
                             val job = launch {
@@ -115,7 +125,12 @@ fun MenuOverlayScreen(
                             Log.d("Gestos", "✋ onPress liberado antes de los 3.5s → cancelado")
                         },
                         onDoubleTap = {
-                            viewModelMediaBackground.isShowMenuApp(true)
+                            mostrarCandado(
+                                estado.isLockScreen,
+                                { showLockIcon = it },
+                                { block -> launch { block() } }
+                            )
+                            viewModelMediaBackground.isShowMenuApp()
                             Log.d("Gestos", "👆👆 Doble tap → showMenu=${estado.showMenuApp}")
                         }
                     )
@@ -158,7 +173,6 @@ fun MenuOverlayScreen(
                     }
 
                     if (estado.showSidePanel) {
-
                         Box(
                             modifier = Modifier
                                 .weight(1f) // mitad derecha
@@ -171,3 +185,18 @@ fun MenuOverlayScreen(
         }
     }
 }
+
+private fun mostrarCandado(
+    isLockScreen: Boolean,
+    setShowLockIcon: (Boolean) -> Unit,
+    launchDelay: (suspend () -> Unit) -> Unit
+) {
+    if (isLockScreen) {
+        setShowLockIcon(true)
+        launchDelay {
+            delay(2000)
+            setShowLockIcon(false)
+        }
+    }
+}
+

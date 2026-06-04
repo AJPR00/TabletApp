@@ -31,7 +31,6 @@ fun RegisterContent(
     onRegisterClick: () -> Unit,
     onBackClick: () -> Unit,
     loading: Boolean,
-    messages: List<String>
 ) {
     var showPassConfirm by remember { mutableStateOf(false) }
 

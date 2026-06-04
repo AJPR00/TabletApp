@@ -2,7 +2,7 @@ package com.ajpr00.data.useCase
 
 import android.content.Context
 import com.ajpr00.core.domain.model.FormatType
-import com.ajpr00.core.domain.repository.MediaRepository
+import com.ajpr00.core.domain.repository.media.MediaRepository
 import com.ajpr00.data.file.FileManager.saveIncomingFile
 import com.ajpr00.data.mapper.toMediaContent
 import com.ajpr00.data.util.detectFormatType

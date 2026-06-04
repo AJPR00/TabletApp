@@ -6,8 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -29,7 +28,7 @@ import com.ajpr00.core.domain.model.MediaContent
 fun MediaCardGrid(
     media: MediaContent,
     onClick: () -> Unit,
-    onToggleFavorite: () -> Unit,
+    onToggleAccion: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -47,7 +46,7 @@ fun MediaCardGrid(
         // Botón de favorito en la esquina superior derecha
         IconButton(
             modifier = Modifier.align(Alignment.TopEnd),
-            onClick = onToggleFavorite
+            onClick = onToggleAccion
         ) {
            /* Icon(
                 imageVector = if (media.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
@@ -55,7 +54,7 @@ fun MediaCardGrid(
                 tint = if (media.isFavorite) Color.Red else Color.Gray
             )*/
             Icon(
-                imageVector = Icons.Default.Favorite,
+                imageVector = Icons.Default.Delete,
                 contentDescription = "Favorito",
                 tint = Color.Red
             )

@@ -9,6 +9,9 @@ object Splash
 object MainGraph
 
 @Serializable
+object RegisterDeviceGraph
+
+@Serializable
 object PanelControl
 
 @Serializable

@@ -3,15 +3,16 @@ package com.ajpr00.presentation_common.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ajpr00.core.domain.usecase.CheckUserExistsUseCase
-import com.ajpr00.core.domain.usecase.RegisterUserUseCase
-import com.ajpr00.core.domain.usecase.SendPasswordResetUseCase
+import com.ajpr00.core.domain.usecase.user.CheckUserExistsUseCase
+import com.ajpr00.core.domain.usecase.user.RegisterUserUseCase
+import com.ajpr00.core.domain.usecase.login.SendPasswordResetUseCase
 import com.ajpr00.core.util.validarEmail
 import com.ajpr00.core.util.validarPassword
-import com.ajpr00.presentation_common.state.EstadoEvento
+import com.ajpr00.presentation_common.state.Estado
 import com.ajpr00.presentation_common.state.RegisterState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -29,8 +30,11 @@ class RegisterViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(RegisterState())
     val uiState: StateFlow<RegisterState> = _uiState
 
-    private val _eventState = MutableStateFlow<EstadoEvento>(EstadoEvento.Inicial)
-    val eventState: StateFlow<EstadoEvento> = _eventState
+    private val _state = MutableStateFlow<Estado>(Estado.Inicial)
+    val state: StateFlow<Estado> = _state
+
+    private val _eventos = MutableSharedFlow<String>()
+    val eventos = _eventos
 
 
     /**
@@ -44,26 +48,26 @@ class RegisterViewModel @Inject constructor(
         if (!isEmailValid() || !isPasswordValid()) return
 
         viewModelScope.launch {
-            _eventState.value = EstadoEvento.Cargando
+            _state.value = Estado.Cargando
             Log.d("RegisterViewModel", "Intentando registrar usuario con email: $email")
             val exists = checkUserExistsUseCase(email)
 
             if (exists) {
                 Log.d("RegisterViewModel", "El usuario ya existe")
-                addEvento("El usuario ya existe")
+                enviarEvento("El usuario ya existe")
                 return@launch
             }
 
             val result = registerUserUseCase(email, password)
 
             if (result.isSuccess) {
-                Log.d("RegisterViewModel", "✅ Registro exitoso en Firebase")
-                addEvento("Cuenta creada correctamente")
-                _eventState.value = EstadoEvento.Exito
+                Log.d("RegisterViewModel", "Registro exitoso en Firebase")
+                enviarEvento("Cuenta creada correctamente")
+                _state.value = Estado.Exito
 
             } else {
-                Log.e("RegisterViewModel", "❌ Error al registrar usuario en Firebase: ${result.exceptionOrNull()?.message}")
-                addEvento("Error al registrar usuario")
+                Log.e("RegisterViewModel", "${result.exceptionOrNull()?.message}")
+                showError("Error al registrar usuario")
             }
         }
 
@@ -71,32 +75,24 @@ class RegisterViewModel @Inject constructor(
 
     fun recuperarPassword(email: String) {
         viewModelScope.launch {
-            _eventState.value = EstadoEvento.Cargando
+            _state.value = Estado.Cargando
 
             val result = sendPasswordResetUseCase(email)
 
             if (result.isSuccess) {
-                addEvento("Correo de recuperación enviado a $email")
-                _eventState.value =  EstadoEvento.Exito
+                enviarEvento("Correo de recuperación enviado a $email")
+                _state.value =  Estado.Exito
             } else {
-                addEvento("Error al enviar correo de recuperación")
+                showError("Error al enviar correo de recuperación")
             }
             delay(5000)
-            _eventState.value = EstadoEvento.Inicial
+            _state.value = Estado.Inicial
         }
     }
 
-    fun addEvento(error: String) {
-        val current = _eventState.value
-        val nuevaLista = when (current) {
-            is EstadoEvento.Mensajes -> current.mensajes.toMutableList().apply { add(error) }
-            else -> mutableListOf(error)
-        }
-        _eventState.value = EstadoEvento.Mensajes(nuevaLista)
-    }
 
     fun clearErrors() {
-        _eventState.value = EstadoEvento.Inicial
+        _state.value = Estado.Inicial
     }
 
     fun clearFormularios() {
@@ -151,7 +147,7 @@ class RegisterViewModel @Inject constructor(
         val valid = email == confirmEmail && validarEmail(email ?: "")
         if (!valid) {
             Log.w("RegisterViewModel", "Los emails no coinciden o no son válidos")
-            addEvento("Los emails no coinciden")
+            showError("Los emails no coinciden")
         } else {
             Log.d("RegisterViewModel", "Emails válidos y coinciden")
         }
@@ -168,11 +164,21 @@ class RegisterViewModel @Inject constructor(
         val valid = password == confirmPassword && validarPassword(password)
         if (!valid) {
             Log.w("RegisterViewModel", "Las contraseñas no coinciden o no cumplen requisitos")
-            addEvento("Las contraseñas no coinciden")
+            showError("Las contraseñas no coinciden")
         } else {
             Log.d("RegisterViewModel", "Contraseñas válidas y coinciden")
         }
         return valid
+    }
+
+    fun enviarEvento(mensaje: String) {
+        viewModelScope.launch {
+            _eventos.emit(mensaje)
+        }
+    }
+
+    fun showError(message: String) {
+        enviarEvento("Error: $message")
     }
 
 }

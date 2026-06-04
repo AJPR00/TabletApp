@@ -9,6 +9,17 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Implementación de DispositivoLocalDataSource.
+ *
+ * Accede directamente a la base de datos local a través del DAO y se encarga
+ * de convertir entre entidades y modelos de dominio. Proporciona las
+ * operaciones básicas para obtener, insertar, eliminar y actualizar
+ * dispositivos almacenados en Room.
+ *
+ * Es la capa más cercana a la BD; el repositorio delega en este DataSource.
+ */
+
 @Singleton
 class DispositivoLocalDataSourceImpl @Inject constructor(
     private val dao: DispositivoDao

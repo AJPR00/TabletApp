@@ -31,13 +31,13 @@ import com.ajpr00.mobile.presentation.viewmodel.RegisterDeviceViewModel
 import com.ajpr00.mobile.ui.components.DrawerMenu
 import com.ajpr00.mobile.ui.components.FloatingBottomBar
 import com.ajpr00.mobile.ui.components.TopBar
-import com.ajpr00.mobile.ui.screen.LoginScreenMobile
-import com.ajpr00.mobile.ui.screen.QrScannerScreen
-import com.ajpr00.mobile.ui.screen.RecoverPasswordMobile
-import com.ajpr00.mobile.ui.screen.RegisterDeviceScreen
-import com.ajpr00.mobile.ui.screen.RegisterMobile
-import com.ajpr00.mobile.ui.screen.ScreenPanelControl
-import com.ajpr00.mobile.ui.screen.SplashScreenMobile
+import com.ajpr00.mobile.presentation.screen.LoginScreenMobile
+import com.ajpr00.mobile.presentation.screen.QrScannerScreen
+import com.ajpr00.mobile.presentation.screen.RecoverPasswordMobile
+import com.ajpr00.mobile.presentation.screen.RegisterDeviceScreen
+import com.ajpr00.mobile.presentation.screen.RegisterMobile
+import com.ajpr00.mobile.presentation.screen.ScreenPanelControl
+import com.ajpr00.mobile.presentation.screen.SplashScreenMobile
 import com.ajpr00.presentation_common.viewmodel.LoginViewModel
 import com.ajpr00.presentation_common.viewmodel.RegisterViewModel
 import com.ajpr00.presentation_common.viewmodel.SplashViewModel
@@ -62,7 +62,7 @@ fun NavigationCore() {
                 DrawerMenu(
                     selectedItem = selectedItem,
                     onItemSelected = { item ->
-                        Log.d("DRAWER", "➡️ Usuario seleccionó: $item")
+                        Log.d("DRAWER", "Usuario seleccionó: $item")
                         selectedItem = item
                         scope.launch { drawerState.close() }
                     }
@@ -77,27 +77,27 @@ fun NavigationCore() {
 
             topBar = {
                 if (!hideBars) {
-                    Log.d("UI", "🧢 Mostrando TopBar (estamos en MainGraph)")
+                    Log.d("UI", "Mostrando TopBar (estamos en MainGraph)")
                     TopBar(
                         onMenuClick = {
-                            Log.d("DRAWER", "📂 Abriendo menú lateral")
+                            Log.d("DRAWER", "Abriendo menú lateral")
                             scope.launch { drawerState.open() }
                         }
                     )
                 } else {
-                    Log.d("UI", "🧢 TopBar oculto (no estamos en MainGraph)")
+                    Log.d("UI", "TopBar oculto (no estamos en MainGraph)")
                 }
             },
 
             bottomBar = {
                 if (!hideBars) {
-                    Log.d("UI", "🦶 Mostrando BottomBar (MainGraph activo)")
+                    Log.d("UI", "Mostrando BottomBar (MainGraph activo)")
                     FloatingBottomBar()
                 }
             }
         ) { innerPadding ->
 
-            Log.d("LAYOUT", "📐 innerPadding aplicado: $innerPadding")
+            Log.d("LAYOUT", "innerPadding aplicado: $innerPadding")
 
             NavHost(
                 modifier = Modifier.padding(innerPadding),
@@ -105,149 +105,152 @@ fun NavigationCore() {
                 startDestination = MainGraph
             ) {
 
-                // 🚀 SPLASH
+                // SPLASH
                 composable<Splash> { backStackEntry ->
-                    Log.d("NAV", "🚀 Entrando en SplashScreen")
+                    Log.d("NAV", "Entrando en SplashScreen")
 
                     val viewModelSplash: SplashViewModel = hiltViewModel(backStackEntry)
 
                     SplashScreenMobile(
                         viewModel = viewModelSplash,
                         onNavigateToMain = {
-                            Log.d("NAV", "➡️ Splash → MainGraph")
+                            Log.d("NAV", "Splash → MainGraph")
                             navController.navigate(MainGraph)
                         },
                         onNavigateToLogin = {
-                            Log.d("NAV", "➡️ Splash → LoginGraph")
+                            Log.d("NAV", "Splash → LoginGraph")
                             navController.navigate(LoginGraph)
                         }
                     )
                 }
 
-                // 🔐 LOGIN GRAPH
+                //LOGIN GRAPH
                 navigation<LoginGraph>(startDestination = LoginScreen) {
 
                     composable<LoginScreen> {
-                        Log.d("NAV", "🔐 Entrando en LoginScreen")
+                        Log.d("NAV", "Entrando en LoginScreen")
 
                         val viewModelLoginViewModel: LoginViewModel = hiltViewModel()
 
                         LoginScreenMobile(
                             viewModel = viewModelLoginViewModel,
                             goToMainGraph = {
-                                Log.d("NAV", "🔐 Login correcto → MainGraph")
+                                Log.d("NAV", "Login correcto → MainGraph")
                                 navController.navigate(MainGraph)
                             },
                             goToFromRegistro = {
-                                Log.d("NAV", "📝 Login → RegisterScreen")
+                                Log.d("NAV", "Login → RegisterScreen")
                                 navController.navigate(RegisterScreen)
                             },
                             goToRecuperarPass = {
-                                Log.d("NAV", "🔑 Login → RecoverPassword")
+                                Log.d("NAV", "Login → RecoverPassword")
                                 navController.navigate(FromRecover)
                             },
                         )
                     }
                 }
 
-                // 📝 REGISTER
+                //REGISTER
                 composable<RegisterScreen> {
-                    Log.d("NAV", "📝 Entrando en RegisterScreen")
+                    Log.d("NAV", "Entrando en RegisterScreen")
 
                     val viewModelLoginViewModel: RegisterViewModel = hiltViewModel()
                     RegisterMobile(
                         viewModel = viewModelLoginViewModel,
                         goToBack = {
-                            Log.d("NAV", "⬅️ Register → Back")
+                            Log.d("NAV", "Register → Back")
                             navController.popBackStack()
                         }
                     )
                 }
 
-                // 🔑 RECOVER PASSWORD
+                // RECOVER PASSWORD
                 composable<FromRecover> {
-                    Log.d("NAV", "🔑 Entrando en RecoverPasswordScreen")
+                    Log.d("NAV", "Entrando en RecoverPasswordScreen")
 
                     val viewModelLoginViewModel: RegisterViewModel = hiltViewModel()
                     RecoverPasswordMobile(
                         viewModel = viewModelLoginViewModel,
                         goToBack = {
-                            Log.d("NAV", "⬅️ RecoverPassword → Back")
+                            Log.d("NAV", "RecoverPassword → Back")
                             navController.popBackStack()
                         }
                     )
                 }
 
-                // 🏠 MAIN GRAPH
+                // MAIN GRAPH
                 navigation<MainGraph>(startDestination = PanelControl) {
 
                     composable<PanelControl> { backStackEntry ->
-                        Log.d("NAV", "🏠 Entrando en PanelControl (MainGraph)")
+                        Log.d("NAV", "Entrando en PanelControl (MainGraph)")
 
                         val parentEntry = remember(backStackEntry) {
                             navController.getBackStackEntry(MainGraph::class.qualifiedName!!)
                         }
 
-                        val viewModelPanelControl: PanelControlViewModel =
-                            hiltViewModel(parentEntry)
+                        val viewModelPanelControl: PanelControlViewModel = hiltViewModel(parentEntry)
 
                         ScreenPanelControl(
                             modifier = Modifier,
                             viewModel = viewModelPanelControl,
                             onSelectImage = {
-                                Log.d("NAV", "⬆️ PanelControl → SelectImage")
+                                Log.d("NAV", "PanelControl → SelectImage")
                                 // navController.navigate(SelectImage)
                             },
                             onSelectVideo = {
-                                Log.d("NAV", "⬆️ PanelControl → SelectVideo")
+                                Log.d("NAV", "PanelControl → SelectVideo")
                                 //  navController.navigate(SelectVideo)
                             },
                             onEnviar = {
-                                Log.d("NAV", "⬆️ PanelControl → Enviar")
+                                Log.d("NAV", "PanelControl → Enviar")
                                 // navController.navigate(Enviar)
                             },
-                            onVerArchivos = {
-                                Log.d("NAV", "⬆️ PanelControl → VerArchivos")
-                                // navController.navigate(VerArchivos)
-                            },
+
                             onConfiguracion = {
-                                Log.d("NAV", "⬆️ PanelControl → Configuracion")
+                                Log.d("NAV", "PanelControl → Configuracion")
                             },
                             onAgregarDispositivo = {
-                                Log.d("NAV", "⬆️ PanelControl → AgregarDispositivo")
+                                Log.d("NAV", "PanelControl → AgregarDispositivo")
                                 navController.navigate(RegisterDevice)
                             }
                         )
                     }
 
-                    composable<RegisterDevice> {
-                        val viewModelRegisterDevice: RegisterDeviceViewModel = hiltViewModel()
-                        RegisterDeviceScreen(
-                            viewModel = viewModelRegisterDevice,
-                            onScanQR = { navController.navigate(QrScanner) },
-                            onRegistrar = {
-                                navController.popBackStack() // cerrar pantalla al registrar
-                            },
-                            onCancelar = {
-                                navController.popBackStack() // cerrar pantalla al cancelar
-                            }
-                        )
-                    }
+                    navigation<RegisterDeviceGraph>(startDestination = RegisterDevice) {
 
-                    composable<QrScanner> {
-                        val viewModelQrScanner: QrScannerViewModel = hiltViewModel()
-                        Log.d("NAV", "⬆️ PanelControl → QrScanner")
-                        QrScannerScreen(
-                            viewModel = viewModelQrScanner,
-                            onConnectionReady = {
-                                Log.d("NAV", "⬆️ PanelControl → QrScanner → onConnectionReady")
-                                navController.popBackStack()
-                            },
-                            onCancel = {
-                                Log.d("NAV", "⬆️ PanelControl → QrScanner → onCancel")
-                                navController.popBackStack()
+                        composable<RegisterDevice> { backStackEntry ->
+                            val parentEntry = remember(backStackEntry) {
+                                navController.getBackStackEntry(RegisterDeviceGraph)
                             }
-                        )
+
+                            val viewModelRegisterDevice: RegisterDeviceViewModel =
+                                hiltViewModel(parentEntry)
+
+                            RegisterDeviceScreen(
+                                viewModelRegistrerDevice = viewModelRegisterDevice,
+                                onScanQR = {navController.navigate(QrScanner)},
+                                onCancelar = {navController.popBackStack()}
+                            )
+                        }
+
+                        composable<QrScanner> { backStackEntry ->
+                            val parentEntry = remember(backStackEntry) {
+                                navController.getBackStackEntry(RegisterDeviceGraph)
+                            }
+
+                            val viewModelRegisterDevice: RegisterDeviceViewModel = hiltViewModel(parentEntry)
+
+                            val viewModelQrScanner: QrScannerViewModel = hiltViewModel()
+
+                            QrScannerScreen(
+                                viewModel = viewModelQrScanner,
+                                onConnectionReady = { dispositivo ->
+                                    viewModelRegisterDevice.setCurrentDevice(dispositivo)
+                                    navController.popBackStack()
+                                },
+                                onCancel = {navController.popBackStack()}
+                            )
+                        }
                     }
 
                 }
