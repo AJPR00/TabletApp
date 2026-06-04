@@ -63,5 +63,5 @@ class MediaLocalDataSourceImpl @Inject constructor(
     override suspend fun delete(media: MediaContentEntity) = mediaDao.delete(media)
     override suspend fun getById(id: String): MediaContentEntity? = mediaDao.getById(id)
     override suspend fun getAllOnce() = mediaDao.getAllOnce()
-    override suspend fun deleteById(id: Int) = mediaDao.deleteById(id)
+    override suspend fun deleteById(id: String)=mediaDao.deleteById(id)
 }

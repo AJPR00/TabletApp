@@ -10,7 +10,8 @@ fun DispositivoEntity.toDomain() = Dispositivo(
     ip = ip,
     puerto = puerto,
     nivelBatery = null,
-    estado = EstadoDispositivo.DESCONOCIDO
+    estado = EstadoDispositivo.DESCONOCIDO,
+    aesKey = aesKey
 )
 
 fun Dispositivo.toEntity() = DispositivoEntity(
@@ -19,5 +20,5 @@ fun Dispositivo.toEntity() = DispositivoEntity(
     ip = ip,
     puerto = puerto,
     tipo = "unknown",
-    token = ""
+    aesKey = aesKey
 )

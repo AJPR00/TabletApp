@@ -10,39 +10,53 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.appDataStore by preferencesDataStore(name = "app_Preference")
+private val Context.appDataStore by preferencesDataStore(name = "app_preference")
 
 @Singleton
 class AppPreference @Inject constructor(
-    @param:ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context
 ) {
+
     companion object {
-        private const val TAG = "appPreference"
+        private const val TAG = "AppPreference"
 
         // Configuración general
         private val IS_DARK_MODE = booleanPreferencesKey("is_dark_mode")
         private val LANGUAGE = stringPreferencesKey("language")
         private val IS_FIRST_RUN = booleanPreferencesKey("is_first_run")
 
+        // Identidad de la tablet
+        private val TABLET_ID = stringPreferencesKey("tablet_id")
+        private val TABLET_NAME = stringPreferencesKey("tablet_name")
     }
 
-    // Configuración
+    // ---------------------------
+    // GETTERS
+    // ---------------------------
+
     val isDarkMode: Flow<Boolean> = context.appDataStore.data.map {
-        val value = it[IS_DARK_MODE] ?: false
-        Log.d(TAG, "isDarkMode leído: $value")
-        value
+        it[IS_DARK_MODE] ?: false
     }
+
     val language: Flow<String> = context.appDataStore.data.map {
-        val value = it[LANGUAGE] ?: "es"
-        Log.d(TAG, "language leído: $value")
-        value
+        it[LANGUAGE] ?: "es"
     }
 
     val isFirstRun: Flow<Boolean> = context.appDataStore.data.map {
-        it[IS_FIRST_RUN] ?: true   // true si es primera instalacion
+        it[IS_FIRST_RUN] ?: true
     }
 
-    //Métodos de guardado configuracion app
+    val tabletId: Flow<String> = context.appDataStore.data.map {
+        it[TABLET_ID] ?: ""
+    }
+
+    val tabletName: Flow<String> = context.appDataStore.data.map {
+        it[TABLET_NAME] ?: "Tablet"
+    }
+
+    // ---------------------------
+    // SETTERS
+    // ---------------------------
 
     suspend fun setDarkMode(enabled: Boolean) {
         context.appDataStore.edit { prefs ->
@@ -65,4 +79,17 @@ class AppPreference @Inject constructor(
         Log.d(TAG, "FirstRun actualizado: false")
     }
 
+    suspend fun setTabletId(id: String) {
+        context.appDataStore.edit { prefs ->
+            prefs[TABLET_ID] = id
+        }
+        Log.d(TAG, "TabletId asignado: $id")
+    }
+
+    suspend fun setTabletName(name: String) {
+        context.appDataStore.edit { prefs ->
+            prefs[TABLET_NAME] = name
+        }
+        Log.d(TAG, "TabletName asignado: $name")
+    }
 }

@@ -2,7 +2,7 @@ package com.ajpr00.tablet.data.repositoryImp
 
 import com.ajpr00.core.domain.model.Playlist
 import com.ajpr00.core.domain.model.PlaylistWithMedia
-import com.ajpr00.core.domain.repository.PlaylistRepository
+import com.ajpr00.core.domain.repository.media.PlaylistRepository
 import com.ajpr00.tablet.data.datasource.local.PlaylistLocalDataSource
 import com.ajpr00.tablet.data.datasource.local.db.entity.PlaylistEntity
 import com.ajpr00.tablet.data.datasource.local.db.entity.PlaylistMediaCrossRef
@@ -10,6 +10,21 @@ import com.ajpr00.tablet.data.mapper.toDomain
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
+
+
+/**
+ * Implementación de PlaylistRepository.
+ *
+ * Gestiona todas las operaciones relacionadas con las playlists en el módulo mobile/tablet:
+ *  - Leer, crear y eliminar playlists
+ *  - Añadir o quitar medias dentro de una playlist
+ *  - Obtener una playlist junto con todos sus medias asociados
+ *  - Insertar listas completas de medias de forma eficiente
+ *
+ * Actúa como puente entre la capa de dominio y las fuentes de datos reales
+ * (BD local, DAOs, mappers). La lógica de dominio solo conoce la interfaz;
+ * aquí se encuentra la implementación concreta.
+ */
 
 class PlaylistRepositoryImpl @Inject constructor(
     private val playlistLocalDS: PlaylistLocalDataSource

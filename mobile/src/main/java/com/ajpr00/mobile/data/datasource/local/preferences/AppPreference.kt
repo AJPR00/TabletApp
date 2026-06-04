@@ -6,10 +6,29 @@ import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.text.get
+
+/**
+ * AppPreference
+ * -------------
+ * Clase responsable de gestionar la configuración local persistente de la app
+ * mediante **Jetpack DataStore (Preferences)**.
+ *
+ * DataStore sustituye a SharedPreferences y ofrece:
+ *  - Escrituras seguras y atómicas
+ *  - Acceso asíncrono mediante Flow
+ *  - Evita ANRs y bloqueos de UI
+ *
+ * Esta clase expone:
+ *  - Tema oscuro (isDarkMode)
+ *  - Idioma seleccionado (language)
+ *  - Flag de primera ejecución (isFirstRun)
+ */
 
 private val Context.appDataStore by preferencesDataStore(name = "app_Preference")
 
@@ -24,8 +43,8 @@ class AppPreference @Inject constructor(
         private val IS_DARK_MODE = booleanPreferencesKey("is_dark_mode")
         private val LANGUAGE = stringPreferencesKey("language")
         private val IS_FIRST_RUN = booleanPreferencesKey("is_first_run")
-
     }
+
 
     // Configuración
     val isDarkMode: Flow<Boolean> = context.appDataStore.data.map {
@@ -42,6 +61,7 @@ class AppPreference @Inject constructor(
     val isFirstRun: Flow<Boolean> = context.appDataStore.data.map {
         it[IS_FIRST_RUN] ?: true   // true si es primera instalacion
     }
+
 
     //Métodos de guardado configuracion app
 
@@ -65,5 +85,4 @@ class AppPreference @Inject constructor(
         }
         Log.d(TAG, "FirstRun actualizado: false")
     }
-
 }

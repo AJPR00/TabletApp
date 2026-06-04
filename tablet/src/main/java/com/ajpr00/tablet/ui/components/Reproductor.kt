@@ -30,6 +30,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 
+//Todo: Refactorizar Reproductor()
+
 /**
  * Reproductor principal que alterna entre imágenes y videos.
  * - Usa ExoPlayer para los videos.

@@ -28,6 +28,6 @@ interface MediaContentDao {
     suspend fun getAllOnce(): List<MediaContentEntity>
 
     @Query("DELETE FROM media_content WHERE id = :id")
-    suspend fun deleteById(id: Int)
+    suspend fun deleteById(id: String)
 
 }

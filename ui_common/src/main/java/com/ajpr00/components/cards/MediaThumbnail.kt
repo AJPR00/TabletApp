@@ -19,7 +19,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.ajpr00.core.domain.model.FormatType
 
 // --------------------------------------------------------------
-// 🖼️ MINIATURA DE IMAGEN / 🎬 MINIATURA DE VÍDEO
+// MINIATURA DE IMAGEN / MINIATURA DE VÍDEO
 // --------------------------------------------------------------
 // Esta función detecta si el archivo es imagen, vídeo o audio.
 // - Si es imagen → Coil la carga directamente.

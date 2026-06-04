@@ -2,7 +2,9 @@ package com.ajpr00.mobile.presentation.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.ajpr00.core.domain.model.TabletConnectionData
+import com.ajpr00.core.domain.model.Dispositivo
+import com.ajpr00.core.domain.model.EstadoDispositivo
+import com.ajpr00.core.domain.model.qr.QrPayload
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,12 +24,13 @@ import javax.inject.Inject
  * Además, evita que el QR se procese varias veces seguidas,
  * porque ZXing detecta el mismo QR muchas veces por segundo.
  */
-class QrScannerViewModel @Inject constructor() : ViewModel() {
+class QrScannerViewModel @Inject constructor(
+) : ViewModel() {
 
     // StateFlow que expone los datos ya parseados del QR.
     // La pantalla observa este flujo para saber cuándo cerrar el Dialog.
-    private val _connectionData = MutableStateFlow<TabletConnectionData?>(null)
-    val connectionData: StateFlow<TabletConnectionData?> = _connectionData.asStateFlow()
+    private val _connectionData = MutableStateFlow<Dispositivo?>(null)
+    val connectionData: StateFlow<Dispositivo?> = _connectionData.asStateFlow()
 
     // Flag para evitar procesar el mismo QR varias veces.
     private var processed = false
@@ -39,19 +42,19 @@ class QrScannerViewModel @Inject constructor() : ViewModel() {
      * Aquí decidimos si lo procesamos o lo ignoramos.
      */
     fun onQrDetected(raw: String) {
-        Log.d("QR_VM", "📥 QR recibido en ViewModel: $raw")
+        Log.d("QR_VM", "QR recibido en ViewModel: $raw")
 
         // Si ya procesamos un QR, ignoramos los siguientes.
         if (processed) {
-            Log.d("QR_VM", "⛔ QR ignorado (ya procesado previamente)")
+            Log.d("QR_VM", "QR ignorado (ya procesado previamente)")
             return
         }
 
         processed = true
-        Log.d("QR_VM", "🔄 Procesando QR por primera vez...")
+        Log.d("QR_VM", "Procesando QR por primera vez...")
 
         val parsed = parseQr(raw)
-        Log.d("QR_VM", "📦 QR parseado correctamente: $parsed")
+        Log.d("QR_VM", "QR parseado correctamente: $parsed")
 
         _connectionData.value = parsed
     }
@@ -69,16 +72,23 @@ class QrScannerViewModel @Inject constructor() : ViewModel() {
      *
      * Si algún campo no existe, se rellena con valores por defecto.
      */
-    private fun parseQr(raw: String): TabletConnectionData {
-        Log.d("QR_VM", "🧩 Iniciando parseo del QR (Gson)...")
+    private fun parseQr(raw: String): Dispositivo {
+        Log.d("QR_VM", "Iniciando parseo del QR (Gson)...")
 
-        val data = Gson().fromJson(raw, TabletConnectionData::class.java)
+        val payload = Gson().fromJson(raw, QrPayload::class.java)
 
-        Log.d("QR_VM", "🧪 Resultado del parseo → $data")
+        Log.d("QR_VM", "Payload QR → $payload")
 
-        return data
+        return Dispositivo(
+            id = payload.id,
+            nombre = payload.nombre,
+            ip = payload.ip,
+            puerto = payload.puerto,
+            aesKey = payload.aesKey,
+            nivelBatery = null,
+            estado = EstadoDispositivo.ONLINE
+        )
     }
-
 
     /**
      * reset()
@@ -87,7 +97,7 @@ class QrScannerViewModel @Inject constructor() : ViewModel() {
      * Útil si el usuario vuelve a abrir el lector.
      */
     fun reset() {
-        Log.d("QR_VM", "🔁 Reseteando estado del ViewModel")
+        Log.d("QR_VM", "Reseteando estado del ViewModel")
         processed = false
         _connectionData.value = null
     }

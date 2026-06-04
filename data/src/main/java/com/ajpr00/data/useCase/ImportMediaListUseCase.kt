@@ -3,8 +3,8 @@ package com.ajpr00.data.useCase
 import android.database.sqlite.SQLiteConstraintException
 import android.util.Log
 import com.ajpr00.core.domain.model.MediaContent
-import com.ajpr00.core.domain.repository.MediaRepository
-import com.ajpr00.core.domain.repository.PlaylistRepository
+import com.ajpr00.core.domain.repository.media.MediaRepository
+import com.ajpr00.core.domain.repository.media.PlaylistRepository
 import javax.inject.Inject
 
 class ImportMediaListUseCase @Inject constructor(

@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.ajpr00.tablet.R
@@ -30,7 +31,6 @@ import com.ajpr00.tablet.presentation.viewmodel.MediaItemsViewModel
 import com.ajpr00.tablet.presentation.viewmodel.ReproducorViewModel
 import com.ajpr00.components.components.ButtonCustonPanel
 import com.ajpr00.presentation_common.viewmodel.AuthViewModel
-import com.ajpr00.tablet.presentation.server.ServerViewModel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -40,7 +40,6 @@ fun MenuApp(
     viewModelMediaBackground: ReproducorViewModel,
     viewModelMediaItme: MediaItemsViewModel,
     viewModelAuth: AuthViewModel,
-    viewModelServer: ServerViewModel,
     goToLogin: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -49,7 +48,6 @@ fun MenuApp(
 
     Log.d("MenuApp", "isLocalLoggedIn: $isLocalLoggedIn")
     Log.d("MenuApp", "avatar: $user")
-
 
     val avatarPainter = if (isLocalLoggedIn && user?.avatarUrl?.isNotEmpty() == true) {
         rememberAsyncImagePainter(user?.avatarUrl)
@@ -72,23 +70,23 @@ fun MenuApp(
         info = { /*TODO*/ },
         vacio = { /*TODO*/ },
         misArchivos = { launcherMedia.launch(arrayOf("image/*", "video/*")) },
-        favorito = { viewModelMediaBackground.isShowSidePanel(it) },
+        favorito = { viewModelMediaBackground.isShowSidePanel() },
         login = {
             if (!isLocalLoggedIn) goToLogin else viewModelAuth.logout()
         },
         ftp = {
             //goToLogin(AccesLoginType.FTP)
-            viewModelMediaBackground.isShowSidePanel(it)
+            viewModelMediaBackground.isShowSidePanel()
         },
         dropBox = {
             //goToLogin(AccesLoginType.DROPBOX)
-            viewModelMediaBackground.isShowSidePanel(it)
+            viewModelMediaBackground.isShowSidePanel()
         },
         googleDrive = {
-            viewModelMediaBackground.isShowSidePanel(it)
+            viewModelMediaBackground.isShowSidePanel()
             //goToLogin(AccesLoginType.DRIVE)
         },
-        onClosedMenuApp = { viewModelMediaBackground.isShowMenuApp(it) },
+        onClosedMenuApp = { viewModelMediaBackground.isShowMenuApp() },
         onLock = { viewModelMediaBackground.togglesLockScreen() },
         avatarIcon = avatarPainter
     )
@@ -118,6 +116,7 @@ fun MenuApp(
 @Composable
 private fun PanelMenuApp(
     modifier: Modifier = Modifier,
+    sizeIcon: Dp = 100.dp,
     configuracion: () -> Unit,
     info: () -> Unit,
     login: () -> Unit,
@@ -135,7 +134,7 @@ private fun PanelMenuApp(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.2f))
-            // 👇 Tap en el fondo cierra el panel
+            //Tap en el fondo cierra el panel
             .pointerInput(Unit) {
                 coroutineScope {
                     detectTapGestures(
@@ -175,6 +174,7 @@ private fun PanelMenuApp(
 
                 ButtonCustonPanel(
                     modifier = modifierButoon,
+                    iconSize = sizeIcon,
                     icon = painterResource(R.drawable.tree_structure_fill),
                     label = "FTP",
                     onClick = { ftp(true) }
@@ -182,6 +182,7 @@ private fun PanelMenuApp(
 
                 ButtonCustonPanel(
                     modifier = modifierButoon,
+                    iconSize = sizeIcon,
                     icon = painterResource(R.drawable.folder_star_fill),
                     label = "Favoritos",
                     onClick = { favorito(true) }
@@ -189,6 +190,7 @@ private fun PanelMenuApp(
 
                 ButtonCustonPanel(
                     modifier = modifierButoon,
+                    iconSize = sizeIcon,
                     icon = painterResource(R.drawable.config),
                     label = "Configuracion",
                     onClick = configuracion
@@ -200,6 +202,7 @@ private fun PanelMenuApp(
 
                 ButtonCustonPanel(
                     modifier = modifierButoon,
+                    iconSize = sizeIcon,
                     icon = painterResource(R.drawable.google_drive_logo_fill),
                     label = "Google Drive",
                     onClick = { googleDrive(true) }
@@ -207,6 +210,7 @@ private fun PanelMenuApp(
 
                 ButtonCustonPanel(
                     modifier = modifierButoon,
+                    iconSize = sizeIcon,
                     icon = avatarIcon,
                     label = "login",
                     onClick = login
@@ -214,6 +218,7 @@ private fun PanelMenuApp(
 
                 ButtonCustonPanel(
                     modifier = modifierButoon,
+                    iconSize = sizeIcon,
                     icon = painterResource(R.drawable.info),
                     label = "Acerca de",
                     onClick = info
@@ -224,6 +229,7 @@ private fun PanelMenuApp(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 ButtonCustonPanel(
                     modifier = modifierButoon,
+                    iconSize = sizeIcon,
                     icon = painterResource(R.drawable.dropbox_logo_fill),
                     label = "Dropbox",
                     onClick = { dropBox(true) }
@@ -231,6 +237,7 @@ private fun PanelMenuApp(
 
                 ButtonCustonPanel(
                     modifier = modifierButoon,
+                    iconSize = sizeIcon,
                     icon = painterResource(R.drawable.folder_open_fill),
                     label = "Mis Archivos",
                     onClick = misArchivos
@@ -238,6 +245,7 @@ private fun PanelMenuApp(
 
                 ButtonCustonPanel(
                     modifier = modifierButoon,
+                    iconSize = sizeIcon,
                     icon = painterResource(R.drawable.folder_open_fill),
                     label = "",
                     onClick = vacio

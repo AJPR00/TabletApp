@@ -8,6 +8,14 @@ kotlin {
 }
 
 dependencies {
+
+    // -------------------------
+    //  OkHttp
+    // -------------------------
+
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
+
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.javax.inject)
     implementation(libs.kotlinx.serialization.json)

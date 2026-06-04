@@ -1,0 +1,15 @@
+package com.ajpr00.core.domain.repository.preference
+
+import kotlinx.coroutines.flow.Flow
+
+interface PreferencesRepository {
+
+    fun isDarkMode(): Flow<Boolean>
+    suspend fun setDarkMode(enabled: Boolean)
+
+    fun getLanguage(): Flow<String>
+    suspend fun setLanguage(lang: String)
+
+    fun isFirstRun(): Flow<Boolean>
+    suspend fun setFirstRunCompleted()
+}

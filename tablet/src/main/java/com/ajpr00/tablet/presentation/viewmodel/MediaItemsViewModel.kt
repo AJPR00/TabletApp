@@ -7,9 +7,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ajpr00.core.domain.model.MediaContent
 import com.ajpr00.core.domain.model.MediaResult
-import com.ajpr00.core.domain.usecase.SaveMediaUseCase
-import com.ajpr00.core.domain.usecase.ListMediaDriveUseCase
-import com.ajpr00.core.domain.usecase.ListMediaFTPUseCase
+import com.ajpr00.core.domain.usecase.media.SaveMediaUseCase
+import com.ajpr00.core.domain.usecase.media.ListMediaDriveUseCase
+import com.ajpr00.core.domain.usecase.media.ListMediaFTPUseCase
 import com.ajpr00.core.domain.usecase.ToggleFavoriteUseCase
 import com.ajpr00.data.mapper.toMediaContentList
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,8 +18,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import com.ajpr00.data.useCase.ImportMediaListUseCase
-import com.ajpr00.presentation_common.state.EstadoEvento
+import com.ajpr00.presentation_common.state.Estado
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 @HiltViewModel
 class MediaItemsViewModel @Inject constructor(
@@ -31,25 +33,33 @@ class MediaItemsViewModel @Inject constructor(
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase
 ) : ViewModel() {
 
-    private val _EventoState = MutableStateFlow<EstadoEvento>(EstadoEvento.Inicial)
-    val eventoState: StateFlow<EstadoEvento> = _EventoState
+    private val _EventoState = MutableStateFlow<Estado>(Estado.Inicial)
+    val eventoState: StateFlow<Estado> = _EventoState
+
+    private val _eventos = MutableSharedFlow<String>()
+    val eventos = _eventos.asSharedFlow()
 
     // Estado observable con la lista de MediaContent
     private val _mediaItems = MutableStateFlow<List<MediaContent>>(emptyList())
     val mediaItems: StateFlow<List<MediaContent>> = _mediaItems
 
-    private val _errors = MutableStateFlow<List<String>>(emptyList())
-    val errors: StateFlow<List<String>> = _errors
-
+    /**
+     * Carga archivos desde Google Drive usando el UseCase.
+     * Emite eventos en caso de error.
+     */
     fun loadFromDrive() {
         viewModelScope.launch {
             when (val result = listMediaDriveUseCase()) {
-                is MediaResult.Success -> _mediaItems.value = result.files
-                is MediaResult.Error -> _EventoState.value =
-                    EstadoEvento.Mensajes(listOf(result.message))
+                is MediaResult.Success -> {
+                    _mediaItems.value = result.files
+                }
+                is MediaResult.Error -> {
+                    showError(result.message)
+                }
             }
         }
     }
+
 
     /*  fun loadFromDrive() {
           viewModelScope.launch {
@@ -69,7 +79,10 @@ class MediaItemsViewModel @Inject constructor(
           }
       }*/
 
-    // Cargar desde FTP
+    /**
+     * Carga archivos desde FTP.
+     * Captura excepciones y emite un evento para la UI.
+     */
     fun loadFromFtp() {
         Log.d("MediaItemsVM", "Cargando archivos desde FTP...")
         viewModelScope.launch {
@@ -79,6 +92,7 @@ class MediaItemsViewModel @Inject constructor(
                 Log.d("MediaItemsVM", "Archivos FTP cargados: ${files.size}")
             } catch (e: Exception) {
                 Log.e("MediaItemsVM", "Error al cargar desde FTP", e)
+                showError("Error al cargar archivos desde FTP")
             }
         }
     }
@@ -109,13 +123,22 @@ class MediaItemsViewModel @Inject constructor(
          }
      }*/
 
+    /**
+     * Importa las URIs seleccionadas y las transforma a MediaContent.
+     * Emite eventos en caso de fallo o éxito.
+     */
     fun importSelectedMedia(uris: List<Uri>, playlistId: String) {
         viewModelScope.launch {
             try {
                 val medias = uris.toMediaContentList(context)
                 importMediaListUseCase(medias, playlistId)
+                enviarEvento("Medias importadas correctamente")
             } catch (e: IllegalStateException) {
-                _EventoState.value = EstadoEvento.Mensajes(listOf(e.message ?: "Error desconocido"))
+                Log.e("MediaItemsVM", "Error importando medias", e)
+                showError(e.message ?: "Error al importar medias")
+            } catch (e: Exception) {
+                Log.e("MediaItemsVM", "Error inesperado importando medias", e)
+                showError("Error al importar medias")
             }
         }
     }
@@ -140,20 +163,41 @@ class MediaItemsViewModel @Inject constructor(
              }
          }
      }*/
-    fun toggleFavorite(media: MediaContent) {
+    /**
+     * Alterna favorito mediante el UseCase y actualiza la lista local.
+     */
+    fun toggleAction(media: MediaContent) {
         viewModelScope.launch {
-            toggleFavoriteUseCase(media)
+            try {
+                toggleFavoriteUseCase(media)
+            } catch (e: Exception) {
+                Log.e("MediaItemsVM", "Error toggling favorite", e)
+                showError("Error al cambiar favorito")
+            }
         }
     }
 
-    // Seleccionar un media para reproducir
+    /**
+     * Selecciona un media para reproducir.
+     * Solo registra la selección; la reproducción la maneja el ReproductorViewModel.
+     */
     fun selectMedia(media: MediaContent) {
         Log.d("MediaItemsVM", "Seleccionado para reproducción: ${media.name}")
-        // Aquí podrías emitir un evento o actualizar otro StateFlow con el media seleccionado
     }
 
-    fun clearErrors() {
-        _EventoState.value = EstadoEvento.Mensajes(emptyList())
-        _EventoState.value = EstadoEvento.Inicial
+    /**
+     * Emite un evento de un solo uso hacia la UI.
+     */
+    private fun enviarEvento(mensaje: String) {
+        viewModelScope.launch {
+            _eventos.emit(mensaje)
+        }
+    }
+
+    /**
+     * Fun auxiliar para mostrar errores desde otras capas.
+     */
+    fun showError(message: String) {
+        enviarEvento("Error: $message")
     }
 }

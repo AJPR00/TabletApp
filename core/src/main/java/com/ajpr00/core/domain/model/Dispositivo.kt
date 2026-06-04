@@ -1,11 +1,12 @@
 package com.ajpr00.core.domain.model
 
 data class Dispositivo(
-    val id: String,
+    val id: String ,
     val nombre: String = "Desconocido",
     val ip: String? = null,
     val puerto: Int? = null,
     val nivelBatery: Int? = null,
+    val aesKey: String? = null,
     val estado: EstadoDispositivo = EstadoDispositivo.DESCONOCIDO
 )
 

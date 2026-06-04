@@ -5,6 +5,8 @@ import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 
+//TODO: Reuvicar fun...
+
 // Esta función intenta sacar un frame del vídeo usando
 // MediaMetadataRetriever.
 //

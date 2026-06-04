@@ -148,4 +148,5 @@ dependencies {
     implementation(libs.androidx.camera.view)
 
     implementation(libs.zxing.core)
+
 }
