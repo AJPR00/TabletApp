@@ -12,10 +12,4 @@ interface PreferencesRepository {
 
     fun isFirstRun(): Flow<Boolean>
     suspend fun setFirstRunCompleted()
-
-    fun getTabletId(): Flow<String>
-    suspend fun setTabletId(id: String)
-
-    fun getTabletName(): Flow<String>
-    suspend fun setTabletName(name: String)
 }

@@ -183,7 +183,7 @@ dependencies {
 
 
     // ---------------------------------------------------------
-    //  Interpretado y Creador QR
+    //
     // ---------------------------------------------------------
     implementation(libs.kotlinx.serialization.json)
 
@@ -191,8 +191,4 @@ dependencies {
 
     // Mapper Gson
     implementation(libs.retrofit.converter.gson)
-
-    // Localizador Lan
-    implementation(libs.jmdns)
-
 }
