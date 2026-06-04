@@ -167,6 +167,9 @@ dependencies {
     // Testing
     // -------------------------
     testImplementation(libs.junit)
+
+    // Localizador Lan
+    implementation(libs.jmdns)
 }
 
 // Exporta los esquemas de Room (útil para migraciones y debugging)

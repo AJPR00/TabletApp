@@ -8,8 +8,10 @@ import com.ajpr00.core.domain.model.EstadoDispositivo
 import com.ajpr00.core.domain.model.PendingMedia
 import com.ajpr00.core.domain.model.PendingStatus
 import com.ajpr00.core.domain.model.RemoteMedia
+import com.ajpr00.core.domain.model.mDNS.MdnsServiceInfo
 import com.ajpr00.core.domain.usecase.media.AddPendingMediaUseCase
 import com.ajpr00.core.domain.usecase.dispositivo.DeleteDispositivoUseCase
+import com.ajpr00.core.domain.usecase.dispositivo.DiscovermDNSTabletUseCase
 import com.ajpr00.core.domain.usecase.media.GetAllPendingMediaUseCase
 import com.ajpr00.core.domain.usecase.dispositivo.GetDispositivosUseCase
 import com.ajpr00.core.domain.usecase.media.GetNextPendingMediaUseCase
@@ -45,6 +47,7 @@ class PanelControlViewModel @Inject constructor(
     private val updatePendingMediaStatusUseCase: UpdatePendingMediaStatusUseCase,
     private val getAllPendingMediaUseCase: GetAllPendingMediaUseCase,
     private val getObserveListUseCase: GetFlowRemoteMediaWithThumbnailsUseCase,
+    private val discovermDNSTabletUseCase: DiscovermDNSTabletUseCase
 ) : ViewModel() {
     private val TAG = "PanelControlVM"
 
@@ -53,6 +56,9 @@ class PanelControlViewModel @Inject constructor(
 // ---------------------------------------------------------
     private val _selectedDevice = MutableStateFlow<DispositivoUi?>(null)
     val selectedDevice: StateFlow<DispositivoUi?> = _selectedDevice
+
+    private val _mdnsState = MutableStateFlow<MdnsServiceInfo?>(null)
+    val mdnsState: StateFlow<MdnsServiceInfo?> = _mdnsState
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val listRepro: StateFlow<List<RemoteMedia>> =
@@ -191,4 +197,16 @@ class PanelControlViewModel @Inject constructor(
             SharingStarted.WhileSubscribed(5000),
             emptyList()
         )
+
+    fun startMdnsDiscovery() {
+        viewModelScope.launch {
+            Log.d(TAG, "VM_MDNS → Iniciando descubrimiento mDNS…")
+
+            discovermDNSTabletUseCase().collect { info ->
+                Log.d(TAG, "VM_MDNS → Tablet encontrada por mDNS: $info")
+                _mdnsState.value = info
+            }
+        }
+    }
+
 }

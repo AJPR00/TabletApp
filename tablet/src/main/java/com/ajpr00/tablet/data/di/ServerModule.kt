@@ -1,9 +1,11 @@
 package com.ajpr00.tablet.data.di
 
+import com.ajpr00.core.domain.repository.preference.PreferencesRepository
 import com.ajpr00.core.domain.usecase.media.DeleteMediaSyncUseCase
 import com.ajpr00.core.domain.usecase.media.GetAllMediaSyncUseCase
 import com.ajpr00.core.domain.usecase.media.GetMediaByIdSyncUseCase
 import com.ajpr00.data.useCase.ImportMediaFromServerUseCase
+import com.ajpr00.tablet.data.network.MdnsPublisher
 import com.ajpr00.tablet.data.server.TabletServer
 import dagger.Module
 import dagger.Provides
@@ -21,13 +23,17 @@ object ServerModule {
         getMediaByIdSync: GetMediaByIdSyncUseCase,
         deleteMediaSyncUseCase: DeleteMediaSyncUseCase,
         getAllMediaSyncUseCase: GetAllMediaSyncUseCase,
-        importMediaFromServerUseCase: ImportMediaFromServerUseCase
+        importMediaFromServerUseCase: ImportMediaFromServerUseCase,
+        mdnsPublisher: MdnsPublisher,
+        prefsRepository: PreferencesRepository
     ): TabletServer {
         return TabletServer(
             getMediaByIdSync,
             deleteMediaSyncUseCase,
             getAllMediaSyncUseCase,
-            importMediaFromServerUseCase
+            importMediaFromServerUseCase,
+            mdnsPublisher,
+            prefsRepository
         )
     }
 }

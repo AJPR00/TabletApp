@@ -1,8 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
 
     <!-- Permisos para acceder a la galería Android 12 y anteriores (API ≤ 32) -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
@@ -11,14 +12,15 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-
     <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" tools:ignore="ScopedStorage" />
 
+    <!-- Permisos necesarios para JmDNS -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
     <!-- Permiso de cámara para QR -->
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-feature android:name="android.hardware.camera" android:required="false" /> <!-- false porque tambien se puede usar la app sin camara -->
-
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
         android:name="com.ajpr00.mobile.MobileApp"
@@ -30,6 +32,7 @@
         android:roundIcon="@mipmap/ic_app_table_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.TabletApp">
+
         <activity
             android:name="com.ajpr00.mobile.MainActivity"
             android:screenOrientation="portrait"
@@ -40,5 +43,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
     </application>
 </manifest>

@@ -149,4 +149,7 @@ dependencies {
 
     implementation(libs.zxing.core)
 
+    // Localizador Lan
+    implementation(libs.jmdns)
+
 }

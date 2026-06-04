@@ -1,111 +1,84 @@
 package com.ajpr00.tablet.data.network
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
 import android.util.Log
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.Inet4Address
+import java.net.InetAddress
+import javax.inject.Inject
 import javax.jmdns.JmDNS
 import javax.jmdns.ServiceInfo
-import java.net.InetAddress
 
-class MdnsPublisher(
-    private val context: Context
+class MdnsPublisher @Inject constructor(
+    @ApplicationContext private val context: Context
 ) {
 
-    // Aquí guardamos la instancia de JmDNS (el que se encarga de anunciar el servicio)
     private var jmdns: JmDNS? = null
-
-    // El MulticastLock es obligatorio para que Android permita enviar/recibir paquetes mDNS
     private var multicastLock: WifiManager.MulticastLock? = null
-
     private val TAG = "MdnsPublisher"
 
-    /**
-     * start()
-     * ---------------------------------------------------------
-     * Esto arranca el anuncio mDNS.
-     * Básicamente es como decirle a la red:
-     * "¡Eh! Soy la tablet, estoy aquí, en esta IP y en este puerto".
-     *
-     * El móvil podrá descubrirnos sin saber la IP.
-     */
-    fun start(id: String,name: String, port: Int) {
+    suspend fun start(id: String, name: String, port: Int) = withContext(Dispatchers.IO) {
+
         Log.d(TAG, "mDNS → Iniciando servicio mDNS para id=$id en puerto=$port")
 
         try {
-            // 1) Pillamos el WifiManager para poder activar el MulticastLock
             val wifi = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
 
-            // 2) Activamos el MulticastLock (sin esto mDNS NO funciona en Android)
-            multicastLock = wifi.createMulticastLock("visumloop-mdns")
-            multicastLock?.acquire()
-            Log.d(TAG, "mDNS → MulticastLock adquirido (necesario para mDNS)")
+            multicastLock = wifi.createMulticastLock("visumloop-mdns").apply {
+                setReferenceCounted(true)
+                acquire()
+            }
+            Log.d(TAG, "mDNS → MulticastLock adquirido")
 
-            // 3) Obtenemos la IP local del dispositivo (la tablet)
-            val ip = intToInetAddress(wifi.connectionInfo.ipAddress)
+            val ip = getLocalIpAddress()
             Log.d(TAG, "mDNS → IP detectada de la tablet: $ip")
 
-            // 4) Creamos la instancia de JmDNS usando esa IP
             jmdns = JmDNS.create(ip, "tablet-$id")
             Log.d(TAG, "mDNS → Instancia JmDNS creada correctamente")
 
-            // 5) Creamos la info del servicio que vamos a anunciar
             val serviceInfo = ServiceInfo.create(
-                "_visumloop._tcp.local.",   // Tipo de servicio (como Chromecast, AirPlay, etc.)
-                name,               // Nombre del dispositivo en la red
-                port,                       // Puerto donde escucha NanoHTTPD
-                "id=$id"                    // TXT record (info adicional)
+                "_visumloop._tcp.local.",
+                name,
+                port,
+                "id=$id"
             )
 
-            // 6) Registramos el servicio → aquí es cuando la tablet "se anuncia"
             jmdns?.registerService(serviceInfo)
-            Log.d(TAG, "mDNS → Servicio registrado en $ip:$port con id=$id")
+            Log.d(TAG, "mDNS → Servicio registrado correctamente")
 
         } catch (e: Exception) {
-            Log.e(TAG, "mDNS → Error al iniciar: ${e.message}")
+            Log.e(TAG, "mDNS → Error al iniciar: ${e.message}", e)
         }
     }
 
-    /**
-     * stop()
-     * ---------------------------------------------------------
-     * Esto apaga el anuncio mDNS.
-     * Se llama cuando la app se cierra o cuando el servidor se detiene.
-     */
     fun stop() {
         Log.d(TAG, "mDNS → Deteniendo servicio mDNS…")
-
         try {
-            // Quitamos el servicio de la red
             jmdns?.unregisterAllServices()
-            Log.d(TAG, "mDNS → Servicios mDNS desregistrados")
-
-            // Cerramos JmDNS
             jmdns?.close()
-            Log.d(TAG, "mDNS → Instancia JmDNS cerrada")
-
-            // Liberamos el MulticastLock
             multicastLock?.release()
-            Log.d(TAG, "mDNS → MulticastLock liberado")
-
+            Log.d(TAG, "mDNS → Servicio detenido correctamente")
         } catch (e: Exception) {
-            Log.e(TAG, "mDNS → Error al detener: ${e.message}")
+            Log.e(TAG, "mDNS → Error al detener: ${e.message}", e)
         }
     }
 
-    /**
-     * Convierte la IP que da Android (un Int) a una InetAddress válida.
-     * Esto es un clásico en Android: la IP viene al revés y hay que recomponerla.
-     */
-    private fun intToInetAddress(ip: Int): InetAddress {
-        val bytes = byteArrayOf(
-            (ip and 0xff).toByte(),
-            (ip shr 8 and 0xff).toByte(),
-            (ip shr 16 and 0xff).toByte(),
-            (ip shr 24 and 0xff).toByte()
-        )
+    private fun getLocalIpAddress(): InetAddress {
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork ?: return InetAddress.getByName("0.0.0.0")
+        val linkProps = cm.getLinkProperties(network) ?: return InetAddress.getByName("0.0.0.0")
 
-        Log.d(TAG, "mDNS → Convirtiendo IP int=$ip a InetAddress=${InetAddress.getByAddress(bytes)}")
+        val ipv4 = linkProps.linkAddresses
+            .map { it.address }
+            .filterIsInstance<Inet4Address>()
+            .firstOrNull()
 
-        return InetAddress.getByAddress(bytes)
+        return ipv4 ?: InetAddress.getByName("0.0.0.0")
     }
 }
+
