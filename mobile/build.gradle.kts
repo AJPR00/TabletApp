@@ -152,4 +152,9 @@ dependencies {
     // Localizador Lan
     implementation(libs.jmdns)
 
+    // --- TESTING DE DEPENDENCIAS ---
+    testImplementation(libs.junit)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.kotlin)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
