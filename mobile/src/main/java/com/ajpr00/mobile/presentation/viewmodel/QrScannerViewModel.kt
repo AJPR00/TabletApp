@@ -3,101 +3,62 @@ package com.ajpr00.mobile.presentation.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.ajpr00.core.domain.model.Dispositivo
-import com.ajpr00.core.domain.model.EstadoDispositivo
-import com.ajpr00.core.domain.model.qr.QrPayload
-import com.google.gson.Gson
+import com.ajpr00.mobile.qr.QrProcessor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 /**
- * QrScannerViewModel
- * ------------------
- * Este ViewModel es el "cerebro" que recibe el texto del QR detectado por ZXing
- * y lo transforma en un objeto TabletConnectionData.
+ * ViewModel encargado de recibir el texto del QR detectado y exponer
+ * el resultado ya procesado a la UI.
  *
- * Piensa en él como el intermediario entre:
- *  - El lector de QR (CameraX + ZXing)
- *  - La pantalla que necesita los datos del dispositivo
+ * Arquitectura:
+ * - Capa: presentation
+ * - Rol: coordinar el flujo QR → dominio → UI.
+ * - No parsea JSON ni construye modelos; delega todo al UseCase.
  *
- * Además, evita que el QR se procese varias veces seguidas,
- * porque ZXing detecta el mismo QR muchas veces por segundo.
+ * Flujo:
+ * 1. Recibe el texto del QR desde CameraX/ZXing.
+ * 2. Evita procesar el mismo QR varias veces.
+ * 3. Llama al UseCase para convertir el raw en un `Dispositivo`.
+ * 4. Expone el resultado por StateFlow para que la UI reaccione.
  */
 class QrScannerViewModel @Inject constructor(
+    private val qrProcessor: QrProcessor
 ) : ViewModel() {
 
-    // StateFlow que expone los datos ya parseados del QR.
-    // La pantalla observa este flujo para saber cuándo cerrar el Dialog.
     private val _connectionData = MutableStateFlow<Dispositivo?>(null)
     val connectionData: StateFlow<Dispositivo?> = _connectionData.asStateFlow()
 
-    // Flag para evitar procesar el mismo QR varias veces.
     private var processed = false
 
     /**
-     * onQrDetected()
-     * --------------
-     * Este método lo llama el QRAnalyzer cada vez que detecta un QR.
-     * Aquí decidimos si lo procesamos o lo ignoramos.
+     * Recibe el texto del QR detectado y delega su procesamiento al UseCase.
      */
     fun onQrDetected(raw: String) {
-        Log.d("QR_VM", "QR recibido en ViewModel: $raw")
+        Log.d("QR_VM", "onQrDetected: QR recibido → $raw")
 
-        // Si ya procesamos un QR, ignoramos los siguientes.
         if (processed) {
-            Log.d("QR_VM", "QR ignorado (ya procesado previamente)")
+            Log.d("QR_VM", "onQrDetected: ignorado (ya procesado previamente)")
             return
         }
 
         processed = true
-        Log.d("QR_VM", "Procesando QR por primera vez...")
+        Log.d("QR_VM", "onQrDetected: procesando QR por primera vez")
 
-        val parsed = parseQr(raw)
-        Log.d("QR_VM", "QR parseado correctamente: $parsed")
+        val dispositivo = qrProcessor(raw)
 
-        _connectionData.value = parsed
+        Log.d("QR_VM", "onQrDetected: dispositivo generado → $dispositivo")
+
+        _connectionData.value = dispositivo
     }
 
     /**
-     * parseQr()
-     * ---------
-     * Convierte el texto del QR en un objeto TabletConnectionData.
-     *
-     * Formato esperado:
-     *   id=xxx;token=xxx;ip=xxx;port=xxx
-     *
-     * Ejemplo real:
-     *   id=tablet01;token=ABC123;ip=192.168.1.45;port=8080
-     *
-     * Si algún campo no existe, se rellena con valores por defecto.
-     */
-    private fun parseQr(raw: String): Dispositivo {
-        Log.d("QR_VM", "Iniciando parseo del QR (Gson)...")
-
-        val payload = Gson().fromJson(raw, QrPayload::class.java)
-
-        Log.d("QR_VM", "Payload QR → $payload")
-
-        return Dispositivo(
-            id = payload.id,
-            nombre = payload.nombre,
-            ip = payload.ip,
-            puerto = payload.puerto,
-            aesKey = payload.aesKey,
-            nivelBatery = null,
-            estado = EstadoDispositivo.ONLINE
-        )
-    }
-
-    /**
-     * reset()
-     * -------
-     * Resetea el estado del ViewModel para permitir leer otro QR.
-     * Útil si el usuario vuelve a abrir el lector.
+     * Permite volver a escanear otro QR.
      */
     fun reset() {
-        Log.d("QR_VM", "Reseteando estado del ViewModel")
+        Log.d("QR_VM", "reset: limpiando estado del ViewModel")
         processed = false
         _connectionData.value = null
     }
