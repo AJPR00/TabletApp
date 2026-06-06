@@ -32,4 +32,16 @@ object About
 object Splash
 
 @Serializable
+object OnboardinGraph
+
+@Serializable
+object OnboardingWelcomeScreenTablet
+
+@Serializable
+object OnboardingInfoScreenTablet
+
+@Serializable
+object OnboardingReadyScreenTablet
+
+@Serializable
 object MainGraph

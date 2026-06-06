@@ -38,6 +38,11 @@ import com.ajpr00.mobile.presentation.screen.RegisterDeviceScreen
 import com.ajpr00.mobile.presentation.screen.RegisterMobile
 import com.ajpr00.mobile.presentation.screen.ScreenPanelControl
 import com.ajpr00.mobile.presentation.screen.SplashScreenMobile
+import com.ajpr00.mobile.presentation.screen.onboarding.OnboardingConnectScreen
+import com.ajpr00.mobile.presentation.screen.onboarding.OnboardingDoneScreen
+import com.ajpr00.mobile.presentation.screen.onboarding.OnboardingLoginScreen
+import com.ajpr00.mobile.presentation.screen.onboarding.OnboardingWelcomeScreen
+import com.ajpr00.mobile.presentation.viewmodel.OnboardingViewModel
 import com.ajpr00.presentation_common.viewmodel.LoginViewModel
 import com.ajpr00.presentation_common.viewmodel.RegisterViewModel
 import com.ajpr00.presentation_common.viewmodel.SplashViewModel
@@ -252,6 +257,52 @@ fun NavigationCore() {
                             )
                         }
                     }
+
+                    navigation<OnboardinGraph>(startDestination = OnboardingWelcomeScreen) {
+
+                        composable<OnboardingWelcomeScreen> { backStackEntry ->
+                            val parentEntry = remember(backStackEntry) {
+                                navController.getBackStackEntry(OnboardinGraph::class.qualifiedName!!)
+                            }
+                            val viewModelOnboarding: OnboardingViewModel = hiltViewModel(parentEntry)
+                            OnboardingWelcomeScreen(
+                                onNext = { navController.navigate(OnboardingLoginScreen) }
+                            )
+                        }
+                        composable<OnboardingLoginScreen> {backStackEntry ->
+                            val parentEntry = remember(backStackEntry) {
+                                navController.getBackStackEntry(OnboardinGraph::class.qualifiedName!!)
+                            }
+                            val viewModelOnboarding: OnboardingViewModel = hiltViewModel(parentEntry)
+                            OnboardingLoginScreen(
+                                onNext = { navController.navigate(OnboardingConnectScreen) },
+                                onBack = { navController.popBackStack() }
+                            )
+                        }
+                        composable<OnboardingConnectScreen> {backStackEntry ->
+                            val parentEntry = remember(backStackEntry) {
+                                navController.getBackStackEntry(OnboardinGraph::class.qualifiedName!!)
+                            }
+                            val viewModelOnboarding: OnboardingViewModel = hiltViewModel(parentEntry)
+                            OnboardingConnectScreen(
+                                onTabletFound = { navController.navigate(OnboardingDoneScreen) },
+                                onBack = { navController.popBackStack() },
+                                requestPermissions = { },
+                                permissionsGranted = true,
+                                isSearching = false
+                            )
+                        }
+                        composable<OnboardingDoneScreen> {backStackEntry ->
+                            val parentEntry = remember(backStackEntry) {
+                                navController.getBackStackEntry(OnboardinGraph::class.qualifiedName!!)
+                            }
+                            val viewModelOnboarding: OnboardingViewModel = hiltViewModel(parentEntry)
+                            OnboardingDoneScreen(
+                                onFinish = { navController.navigate(LoginGraph) }
+                            )
+                        }
+                    }
+
 
                 }
             }

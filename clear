@@ -1,0 +1,57 @@
+*   [33md41c2f9[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/tablet[m[33m, [m[1;31morigin/develop[m[33m, [m[1;32mdevelop[m[33m)[m Merge pull request #8 from AJPR00/feature/mobile
+[31m|[m[32m\[m  
+[31m|[m * [33m6787994[m[33m ([m[1;31morigin/feature/mobile[m[33m, [m[1;32mfeature/mobile[m[33m)[m feat(red): mDNS funcionando de extremo a extremo entre móvil y tablet
+[31m|[m[31m/[m  
+* [33m1d30d00[m feat(tablet): implementar mDNS dinámico y gestión de conexión del cliente
+[32m|[m *   [33mdfcf2af[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge pull request #7 from AJPR00/develop
+[32m|[m [33m|[m[32m\[m  
+[32m|[m [33m|[m[32m/[m  
+[32m|[m[32m/[m[33m|[m   
+* [33m|[m   [33m61341f2[m Merge pull request #6 from AJPR00/revert-5-feature/tablet
+[35m|[m[36m\[m [33m\[m  
+[35m|[m * [33m|[m [33m43dcdb5[m[33m ([m[1;31morigin/revert-5-feature/tablet[m[33m)[m Revert "feat(tablet): implementar mDNS dinámico y gestión de conexión del cli…"
+[35m|[m [33m|[m[33m/[m  
+[35m|[m * [33m2663cfc[m Merge pull request #5 from AJPR00/feature/tablet
+[35m|[m[35m/[m[1;32m|[m 
+[35m|[m * [33m2d1b330[m[33m ([m[1;31morigin/feature/tablet[m[33m)[m feat(tablet): implementar mDNS dinámico y gestión de conexión del cliente
+[35m|[m[35m/[m  
+*   [33m96e1b2f[m Merge pull request #4 from AJPR00/fix/mobile
+[1;33m|[m[1;34m\[m  
+[1;33m|[m * [33mf824d12[m[33m ([m[1;31morigin/fix/mobile[m[33m, [m[1;32mfix/mobile[m[33m)[m fix(mobile): reparar eventos y definirshowToast y ajustar interacción en pantallas afectadas
+[1;33m|[m *   [33m6d506a6[m Merge pull request #3 from AJPR00/feature/mobile
+[1;33m|[m [1;35m|[m[1;36m\[m  
+[1;33m|[m [1;35m|[m *   [33md52501e[m fix: resolver conflictos entre develop y feature/mobile
+[1;33m|[m [1;35m|[m [31m|[m[1;35m\[m  
+[1;33m|[m [1;35m|[m [31m|[m[1;35m/[m  
+[1;33m|[m [1;35m|[m[1;35m/[m[31m|[m   
+[1;33m|[m * [31m|[m [33me07d2af[m Merge pull request #2 from AJPR00/fix/mobile
+[1;33m|[m[1;33m/[m[34m|[m [31m|[m 
+[1;33m|[m * [31m|[m [33m6c6e8d7[m Mobile-QrScannerScreen: AndroidView a pantalla completa para QR
+[1;33m|[m[1;33m/[m [31m/[m  
+[1;33m|[m * [33m37520df[m refactor(project): saneamiento general de arquitectura, repositorios, usecases, datasources y UI
+[1;33m|[m * [33me36f997[m feature(mobile): añadir pantalla y VM de registro de dispositivo (manual, auto, QR)
+[1;33m|[m[1;33m/[m  
+* [33m909ee71[m[33m ([m[1;31morigin/release/v1.0[m[33m, [m[1;31morigin/fix/tablet[m[33m, [m[1;31morigin/fix/data[m[33m, [m[1;31morigin/fix/core[m[33m, [m[1;31morigin/feature/data[m[33m, [m[1;31morigin/feature/core[m[33m, [m[1;32mrelease/v1.0[m[33m, [m[1;32mmain[m[33m, [m[1;32mfix/tablet[m[33m, [m[1;32mfix/data[m[33m, [m[1;32mfix/core[m[33m, [m[1;32mfeature/data[m[33m, [m[1;32mfeature/core[m[33m)[m rebuild: integrar TODO UI + TODO refactor-general en base limpia
+*   [33m2c32d60[m Merge pull request #1 from AJPR00/feature/refactor-general
+[35m|[m[36m\[m  
+[35m|[m * [33m5ce7625[m chore: actualizar .gitignore para ignorar archivos locales
+[35m|[m * [33m070acc6[m refactor: reorganización de core, data, tablet y mobile
+[35m|[m * [33mcc75a13[m fix(ui): ajustes visuales y reorganización de temas y componentes
+[35m|[m[35m/[m  
+* [33m7114c2d[m feat: añadir pantallas mobile
+* [33ma2c0c5d[m refactor: nueva arquitectura limpia con separación por capas y core puro
+* [33m60d4101[m Refactor: Migración completa del proyecto a "Clean Architecture. " Separación por capas, repositorios unificados, casos de uso independientes y DI estructurada con Hilt.
+* [33mf9eb764[m Integración completa de login Google/Firebase + persistencia y logs -Implementado login con Google + Firebase y flujo Drive, con bifurcador AccesLoginType.
+* [33m219b1f3[m Fix: Screen y eventos de FromRegister()
+* [33ma361ed7[m Fix: Succesc EmailPass
+* [33m5e91b4b[m Fix: Google Driver
+* [33m71713f8[m Fix: Reproductor
+* [33m20a5e69[m Fix: Revisión y validación del flujo de listado de archivos en Google Drive
+* [33med140ba[m Google + Driver, toca afinar
+* [33m9866a49[m Google + Driver, toca afinar
+* [33mf3b7167[m Implementado zoom con gestos en AsyncImage para interacción de fotos" y menuS por posicion del tap
+* [33m9cede5c[m Implementado zoom con gestos en AsyncImage para interacción de fotos" y menuS por posicion del tap
+* [33m3d90939[m Integración de controles multimedia en Compose: -slider vertical para volumen con animación - Implementado detección de long press con awaitPointerEventScope - Corrección de uso de CoroutineScope y delay en gestos - Soporte para GIF animados con Coil (coil-gif) en ReproductorScreen - Ajustes de tamaño y posicionamiento de imágenes animadas - Mejoras en AnimatedContent para transición entre imagen y vídeo"
+* [33mbab4388[m Reanudar Fase 2: Reproducción básica de medios - Corregido manejo de errores en Reproductor.kt - Probados controles de UI en emulador de tablet
+* [33m3bfe151[m Repositorio inicial creado. Definido estructura del proyecto.
+* [33mdb2d43e[m Initial commit

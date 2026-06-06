@@ -3,7 +3,6 @@ package com.ajpr00.tablet.ui.navigation
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -14,18 +13,18 @@ import androidx.navigation.navigation
 import com.ajpr00.tablet.presentation.viewmodel.MediaItemsViewModel
 import com.ajpr00.tablet.presentation.viewmodel.ReproducorViewModel
 import com.ajpr00.tablet.presentation.viewmodel.SplashViewModel
-import com.ajpr00.tablet.ui.components.MenuApp
-import com.ajpr00.tablet.ui.components.MenuGestoReproductor
-import com.ajpr00.tablet.ui.components.Reproductor
-import com.ajpr00.tablet.ui.components.ScreenMediaExplorer
 import com.ajpr00.tablet.ui.screen.LoginScreenTablet
-import com.ajpr00.tablet.ui.screen.MenuOverlayScreen
 import com.ajpr00.tablet.ui.screen.RecoverPasswordTablet
 import com.ajpr00.tablet.ui.screen.ReproductorScreen
 import com.ajpr00.presentation_common.viewmodel.AuthViewModel
 import com.ajpr00.presentation_common.viewmodel.LoginViewModel
 import com.ajpr00.presentation_common.viewmodel.RegisterViewModel
+import com.ajpr00.tablet.presentation.viewmodel.OnboardingTabletViewModel
+import com.ajpr00.tablet.presentation.viewmodel.SplashTabletViewModel
 import com.ajpr00.tablet.ui.screen.SplashScreenTablet
+import com.ajpr00.tablet.ui.screen.onboarding.OnboardingInfoScreenTablet
+import com.ajpr00.tablet.ui.screen.onboarding.OnboardingReadyScreenTablet
+import com.ajpr00.tablet.ui.screen.onboarding.OnboardingWelcomeScreenTablet
 
 @Composable
 fun NavigationCore(innerPadding: PaddingValues) {
@@ -37,8 +36,10 @@ fun NavigationCore(innerPadding: PaddingValues) {
         modifier = Modifier.padding(innerPadding)
     ) {
         composable<Splash> { backStackEntry ->
-            val viewModelSplash: SplashViewModel = hiltViewModel()
+            val viewModelSplash: SplashTabletViewModel = hiltViewModel()
             SplashScreenTablet(
+                viewModel = viewModelSplash,
+                goToOnboarding = { navController.navigate(OnboardinGraph) },
                 goToMainGraph = { navController.navigate(LoginGraph) },
             )
         }
@@ -46,7 +47,7 @@ fun NavigationCore(innerPadding: PaddingValues) {
         // Subgrafo de login
         navigation<LoginGraph>(startDestination = LoginScreen) {
 
-            composable<LoginScreen> { backStackEntry ->
+            composable<LoginScreen> {
                 val viewModelLoginViewModel: LoginViewModel = hiltViewModel()
 
                 LoginScreenTablet(
@@ -59,7 +60,7 @@ fun NavigationCore(innerPadding: PaddingValues) {
             }
         }
 
-        composable<RegisterScreen> { backStackEntry ->
+        composable<RegisterScreen> {
             val viewModelLoginViewModel: RegisterViewModel = hiltViewModel()
             /*RegisterContent(
                 modifier = Modifier,
@@ -67,7 +68,7 @@ fun NavigationCore(innerPadding: PaddingValues) {
                 goToBack = { navController.popBackStack() }
             )*/
         }
-        composable<FromRecover> { backStackEntry ->
+        composable<FromRecover> {
             val viewModelLoginViewModel: RegisterViewModel = hiltViewModel()
             RecoverPasswordTablet(
                 viewModel = viewModelLoginViewModel,
@@ -91,6 +92,50 @@ fun NavigationCore(innerPadding: PaddingValues) {
                     viewModelMediaItems = viewModelMediaItems,
                     viewModelAuth = viewModelAuth,
                     goToLogin = { navController.navigate(LoginGraph) }
+                )
+            }
+        }
+
+        navigation<OnboardinGraph>(startDestination = OnboardingWelcomeScreenTablet) {
+
+            composable<OnboardingWelcomeScreenTablet> { entry ->
+                val parentEntry = remember(entry) {
+                    navController.getBackStackEntry(OnboardinGraph::class.qualifiedName!!)
+                }
+                val vm: OnboardingTabletViewModel = hiltViewModel(parentEntry)
+
+                OnboardingWelcomeScreenTablet(
+                    onNext = { navController.navigate(OnboardingInfoScreenTablet) }
+                )
+            }
+
+            composable<OnboardingInfoScreenTablet> { entry ->
+                val parentEntry = remember(entry) {
+                    navController.getBackStackEntry(OnboardinGraph::class.qualifiedName!!)
+                }
+                val vm: OnboardingTabletViewModel = hiltViewModel(parentEntry)
+
+                OnboardingInfoScreenTablet(
+                    onNext = {
+                        vm.saveNameProvisonal(it)
+                        navController.navigate(OnboardingReadyScreenTablet)
+                    },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable<OnboardingReadyScreenTablet> { entry ->
+                val parentEntry = remember(entry) {
+                    navController.getBackStackEntry(OnboardinGraph::class.qualifiedName!!)
+                }
+                val vm: OnboardingTabletViewModel = hiltViewModel(parentEntry)
+
+                OnboardingReadyScreenTablet(
+                    tabletName = vm.name,
+                    onFinish = {
+                        vm.setTabletName(vm.name)
+                        navController.navigate(LoginGraph)
+                    }
                 )
             }
         }
