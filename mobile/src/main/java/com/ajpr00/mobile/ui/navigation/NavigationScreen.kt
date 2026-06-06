@@ -38,3 +38,20 @@ object RegisterDevice
 @Serializable
 object QrScanner
 
+
+@Serializable
+object OnboardinGraph
+
+@Serializable
+object OnboardingWelcomeScreen
+
+@Serializable
+object OnboardingLoginScreen
+
+@Serializable
+object OnboardingConnectScreen
+
+@Serializable
+object OnboardingDoneScreen
+
+

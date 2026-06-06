@@ -8,7 +8,9 @@ import android.util.Log
 import androidx.annotation.RequiresPermission
 import com.ajpr00.core.domain.model.mDNS.MdnsServiceInfo
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -45,7 +47,7 @@ class MdnsResolver @Inject constructor(
                 }
                 Log.d(TAG, "discover() → MulticastLock adquirido correctamente")
 
-                // ⭐ IP REAL usando API moderna
+                // IP REAL usando API moderna
                 val ip = getLocalIpAddress()
                 Log.d(TAG, "discover() → IP local detectada (API moderna): $ip")
 
@@ -131,4 +133,39 @@ class MdnsResolver @Inject constructor(
             InetAddress.getByName("0.0.0.0")
         }
     }
+
+    private var discoveryJob: Job? = null
+
+    fun startDiscovery(
+        serviceType: String = "_visumloop._tcp.local.",
+        onDeviceFound: (MdnsServiceInfo) -> Unit
+    ) {
+        // Evitar múltiples búsquedas simultáneas
+        if (discoveryJob?.isActive == true) return
+
+        discoveryJob = CoroutineScope(Dispatchers.IO).launch {
+            discover(serviceType).collect { info ->
+                onDeviceFound(info)
+            }
+        }
+    }
+
+    fun stopDiscovery() {
+        try {
+            discoveryJob?.cancel()
+            discoveryJob = null
+
+            jmdns?.close()
+            jmdns = null
+
+            multicastLock?.release()
+            multicastLock = null
+
+            Log.d(TAG, "stopDiscovery() → Búsqueda mDNS detenida correctamente")
+
+        } catch (e: Exception) {
+            Log.e(TAG, "stopDiscovery() → ERROR: ${e.message}")
+        }
+    }
+
 }

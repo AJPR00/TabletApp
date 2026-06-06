@@ -1,0 +1,283 @@
+[33mcommit d41c2f963ea11a950a10e0db98e1ecdcff270374[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/tablet[m[33m, [m[1;31morigin/develop[m[33m, [m[1;32mdevelop[m[33m)[m
+Merge: 1d30d00 6787994
+Author: A.JPr0 <115544261+AJPR00@users.noreply.github.com>
+Date:   Fri Jun 5 00:04:37 2026 +0200
+
+    Merge pull request #8 from AJPR00/feature/mobile
+    
+    feat(red): mDNS funcionando de extremo a extremo entre móvil y tablet
+
+[33mcommit 678799426401310454e2008e9b8da17c34d8d3a4[m[33m ([m[1;31morigin/feature/mobile[m[33m, [m[1;32mfeature/mobile[m[33m)[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Fri Jun 5 00:02:08 2026 +0200
+
+    feat(red): mDNS funcionando de extremo a extremo entre móvil y tablet
+    
+    - Implementada detección de IP moderna con ConnectivityManager (Android 10–14)
+    - Corregido problema de JmDNS escuchando en la interfaz equivocada (hotspot)
+    - Añadido descubrimiento mDNS completo en el móvil (serviceAdded + serviceResolved)
+    - Añadida publicación mDNS estable en la tablet con corrutinas en IO
+    - Sustituido hilo infinito por Job cancelable (structured concurrency)
+    - Añadidos logs detallados y profesionales en TabletServer y MdnsResolver
+    - mDNS se detiene al conectar cliente y se reactiva tras inactividad
+    - Primer descubrimiento LAN exitoso entre dispositivos VisumLoop
+
+[33mcommit 1d30d0072dd4ed8fe93b4709c5766d655a5985f2[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Thu Jun 4 21:07:33 2026 +0200
+
+    feat(tablet): implementar mDNS dinámico y gestión de conexión del cliente
+
+[33mcommit 61341f21561ca367a2d832f148728e18ba87d024[m
+Merge: 96e1b2f 43dcdb5
+Author: A.JPr0 <115544261+AJPR00@users.noreply.github.com>
+Date:   Thu Jun 4 21:15:37 2026 +0200
+
+    Merge pull request #6 from AJPR00/revert-5-feature/tablet
+    
+    Revert 5 feature/tablet
+
+[33mcommit 43dcdb5b3046a76bdadd86fe1a148c5326392920[m[33m ([m[1;31morigin/revert-5-feature/tablet[m[33m)[m
+Author: A.JPr0 <115544261+AJPR00@users.noreply.github.com>
+Date:   Thu Jun 4 21:15:13 2026 +0200
+
+    Revert "feat(tablet): implementar mDNS dinámico y gestión de conexión del cli…"
+
+[33mcommit 2663cfcef6b3932509c7f01e4d1eeea840f4ef76[m
+Merge: 96e1b2f 2d1b330
+Author: A.JPr0 <115544261+AJPR00@users.noreply.github.com>
+Date:   Thu Jun 4 21:13:02 2026 +0200
+
+    Merge pull request #5 from AJPR00/feature/tablet
+    
+    feat(tablet): implementar mDNS dinámico y gestión de conexión del cli…
+
+[33mcommit 2d1b3303c1cd22152be65e7c3359a4622b42745a[m[33m ([m[1;31morigin/feature/tablet[m[33m)[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Thu Jun 4 21:07:33 2026 +0200
+
+    feat(tablet): implementar mDNS dinámico y gestión de conexión del cliente
+
+[33mcommit 96e1b2f7ecf9aab72f52af63cd894f1b23f22ca8[m
+Merge: 909ee71 f824d12
+Author: A.JPr0 <115544261+AJPR00@users.noreply.github.com>
+Date:   Thu Jun 4 14:34:19 2026 +0200
+
+    Merge pull request #4 from AJPR00/fix/mobile
+    
+    fix/mobile
+
+[33mcommit f824d121082eda8bb00ce65a4017fda44ada7dd8[m[33m ([m[1;31morigin/fix/mobile[m[33m, [m[1;32mfix/mobile[m[33m)[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Thu Jun 4 14:21:02 2026 +0200
+
+    fix(mobile): reparar eventos y definirshowToast y ajustar interacción en pantallas afectadas
+
+[33mcommit 6d506a6d3bd186b7d96caea3187d9511440712e9[m
+Merge: e07d2af d52501e
+Author: A.JPr0 <115544261+AJPR00@users.noreply.github.com>
+Date:   Thu Jun 4 13:54:03 2026 +0200
+
+    Merge pull request #3 from AJPR00/feature/mobile
+    
+    Feature/mobile
+
+[33mcommit d52501ed79ebcbe573f238fd1e887e8b3b5c87df[m
+Merge: 37520df e07d2af
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Thu Jun 4 13:53:13 2026 +0200
+
+    fix: resolver conflictos entre develop y feature/mobile
+
+[33mcommit 37520df6486aaa7042674f807f71ce5caa8a3544[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Thu Jun 4 13:39:08 2026 +0200
+
+    refactor(project): saneamiento general de arquitectura, repositorios, usecases, datasources y UI
+
+[33mcommit e36f997ed3baa64f950aac255fce6d547fa382bc[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Thu Jun 4 13:36:14 2026 +0200
+
+    feature(mobile): añadir pantalla y VM de registro de dispositivo (manual, auto, QR)
+
+[33mcommit e07d2afac4e76634fd2899169b5254be9c0a7018[m
+Merge: 909ee71 6c6e8d7
+Author: A.JPr0 <115544261+AJPR00@users.noreply.github.com>
+Date:   Tue May 26 20:36:06 2026 +0200
+
+    Merge pull request #2 from AJPR00/fix/mobile
+    
+    Mobile-QrScannerScreen: AndroidView a pantalla completa para QR
+
+[33mcommit 6c6e8d741e532f73df493c65301b8c93887ccf06[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Tue May 26 20:28:57 2026 +0200
+
+    Mobile-QrScannerScreen: AndroidView a pantalla completa para QR
+
+[33mcommit 909ee717a8d097e1f2f7bc57a602f4d6358e7e62[m[33m ([m[1;31morigin/release/v1.0[m[33m, [m[1;31morigin/fix/tablet[m[33m, [m[1;31morigin/fix/data[m[33m, [m[1;31morigin/fix/core[m[33m, [m[1;31morigin/feature/data[m[33m, [m[1;31morigin/feature/core[m[33m, [m[1;32mrelease/v1.0[m[33m, [m[1;32mmain[m[33m, [m[1;32mfix/tablet[m[33m, [m[1;32mfix/data[m[33m, [m[1;32mfix/core[m[33m, [m[1;32mfeature/data[m[33m, [m[1;32mfeature/core[m[33m)[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Tue May 26 12:50:43 2026 +0200
+
+    rebuild: integrar TODO UI + TODO refactor-general en base limpia
+
+[33mcommit 2c32d602dcfafd363dff76c56f195ec723c45d4e[m
+Merge: 7114c2d 5ce7625
+Author: A.JPr0 <115544261+AJPR00@users.noreply.github.com>
+Date:   Tue May 26 11:11:22 2026 +0200
+
+    Merge pull request #1 from AJPR00/feature/refactor-general
+    
+    refactor: reorganización de core, data, tablet y mobile
+
+[33mcommit 5ce762548607c75a8295b2a4fb3c37e4179b0811[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Tue May 26 11:03:18 2026 +0200
+
+    chore: actualizar .gitignore para ignorar archivos locales
+
+[33mcommit 070acc6976cef130ab24dcf866f5ff5f9a858366[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Tue May 26 10:55:21 2026 +0200
+
+    refactor: reorganización de core, data, tablet y mobile
+
+[33mcommit cc75a13a4d2defd06a93b0cbf477d3289ac8b15f[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Tue May 26 10:40:27 2026 +0200
+
+    fix(ui): ajustes visuales y reorganización de temas y componentes
+
+[33mcommit 7114c2def83b13c304c2644a7a51c18ad4a10392[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Wed May 20 12:36:32 2026 +0200
+
+    feat: añadir pantallas mobile
+
+[33mcommit a2c0c5d58e85f35bc0bb5cef63193d6bc4f26e3d[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Wed May 20 12:33:40 2026 +0200
+
+    refactor: nueva arquitectura limpia con separación por capas y core puro
+    
+    - Reestructuración completa del proyecto: de app monolítica (solo tablet) a arquitectura modular
+    - Nuevo módulo core: sin Android, sin Hilt, sin Dagger; solo lógica de dominio
+    - UseCases ahora inyectables mediante @Inject constructor (javax.inject)
+    - Módulo data reorganizado: repositorios + módulos Hilt
+    - Módulos presentation_common y ui_common para compartir ViewModels y UI
+    - Módulo mobile añadido como app independiente
+    - Eliminación del antiguo UseCaseModule y DI manual
+    - Mejoras en mantenibilidad, escalabilidad y claridad arquitectónica
+
+[33mcommit 60d41017fc9269cd88c9e9893f69c6e119d0b3f2[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Thu Apr 16 10:38:17 2026 +0200
+
+    Refactor: Migración completa del proyecto a "Clean Architecture. "
+    Separación por capas, repositorios unificados, casos de uso independientes y DI estructurada con Hilt.
+
+[33mcommit f9eb76498b04d2487f08d7ff8d9c5e0dc93ecc7e[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Thu Dec 11 05:49:13 2025 +0100
+
+    Integración completa de login Google/Firebase + persistencia y logs
+    -Implementado login con Google + Firebase y flujo Drive, con bifurcador AccesLoginType.
+    
+    -Añadido LoginPreferences con DataStore para sesiones locales y Drive.
+    
+    -Ajustado launcherLogin para manejar ambos flujos en el callback.
+    
+    -Añadidos métodos de guardado/limpieza de sesiones y logs en repositorios y preferencias.
+
+[33mcommit 219b1f3b6dbeaa573c529296bfb2da05f6726409[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Tue Dec 9 20:55:13 2025 +0100
+
+    Fix: Screen y eventos de FromRegister()
+
+[33mcommit a361ed78f13525f955a697b203cbbec9364238e7[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Tue Dec 9 02:42:49 2025 +0100
+
+    Fix: Succesc EmailPass
+
+[33mcommit 5e91b4b8e6b265b085877afb25ad691f17f6c96b[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Tue Dec 9 01:49:18 2025 +0100
+
+    Fix: Google Driver
+
+[33mcommit 71713f8fb6bd9603464e43f7b36ac10a4f1afdc7[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Mon Dec 8 01:50:01 2025 +0100
+
+    Fix: Reproductor
+
+[33mcommit 20a5e69e8618b5cc41efc212e7f1b0660f5cba6b[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Sat Dec 6 12:34:54 2025 +0100
+
+    Fix: Revisión y validación del flujo de listado de archivos en Google Drive
+    
+    - Se verificó que el flujo de obtención de AccessToken y listado de archivos funciona correctamente.
+    - Se identificó la posible duplicación de algunos archivos en la lista.
+    - Se ajustó la lógica de listado para asegurar la integridad de los datos.
+    - Se documenta el comportamiento esperado y el resultado final en el manual técnico.
+
+[33mcommit ed140bab21984e6e8ab630567b96cf3c7991035f[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Tue Dec 2 23:07:46 2025 +0100
+
+    Google + Driver, toca afinar
+
+[33mcommit 9866a495b6e85896dcf6d3df4bf3db10ea849bdf[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Tue Dec 2 23:05:47 2025 +0100
+
+    Google + Driver, toca afinar
+
+[33mcommit f3b7167e20d64534a910d480b6feec8bba67abaf[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Sun Nov 30 13:53:05 2025 +0100
+
+    Implementado zoom con gestos en AsyncImage para interacción de fotos" y menuS por posicion del tap
+
+[33mcommit 9cede5c6d6c84996d00fdd07268d3c0b1129fe60[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Sun Nov 30 13:52:57 2025 +0100
+
+    Implementado zoom con gestos en AsyncImage para interacción de fotos" y menuS por posicion del tap
+
+[33mcommit 3d909390afb7bab391c9ab4cac747c91059cfeab[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Sun Nov 30 05:27:44 2025 +0100
+
+    Integración de controles multimedia en Compose:
+    -slider vertical para volumen con animación
+    - Implementado detección de long press con awaitPointerEventScope
+    - Corrección de uso de CoroutineScope y delay en gestos
+    - Soporte para GIF animados con Coil (coil-gif) en ReproductorScreen
+    - Ajustes de tamaño y posicionamiento de imágenes animadas
+    - Mejoras en AnimatedContent para transición entre imagen y vídeo"
+
+[33mcommit bab43885d1816115ae8281840323f0e188811cdd[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Sat Nov 29 13:16:12 2025 +0100
+
+    Reanudar Fase 2: Reproducción básica de medios
+    - Corregido manejo de errores en Reproductor.kt
+    - Probados controles de UI en emulador de tablet
+
+[33mcommit 3bfe1513983f861315e31c3aae9c4788268185f5[m
+Author: Antonio J Patrocinio <Antonio.J.Patrocinio@gmail.com>
+Date:   Mon Sep 29 03:48:25 2025 +0200
+
+    Repositorio inicial creado.
+    Definido estructura del proyecto.
+
+[33mcommit db2d43e37fe9e2709c9a310b2e6e4ade49d67caf[m
+Author: A.JPr0 <115544261+AJPR00@users.noreply.github.com>
+Date:   Wed Sep 24 12:52:59 2025 +0200
+
+    Initial commit
