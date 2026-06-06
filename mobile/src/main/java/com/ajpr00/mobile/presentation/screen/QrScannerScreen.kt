@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -23,10 +22,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.ajpr00.core.domain.model.Dispositivo
-import com.ajpr00.core.domain.model.TabletConnectionData
 import com.ajpr00.mobile.presentation.viewmodel.QrScannerViewModel
-import com.ajpr00.mobile.qr.buildPreviewView
-import com.ajpr00.mobile.qr.setupCamera
+import com.ajpr00.mobile.qr.camara.buildPreviewView
+import com.ajpr00.mobile.qr.camara.setupCamera
+
 
 /**
  * QrScannerScreen
