@@ -1,5 +1,6 @@
 package com.ajpr00.core.domain.usecase.media
 
+import com.ajpr00.core.security.Crypto
 import com.ajpr00.core.domain.model.PendingMedia
 import com.ajpr00.core.domain.repository.media.TabletApiRepository
 import okhttp3.MediaType.Companion.toMediaType
