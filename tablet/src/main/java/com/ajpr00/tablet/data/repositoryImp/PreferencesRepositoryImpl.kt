@@ -28,4 +28,8 @@ class PreferencesRepositoryImpl @Inject constructor(
     override fun getTabletName(): Flow<String> = prefs.tabletName
 
     override suspend fun setTabletName(name: String) = prefs.setTabletName(name)
+
+    override suspend fun setAesKey(bytes: ByteArray) = prefs.setAesKey(bytes)
+
+    override fun getAesKey(): Flow<ByteArray?> = prefs.aesKey
 }
