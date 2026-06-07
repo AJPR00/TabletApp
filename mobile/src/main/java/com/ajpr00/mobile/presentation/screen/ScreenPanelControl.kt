@@ -1,6 +1,5 @@
 package com.ajpr00.mobile.presentation.screen
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,14 +55,12 @@ fun ScreenPanelControl(
     val selectedDevice by viewModel.selectedDevice.collectAsState()
     val mediaListRepro by viewModel.listRepro.collectAsState()
 
-    // ESTADO PARA MOSTRAR LA PANTALLA FLOTANTE
     var showExplorer by remember { mutableStateOf(false) }
+    val mdnsInfo by viewModel.mdnsState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.startMdnsDiscovery()
     }
-
-    val mdnsInfo by viewModel.mdnsState.collectAsState()
 
     mdnsInfo?.let { info ->
         Text("Tablet encontrada: ${info.name} (${info.ip}:${info.port})")
@@ -79,18 +76,17 @@ fun ScreenPanelControl(
             onSelectDevice = { viewModel.selectDevice(it) },
             onSelectImage = onSelectImage,
             onSelectVideo = onSelectVideo,
-            onEnviar = onEnviar,
+            onPendSend = viewModel::enviarMediaCifrado,
             openExploreListRepro = { showExplorer = true },
             onConfiguracion = onConfiguracion,
             onAgregarDispositivo = onAgregarDispositivo
         )
 
-        //  OVERLAY ENCIMA DEL PANEL
         if (showExplorer) {
             ScreenMediaExplorer(
                 items = mediaListRepro,
                 label = "Lista de reproducción",
-                itemContent = { RemoteMediaCard( media = it,) }
+                itemContent = { RemoteMediaCard(media = it) }
             )
         }
     }
@@ -105,7 +101,7 @@ private fun PanelMenu(
     onSelectDevice: (DispositivoUi) -> Unit,
     onSelectImage: () -> Unit,
     onSelectVideo: () -> Unit,
-    onEnviar: () -> Unit,
+    onPendSend: () -> Unit,
     openExploreListRepro: () -> Unit,
     onConfiguracion: () -> Unit,
     onAgregarDispositivo: () -> Unit,
@@ -115,7 +111,6 @@ private fun PanelMenu(
 
     Column(modifier = modifier.fillMaxSize()) {
 
-        // 4 botones grandes
         ActionGrid(
             modifier = Modifier
                 .fillMaxWidth()
@@ -130,6 +125,8 @@ private fun PanelMenu(
         if (isListSendMedia) {
             MediaListSection(
                 modifier = Modifier.weight(0.25f),
+                icon = painterResource(id = R.drawable.ic_mobile_control),
+                onFabClick = onPendSend,
                 listSendMedia = listSendMedia
             )
         }
@@ -183,7 +180,7 @@ private fun ActionGrid(
                 ButtonCustonPanel(
                     icon = painterResource(id = R.drawable.ic_mobile_control),
                     label = "Ver lista reproducción",
-                    onClick = { openExploreListRepro()}
+                    onClick = { openExploreListRepro() }
                 )
             }
             item {
@@ -200,25 +197,40 @@ private fun ActionGrid(
 @Composable
 private fun MediaListSection(
     modifier: Modifier,
+    icon: Painter,
+    onFabClick: () -> Unit,
     listSendMedia: List<PendingMedia>
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
+    Box(
+        modifier = modifier
+    ) {
+        Column(modifier = modifier.fillMaxWidth()) {
 
-        TextoConDivisor(texto = "Medias a enviar:")
+            TextoConDivisor(texto = "Medias a enviar:")
 
-        LazyRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp, start = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(listSendMedia) { media ->
-                MediaPreviewCard(
-                    media = media,
-                    size = 80.dp
-                )
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp, start = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(listSendMedia) { media ->
+                    MediaPreviewCard(
+                        media = media,
+                        size = 80.dp
+                    )
+                }
             }
         }
+        FabAdd(
+            modifier = Modifier
+                .size(60.dp)
+                .align(Alignment.BottomEnd)
+                .offset((-10).dp, 1.dp),
+            icon = icon,
+            icDesc = "Agregar dispositivo",
+            onClick = onFabClick
+        )
     }
 }
 
@@ -243,7 +255,7 @@ fun DeviceListSection(
     selectedDevice: DispositivoUi?,
     onSelectDevice: (DispositivoUi) -> Unit,
     dispositivos: List<DispositivoUi>,
-    onFabClick: (() -> Unit)? = null
+    onFabClick: () -> Unit
 ) {
     Box(
         modifier = modifier
@@ -297,7 +309,7 @@ fun DeviceListSection(
                 .offset((-10).dp, 1.dp),
             icon = icon,
             icDesc = "Agregar dispositivo",
-            onClick = onFabClick ?: {}
+            onClick = onFabClick
         )
     }
 }

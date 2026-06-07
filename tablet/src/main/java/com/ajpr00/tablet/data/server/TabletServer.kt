@@ -1,5 +1,6 @@
 package com.ajpr00.tablet.data.server
 
+import android.util.Base64
 import android.util.Log
 import com.ajpr00.core.domain.model.FormatType
 import com.ajpr00.core.domain.model.api.ApiResponse
@@ -11,7 +12,10 @@ import com.ajpr00.core.domain.repository.preference.PreferencesRepository
 import com.ajpr00.core.domain.usecase.media.DeleteMediaSyncUseCase
 import com.ajpr00.core.domain.usecase.media.GetAllMediaSyncUseCase
 import com.ajpr00.core.domain.usecase.media.GetMediaByIdSyncUseCase
-import com.ajpr00.data.crypto.Crypto
+import com.ajpr00.core.security.Crypto
+import com.ajpr00.core.security.Pbkdf2KeyDeriver
+import com.ajpr00.core.security.PinGenerator
+import com.ajpr00.core.security.SaltGenerator
 import com.ajpr00.data.useCase.ImportMediaFromServerUseCase
 import com.ajpr00.data.util.ImageUtils
 import com.ajpr00.data.util.VideoUtils
@@ -28,43 +32,40 @@ import java.io.File
 import javax.inject.Inject
 
 /**
- * TabletServer
+ * # TabletServer
  *
- * Servidor HTTP embebido (NanoHTTPD) que actúa como puerta de entrada para la app móvil.
+ * Servidor HTTP embebido basado en `NanoHTTPD` que actúa como puerta de entrada
+ * para la app móvil dentro de la red local.
  *
- * ### Propósito
- * - Exponer endpoints REST para que el móvil pueda:
- *   - comprobar disponibilidad (`/ping`),
- *   - obtener información (`/info`),
- *   - listar media (`/list_media`),
- *   - descargar media y thumbnails (`/media/{id}`, `/thumbnail/{id}`),
- *   - eliminar media (`/delete/{id}`),
- *   - subir archivos cifrados (`/upload`).
+ * ## Responsabilidades principales
+ * - Exponer endpoints REST para:
+ *   - Comprobar disponibilidad: `GET /ping`.
+ *   - Obtener información del dispositivo: `GET /info`.
+ *   - Listar media: `GET /list_media`.
+ *   - Descargar media: `GET /media/{id}`.
+ *   - Descargar thumbnails: `GET /thumbnail/{id}`.
+ *   - Eliminar media: `DELETE /delete/{id}`.
+ *   - Gestionar vinculación segura: `POST /show_pin`, `POST /pair`.
+ *   - Recibir archivos cifrados: `POST /upload`.
  *
- * ### Responsabilidad dentro de la arquitectura
- * - **Infraestructura HTTP**: recibe peticiones y devuelve respuestas.
- * - **Coordinador**: valida headers, parsea multipart, descifra y delega en UseCases.
- * - **No contiene lógica de negocio**: la lógica de persistencia y reglas están en los UseCases (domain).
+ * ## Seguridad
+ * - La vinculación se basa en:
+ *   - PIN humano (6 dígitos).
+ *   - SALT aleatorio.
+ *   - PBKDF2 para derivar una clave temporal.
+ *   - Entrega cifrada de la clave AES REAL (AES‑128).
+ * - La clave AES REAL se guarda en `PreferencesRepository` y se usa para cifrar
+ *   y descifrar el tráfico real (por ejemplo, `/upload`).
  *
- * ### Flujo interno relevante (upload cifrado)
- * 1. Validar token `X-Auth-Token`.
- * 2. `session.parseBody()` para obtener la ruta del archivo temporal.
- * 3. Leer bytes cifrados y descifrarlos con `Crypto`.
- * 4. Guardar un fichero temporal con los bytes descifrados.
- * 5. Llamar a `ImportMediaFromServerUseCase` para guardar en sandbox y Room.
- * 6. Responder con `ApiResponse<UploadResult>`.
- *
- * ### Notas y advertencias
- * - Todas las respuestas JSON siguen el wrapper `ApiResponse<T>` para compatibilidad con Gson/Retrofit.
- * - Se especifica el tipo genérico en cada `ApiResponse<T>` para evitar errores de inferencia.
- * - `Crypto` usa AES/GCM; si la clave es incorrecta o los datos están corruptos, el descifrado devuelve `ByteArray(0)` y la petición se rechaza.
- *
- * ### Relación con capas
- * - **presentation**: el móvil consume estos endpoints (Retrofit + Gson).
+ * ## Relación con otras capas
+ * - **domain**: delega en use cases síncronos para operaciones con Room.
  * - **data**: usa mappers (`toRemote`) y utilidades de imagen/vídeo.
- * - **core/domain**: delega en UseCases síncronos para operaciones con Room.
+ * - **core/security**: usa `Crypto`, `Pbkdf2KeyDeriver`, `SaltGenerator`, `PinGenerator`.
+ * - **network**: usa `MdnsPublisher` para anunciar el servicio en la red local.
  *
- * @constructor Inyecta los use cases y componentes de infraestructura necesarios.
+ * ## Notas importantes
+ * - Este servidor no contiene lógica de negocio; solo enruta y coordina.
+ * - Todas las respuestas JSON usan el wrapper `ApiResponse<T>`.
  */
 class TabletServer @Inject constructor(
     private val getMediaByIdSync: GetMediaByIdSyncUseCase,
@@ -75,49 +76,52 @@ class TabletServer @Inject constructor(
     private val prefsRepository: PreferencesRepository
 ) : NanoHTTPD(8080) {
 
-    /** Marca si hay un cliente activo para pausar mDNS temporalmente. */
-    private var isClientConnected = false
+    /** Indica si hay un cliente activo para pausar mDNS temporalmente. */
+    private var isClientConnected: Boolean = false
 
-    /** Última vez que se recibió una petición (ms). */
-    private var lastRequestTime = System.currentTimeMillis()
+    /** Marca la última vez que se recibió una petición HTTP. */
+    private var lastRequestTime: Long = System.currentTimeMillis()
 
-    /** Instancia de cifrado AES/GCM. La clave debe gestionarse desde prefs en producción. */
-    private val crypto = Crypto("CLAVE_COMPARTIDA_USUARIO")
+    /** PIN actual generado para el proceso de vinculación. Solo vive en memoria. */
+    private var currentPin: String? = null
 
-    /** Token compartido simple para proteger `/upload`. En producción usar mecanismo más robusto. */
-    private val AUTH_TOKEN = "TOKEN_SECRETO_COMPARTIDO"
+    /** SALT actual asociado al PIN. Solo vive en memoria. */
+    private var currentSalt: ByteArray? = null
 
     private val gson = Gson()
     private val TAG = "TabletServer"
 
-    // ---------------------------------------------------------
-    //  CICLO DE VIDA: START / STOP
-    // ---------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // CICLO DE VIDA: START / STOP
+    // -------------------------------------------------------------------------
 
     /**
-     * Inicia NanoHTTPD y publica el servicio por mDNS.
+     * Inicia el servidor HTTP y publica el servicio por mDNS.
      *
      * Flujo:
-     * - Inicia el servidor HTTP.
-     * - Recupera id y nombre de la tablet desde [PreferencesRepository].
-     * - Publica el servicio con [MdnsPublisher].
-     * - Lanza un hilo que re-publica mDNS si el cliente se desconecta por inactividad.
+     * 1. Llama a `super.start()` para arrancar NanoHTTPD.
+     * 2. Recupera `tabletId` y `tabletName` desde [PreferencesRepository].
+     * 3. Publica el servicio mDNS con [MdnsPublisher].
+     * 4. Lanza un hilo que vigila la inactividad y reactiva mDNS si el cliente
+     *    deja de hacer peticiones durante un tiempo.
      *
      * Advertencias:
-     * - No bloquear el hilo principal; las operaciones de red se lanzan en Dispatchers.IO.
+     * - No debe ejecutarse en el hilo principal.
+     * - Si `tabletId` o `tabletName` están vacíos, la publicación mDNS será
+     *   menos útil; se asume que el onboarding ya se ha completado.
      */
     override fun start() {
         super.start()
-        Log.d(TAG, "🚀 Servidor HTTP iniciado en 8080")
+        Log.d(TAG, "Servidor HTTP iniciado en el puerto 8080")
 
         val id = runBlocking { prefsRepository.getTabletId().first() }
         val name = runBlocking { prefsRepository.getTabletName().first() }
 
-        Log.d(TAG, "📡 Iniciando mDNS → id=$id name=$name port=8080")
+        Log.d(TAG, "Iniciando mDNS con id=$id name=$name port=8080")
 
         CoroutineScope(Dispatchers.IO).launch {
             mdnsPublisher.start(id, name, 8080)
-            Log.d(TAG, "📡 mDNS → Publicación inicial completada")
+            Log.d(TAG, "Publicación mDNS inicial completada")
         }
 
         // Hilo que vigila la inactividad y reactiva mDNS si el cliente desaparece.
@@ -125,11 +129,11 @@ class TabletServer @Inject constructor(
             while (true) {
                 val diff = System.currentTimeMillis() - lastRequestTime
                 if (isClientConnected && diff > 10_000) {
-                    Log.d(TAG, "⏳ Cliente inactivo ($diff ms) → reactivando mDNS")
+                    Log.d(TAG, "Cliente inactivo durante $diff ms. Reactivando mDNS.")
                     isClientConnected = false
                     CoroutineScope(Dispatchers.IO).launch {
                         mdnsPublisher.start(id, name, 8080)
-                        Log.d(TAG, "📡 mDNS → Reactivado tras inactividad")
+                        Log.d(TAG, "mDNS reactivado tras inactividad")
                     }
                 }
                 Thread.sleep(2000)
@@ -138,89 +142,121 @@ class TabletServer @Inject constructor(
     }
 
     /**
-     * Detiene mDNS y el servidor HTTP.
+     * Detiene el servidor HTTP y la publicación mDNS.
      */
     override fun stop() {
-        Log.d(TAG, "🛑 Deteniendo mDNS…")
+        Log.d(TAG, "Deteniendo mDNS")
         mdnsPublisher.stop()
-        Log.d(TAG, "🛑 Deteniendo servidor NanoHTTPD…")
+        Log.d(TAG, "Deteniendo servidor NanoHTTPD")
         super.stop()
     }
 
-    // ---------------------------------------------------------
-    //  ROUTER PRINCIPAL
-    // ---------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // ROUTER PRINCIPAL
+    // -------------------------------------------------------------------------
 
     /**
-     * Router principal que despacha las peticiones HTTP.
+     * Router principal del servidor HTTP.
      *
-     * - Valida y actualiza `lastRequestTime`.
-     * - Pausa mDNS mientras hay un cliente activo para evitar ruido en la red.
-     * - Devuelve siempre `ApiResponse<T>` para endpoints JSON.
+     * Responsabilidades:
+     * - Actualizar el timestamp de actividad.
+     * - Pausar mDNS cuando se detecta un cliente activo.
+     * - Registrar logs de cada petición.
+     * - Despachar a los handlers según la ruta.
      *
-     * @param session Objeto con la petición HTTP.
-     * @return [NanoHTTPD.Response] con JSON o stream binario.
+     * Rutas soportadas:
+     * - `GET /ping`
+     * - `GET /info`
+     * - `GET /list_media`
+     * - `DELETE /delete/{id}`
+     * - `GET /media/{id}`
+     * - `GET /thumbnail/{id}`
+     * - `POST /show_pin`
+     * - `POST /pair`
+     * - `POST /upload`
      */
     override fun serve(session: IHTTPSession): Response {
         return try {
+            // 1. Actualizar timestamp de actividad
             lastRequestTime = System.currentTimeMillis()
 
+            // 2. Si es la primera petición del cliente, detener mDNS
             if (!isClientConnected) {
                 isClientConnected = true
-                Log.d(TAG, "📱 Cliente conectado → apagando mDNS temporalmente")
+                Log.d(TAG, "Cliente conectado. Pausando mDNS temporalmente.")
                 mdnsPublisher.stop()
             }
 
+            // 3. Extraer datos de la petición
             val uri = session.uri
             val method = session.method
 
-            Log.d(TAG, "➡️ Petición recibida: $method $uri desde ${session.remoteIpAddress}")
+            Log.d(TAG, "Petición recibida: $method $uri desde ${session.remoteIpAddress}")
 
+            // 4. Router principal
             when {
-                uri == "/ping" -> handlePing()
-                uri == "/info" -> handleInfo()
-                uri == "/list_media" -> handleListMedia()
-                uri.startsWith("/delete/") -> handleDelete(uri)
-                uri.startsWith("/media/") -> handleMediaDownload(uri)
-                uri.startsWith("/thumbnail/") -> handleThumbnail(uri)
+                uri == "/ping" && method == Method.GET -> handlePing()
+                uri == "/info" && method == Method.GET -> handleInfo()
+                uri == "/list_media" && method == Method.GET -> handleListMedia()
+                uri.startsWith("/delete/") && method == Method.DELETE -> handleDelete(uri)
+                uri.startsWith("/media/") && method == Method.GET -> handleMediaDownload(uri)
+                uri.startsWith("/thumbnail/") && method == Method.GET -> handleThumbnail(uri)
+                uri == "/show_pin" && method == Method.POST -> handleShowPin()
+                uri == "/pair" && method == Method.POST -> handlePair(session)
                 uri == "/upload" && method == Method.POST -> handleEncryptedUpload(session)
-                else -> json(ApiResponse<Unit>(status = "ERROR", error = "not found"), Response.Status.NOT_FOUND)
+                else -> {
+                    Log.w(TAG, "Ruta no encontrada: $uri")
+                    json(
+                        ApiResponse<Unit>(
+                            status = "ERROR",
+                            error = "not found"
+                        ),
+                        Response.Status.NOT_FOUND
+                    )
+                }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "💥 Error general en serve(): ${e.message}", e)
-            return json(ApiResponse<Unit>(status = "ERROR", error = "internal error"), Response.Status.INTERNAL_ERROR)
+            Log.e(TAG, "Error general en serve(): ${e.message}", e)
+            json(
+                ApiResponse<Unit>(
+                    status = "ERROR",
+                    error = "internal error"
+                ),
+                Response.Status.INTERNAL_ERROR
+            )
         }
     }
 
-    // ---------------------------------------------------------
-    //  ENDPOINTS (implementación)
-    // ---------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // ENDPOINTS BÁSICOS
+    // -------------------------------------------------------------------------
 
     /**
      * `GET /ping`
      *
-     * Respuesta simple para comprobar disponibilidad.
+     * Endpoint simple para comprobar que el servidor está vivo.
      *
-     * @return ApiResponse<String> con `data = "pong"`.
+     * @return `ApiResponse<String>` con `data = "pong"`.
      */
     private fun handlePing(): Response {
-        Log.d(TAG, "🏓 /ping → OK")
-        return json(ApiResponse<String>(status = "OK", data = "pong"))
+        Log.d(TAG, "/ping → OK")
+        return json(ApiResponse(status = "OK", data = "pong"))
     }
 
     /**
      * `GET /info`
      *
-     * Devuelve id, nombre y puerto de la tablet.
-     *
-     * @return ApiResponse<DeviceInfo> con la información del dispositivo.
+     * Devuelve información básica de la tablet:
+     * - id
+     * - nombre
+     * - puerto
      */
     private fun handleInfo(): Response {
-        Log.d(TAG, "ℹ️ /info → Enviando información del dispositivo…")
+        Log.d(TAG, "/info → Enviando información del dispositivo")
         val id = runBlocking { prefsRepository.getTabletId().first() }
         val name = runBlocking { prefsRepository.getTabletName().first() }
         val info = DeviceInfo(id = id, name = name, port = 8080)
-        return json(ApiResponse<DeviceInfo>(status = "OK", data = info))
+        return json(ApiResponse(status = "OK", data = info))
     }
 
     /**
@@ -229,56 +265,54 @@ class TabletServer @Inject constructor(
      * Lista todos los media almacenados en Room.
      *
      * Flujo:
-     * 1. Llamada síncrona a [GetAllMediaSyncUseCase].
-     * 2. Mapeo a DTO remoto con `toRemote()`.
-     * 3. Envoltorio en [ListMediaData] y [ApiResponse].
-     *
-     * @return ApiResponse<ListMediaData>
+     * 1. Llama a [GetAllMediaSyncUseCase].
+     * 2. Mapea a DTO remoto con `toRemote()`.
+     * 3. Envuelve en [ListMediaData] y [ApiResponse].
      */
     private fun handleListMedia(): Response {
-        Log.d(TAG, "📂 /list_media → Listando archivos…")
+        Log.d(TAG, "/list_media → Listando archivos")
         val list = getAllMediaSyncUseCase().map { it.toRemote() }
-        return json(ApiResponse<ListMediaData>(status = "OK", data = ListMediaData(list)))
+        return json(ApiResponse(status = "OK", data = ListMediaData(list)))
     }
 
     /**
      * `DELETE /delete/{id}`
      *
-     * Elimina un media por id delegando en el use case.
-     *
-     * @param uri Ruta completa; se extrae el id.
-     * @return ApiResponse<DeleteResult> con el id eliminado.
+     * Elimina un media por id.
      */
     private fun handleDelete(uri: String): Response {
         val id = uri.removePrefix("/delete/")
-        Log.d(TAG, "🗑️ /delete/$id → Eliminando media…")
+        Log.d(TAG, "/delete/$id → Eliminando media")
         deleteMediaSyncUseCase(id)
-        return json(ApiResponse<DeleteResult>(status = "OK", data = DeleteResult(id)))
+        return json(ApiResponse(status = "OK", data = DeleteResult(id)))
     }
 
     /**
      * `GET /media/{id}`
      *
      * Devuelve el archivo original como stream binario.
-     *
-     * @param uri Ruta completa; se extrae el id.
-     * @return Response binaria con el archivo o ApiResponse<Unit> de error.
      */
     private fun handleMediaDownload(uri: String): Response {
         val id = uri.removePrefix("/media/")
-        Log.d(TAG, "📥 /media/$id → Descargando archivo…")
+        Log.d(TAG, "/media/$id → Descargando archivo")
 
         val media = getMediaByIdSync(id)
-            ?: return json(ApiResponse<Unit>(status = "ERROR", error = "not found"), Response.Status.NOT_FOUND)
+            ?: return json(
+                ApiResponse<Unit>(status = "ERROR", error = "not found"),
+                Response.Status.NOT_FOUND
+            )
 
         val file = File(media.path)
         if (!file.exists()) {
-            Log.e(TAG, "❌ /media/$id → Archivo físico no encontrado")
-            return json(ApiResponse<Unit>(status = "ERROR", error = "not found"), Response.Status.NOT_FOUND)
+            Log.e(TAG, "/media/$id → Archivo físico no encontrado")
+            return json(
+                ApiResponse<Unit>(status = "ERROR", error = "not found"),
+                Response.Status.NOT_FOUND
+            )
         }
 
         val mime = getMimeType(file)
-        Log.d(TAG, "📤 Enviando archivo ${file.name} con mime=$mime")
+        Log.d(TAG, "Enviando archivo ${file.name} con mime=$mime")
         return newFixedLengthResponse(Response.Status.OK, mime, file.inputStream(), file.length())
     }
 
@@ -286,20 +320,17 @@ class TabletServer @Inject constructor(
      * `GET /thumbnail/{id}`
      *
      * Genera y devuelve un thumbnail JPEG para imagen o vídeo.
-     *
-     * @param uri Ruta completa; se extrae el id.
-     * @return Stream JPEG o ApiResponse<Unit> de error.
      */
     private fun handleThumbnail(uri: String): Response {
         val id = uri.removePrefix("/thumbnail/")
-        Log.d(TAG, "🖼️ /thumbnail/$id → Generando thumbnail…")
+        Log.d(TAG, "/thumbnail/$id → Generando thumbnail")
 
         val media = getMediaByIdSync(id)
             ?: return json(ApiResponse<Unit>(status = "ERROR", error = "not found"))
 
         val file = File(media.path)
         if (!file.exists()) {
-            Log.e(TAG, "❌ /thumbnail/$id → Archivo físico no encontrado")
+            Log.e(TAG, "/thumbnail/$id → Archivo físico no encontrado")
             return json(ApiResponse<Unit>(status = "ERROR", error = "not found"))
         }
 
@@ -307,79 +338,225 @@ class TabletServer @Inject constructor(
             FormatType.IMAGE -> ImageUtils.generateThumbnail(file)
             FormatType.VIDEO -> VideoUtils.generateVideoThumbnail(file)
             else -> {
-                Log.e(TAG, "❌ /thumbnail/$id → Tipo no soportado: ${media.type}")
+                Log.e(TAG, "/thumbnail/$id → Tipo no soportado: ${media.type}")
                 return json(ApiResponse<Unit>(status = "ERROR", error = "unsupported"))
             }
         }
 
-        Log.d(TAG, "📤 Enviando thumbnail (${thumb.length()} bytes)")
-        return newFixedLengthResponse(Response.Status.OK, "image/jpeg", thumb.inputStream(), thumb.length())
+        Log.d(TAG, "Enviando thumbnail (${thumb.length()} bytes)")
+        return newFixedLengthResponse(
+            Response.Status.OK,
+            "image/jpeg",
+            thumb.inputStream(),
+            thumb.length()
+        )
     }
 
-    // ---------------------------------------------------------
-    //  /upload CIFRADO (detalle)
-    // ---------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // VINCULACIÓN: /show_pin y /pair
+    // -------------------------------------------------------------------------
+
+    /**
+     * `POST /show_pin`
+     *
+     * Inicia el proceso de emparejamiento:
+     * - Genera un PIN de 6 dígitos.
+     * - Genera un SALT de 16 bytes.
+     * - Guarda ambos en memoria (no en disco).
+     * - Devuelve el SALT al móvil en Base64.
+     *
+     * El PIN se muestra en la tablet desde la capa de presentación; no viaja
+     * por la red.
+     */
+    private fun handleShowPin(): Response {
+        Log.d(TAG, "/show_pin → Generando PIN y SALT para emparejamiento")
+
+        // 1. Generar PIN
+        val pin = PinGenerator.generatePin6()
+        currentPin = pin
+
+        // Aquí la capa de presentación debería ser notificada para mostrar el PIN.
+        Log.d(TAG, "/show_pin → PIN generado (solo para UI de tablet)")
+
+        // 2. Generar SALT
+        val salt = SaltGenerator.generateSalt16()
+        currentSalt = salt
+
+        val saltBase64 = Base64.encodeToString(salt, Base64.NO_WRAP)
+
+        val payload = mapOf(
+            "status" to "pending",
+            "salt" to saltBase64
+        )
+
+        Log.d(TAG, "/show_pin → SALT enviado al móvil")
+
+        return json(ApiResponse(status = "OK", data = payload))
+    }
+
+    /**
+     * `POST /pair`
+     *
+     * Completa el proceso de emparejamiento:
+     * - Recibe el PIN introducido en el móvil.
+     * - Comprueba que coincide con el PIN actual.
+     * - Deriva una clave temporal con PBKDF2 usando PIN + SALT.
+     * - Genera una clave AES REAL aleatoria (AES‑128).
+     * - Cifra la clave AES REAL con la clave temporal.
+     * - Guarda la clave AES REAL en preferencias.
+     * - Devuelve al móvil:
+     *   - SALT (por si lo necesita).
+     *   - AES_REAL cifrada en Base64.
+     */
+    private fun handlePair(session: IHTTPSession): Response {
+        Log.d(TAG, "/pair → Petición de emparejamiento recibida")
+
+        val pinFromClient = session.parameters["pin"]?.firstOrNull()
+        if (pinFromClient.isNullOrBlank()) {
+            Log.e(TAG, "/pair → PIN no proporcionado")
+            return json(
+                ApiResponse<Unit>(status = "ERROR", error = "pin missing"),
+                Response.Status.BAD_REQUEST
+            )
+        }
+
+        val expectedPin = currentPin
+        val salt = currentSalt
+
+        if (expectedPin == null || salt == null) {
+            Log.e(TAG, "/pair → No hay PIN/SALT activos. Llamar antes a /show_pin.")
+            return json(
+                ApiResponse<Unit>(status = "ERROR", error = "pair not initialized"),
+                Response.Status.BAD_REQUEST
+            )
+        }
+
+        if (pinFromClient != expectedPin) {
+            Log.e(TAG, "/pair → PIN incorrecto. Esperado=$expectedPin, recibido=$pinFromClient")
+            return json(
+                ApiResponse<Unit>(status = "ERROR", error = "invalid pin"),
+                Response.Status.UNAUTHORIZED
+            )
+        }
+
+        Log.d(TAG, "/pair → PIN válido. Derivando clave temporal PBKDF2.")
+
+        // 1. Derivar clave temporal
+        val derivedKey = Pbkdf2KeyDeriver.deriveKeyFromPin(pinFromClient, salt)
+        if (derivedKey.isEmpty()) {
+            Log.e(TAG, "/pair → Error derivando clave PBKDF2")
+            return json(
+                ApiResponse<Unit>(status = "ERROR", error = "pbkdf2 failed"),
+                Response.Status.INTERNAL_ERROR
+            )
+        }
+
+        // 2. Generar AES_REAL aleatoria (16 bytes → AES‑128)
+        val aesReal = ByteArray(16)
+        java.security.SecureRandom().nextBytes(aesReal)
+
+        // 3. Cifrar AES_REAL con la clave derivada
+        val cryptoForKey = Crypto(derivedKey)
+        val encryptedAesKey = cryptoForKey.encrypt(aesReal)
+        if (encryptedAesKey.isEmpty()) {
+            Log.e(TAG, "/pair → Error cifrando AES_REAL")
+            return json(
+                ApiResponse<Unit>(status = "ERROR", error = "encrypt aes failed"),
+                Response.Status.INTERNAL_ERROR
+            )
+        }
+
+        // 4. Guardar AES_REAL en preferencias
+        runBlocking {
+            prefsRepository.setAesKey(aesReal)
+        }
+        Log.d(TAG, "/pair → AES_REAL guardada en preferencias. Vinculación completada.")
+
+        // 5. Preparar respuesta
+        val saltBase64 = Base64.encodeToString(salt, Base64.NO_WRAP)
+        val encryptedAesBase64 = Base64.encodeToString(encryptedAesKey, Base64.NO_WRAP)
+
+        val payload = mapOf(
+            "status" to "linked",
+            "salt" to saltBase64,
+            "encryptedAesKey" to encryptedAesBase64
+        )
+
+        // 6. Limpiar PIN/SALT en memoria
+        currentPin = null
+        currentSalt = null
+
+        return json(ApiResponse(status = "OK", data = payload))
+    }
+
+    // -------------------------------------------------------------------------
+    // /upload CIFRADO CON AES_REAL
+    // -------------------------------------------------------------------------
 
     /**
      * `POST /upload`
      *
-     * Recibe un archivo cifrado (AES/GCM) enviado por el móvil.
+     * Recibe un archivo cifrado con AES/GCM usando la clave AES REAL compartida
+     * tras la vinculación.
      *
-     * Flujo paso a paso:
-     * 1. Validar header `X-Auth-Token`.
-     * 2. `session.parseBody(files)` para obtener la ruta temporal del multipart.
-     * 3. Leer bytes cifrados desde el fichero temporal.
-     * 4. Descifrar con [Crypto.decrypt].
-     * 5. Guardar fichero temporal descifrado.
-     * 6. Llamar a [ImportMediaFromServerUseCase] para persistir en sandbox y Room.
-     * 7. Responder `ApiResponse<UploadResult>` con success = true.
-     *
-     * Parámetros:
-     * - `session`: sesión HTTP con headers y multipart.
-     *
-     * Retorno:
-     * - `Response` con JSON `ApiResponse<UploadResult>` o error con tipo explícito.
-     *
-     * Errores comunes:
-     * - Token inválido → 401.
-     * - Multipart sin campo `file` → 400.
-     * - Descifrado fallido (clave incorrecta o datos corruptos) → 400.
+     * Flujo:
+     * 1. Cargar la clave AES REAL desde [PreferencesRepository].
+     * 2. Si no existe, devolver error de no vinculado.
+     * 3. Parsear el multipart y obtener el fichero temporal.
+     * 4. Leer los bytes cifrados.
+     * 5. Descifrar con `Crypto(aesKey).decrypt`.
+     * 6. Guardar un fichero temporal con los bytes descifrados.
+     * 7. Delegar en [ImportMediaFromServerUseCase].
+     * 8. Responder con `ApiResponse<UploadResult>`.
      */
     private fun handleEncryptedUpload(session: IHTTPSession): Response {
-        Log.d(TAG, "⬆️ /upload → Petición de subida recibida")
+        Log.d(TAG, "/upload → Petición de subida recibida")
 
-        // 1. Validación de token
-        val token = session.headers["x-auth-token"]
-        if (token != AUTH_TOKEN) {
-            Log.e(TAG, "❌ /upload → Token inválido")
-            return json(ApiResponse<Unit>(status = "ERROR", error = "unauthorized"), Response.Status.UNAUTHORIZED)
+        // 1. Cargar clave AES REAL
+        val aesKey = runBlocking { prefsRepository.getAesKey().first() }
+        if (aesKey == null) {
+            Log.e(TAG, "/upload → No hay clave AES_REAL configurada. Dispositivo no vinculado.")
+            return json(
+                ApiResponse<Unit>(status = "ERROR", error = "not linked"),
+                Response.Status.UNAUTHORIZED
+            )
         }
-        Log.d(TAG, "🔐 /upload → Token válido, procesando archivo cifrado…")
 
-        // 2. Parse multipart body (NanoHTTPD escribe un fichero temporal y devuelve su ruta)
+        val crypto = Crypto(aesKey)
+
+        // 2. Parse multipart body
         val files = HashMap<String, String>()
         session.parseBody(files)
 
         val tempPath = files["file"]
         if (tempPath == null) {
-            Log.e(TAG, "❌ /upload → Archivo no recibido en multipart")
-            return json(ApiResponse<Unit>(status = "ERROR", error = "file missing"), Response.Status.BAD_REQUEST)
+            Log.e(TAG, "/upload → Archivo no recibido en multipart")
+            return json(
+                ApiResponse<Unit>(status = "ERROR", error = "file missing"),
+                Response.Status.BAD_REQUEST
+            )
         }
 
         val tempFile = File(tempPath)
         val encryptedBytes = try {
             tempFile.readBytes()
         } catch (e: Exception) {
-            Log.e(TAG, "❌ /upload → Error leyendo fichero temporal: ${e.message}", e)
-            return json(ApiResponse<Unit>(status = "ERROR", error = "file read error"), Response.Status.INTERNAL_ERROR)
+            Log.e(TAG, "/upload → Error leyendo fichero temporal: ${e.message}", e)
+            return json(
+                ApiResponse<Unit>(status = "ERROR", error = "file read error"),
+                Response.Status.INTERNAL_ERROR
+            )
         }
-        Log.d(TAG, "📦 /upload → Bytes cifrados recibidos (${encryptedBytes.size} bytes)")
+        Log.d(TAG, "/upload → Bytes cifrados recibidos (${encryptedBytes.size} bytes)")
 
         // 3. Descifrado AES/GCM
         val decryptedBytes = crypto.decrypt(encryptedBytes)
         if (decryptedBytes.isEmpty()) {
-            Log.e(TAG, "❌ /upload → Error descifrando datos (clave incorrecta o datos corruptos)")
-            return json(ApiResponse<Unit>(status = "ERROR", error = "decrypt failed"), Response.Status.BAD_REQUEST)
+            Log.e(TAG, "/upload → Error descifrando datos (clave incorrecta o datos corruptos)")
+            return json(
+                ApiResponse<Unit>(status = "ERROR", error = "decrypt failed"),
+                Response.Status.BAD_REQUEST
+            )
         }
 
         // 4. Guardar fichero temporal descifrado
@@ -387,25 +564,29 @@ class TabletServer @Inject constructor(
         try {
             plainTempFile.writeBytes(decryptedBytes)
         } catch (e: Exception) {
-            Log.e(TAG, "❌ /upload → Error escribiendo fichero descifrado: ${e.message}", e)
-            return json(ApiResponse<Unit>(status = "ERROR", error = "file write error"), Response.Status.INTERNAL_ERROR)
+            Log.e(TAG, "/upload → Error escribiendo fichero descifrado: ${e.message}", e)
+            return json(
+                ApiResponse<Unit>(status = "ERROR", error = "file write error"),
+                Response.Status.INTERNAL_ERROR
+            )
         }
-        Log.d(TAG, "📁 /upload → Archivo descifrado guardado en ${plainTempFile.absolutePath}")
+        Log.d(TAG, "/upload → Archivo descifrado guardado en ${plainTempFile.absolutePath}")
 
         // 5. Extraer metadata y delegar en use case
         val mime = session.headers["content-type"] ?: "application/octet-stream"
         val originalName = session.parameters["file"]?.firstOrNull() ?: "uploaded_file"
         val ext = originalName.substringAfterLast('.', "")
 
-        Log.d(TAG, "📦 /upload → Archivo descifrado: $originalName ($mime) ext=$ext")
+        Log.d(TAG, "/upload → Archivo descifrado: $originalName ($mime) ext=$ext")
 
         runBlocking {
             importMediaFromServerUseCase(plainTempFile, mime, ext)
         }
 
-        Log.d(TAG, "✅ /upload → Archivo importado correctamente en Room")
+        Log.d(TAG, "/upload → Archivo importado correctamente en Room")
+
         return json(
-            ApiResponse<UploadResult>(
+            ApiResponse(
                 status = "OK",
                 data = UploadResult(
                     success = true,
@@ -413,25 +594,21 @@ class TabletServer @Inject constructor(
                 )
             )
         )
-
     }
 
-    // ---------------------------------------------------------
-    //  UTILIDADES
-    // ---------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // UTILIDADES
+    // -------------------------------------------------------------------------
 
     /**
-     * Serializa [ApiResponse] a JSON usando Gson y devuelve una respuesta HTTP.
+     * Serializa un [ApiResponse] a JSON usando Gson y devuelve una respuesta HTTP.
      *
-     * - Siempre especifica el tipo genérico en la llamada para evitar errores de inferencia.
-     *
-     * @param body ApiResponse con tipo explícito.
+     * @param body Cuerpo de la respuesta envuelto en `ApiResponse`.
      * @param status Código HTTP a devolver (por defecto 200 OK).
-     * @return [NanoHTTPD.Response] con `application/json`.
      */
     private fun json(body: ApiResponse<*>, status: Response.Status = Response.Status.OK): Response {
         val json = gson.toJson(body)
-        Log.d(TAG, "↩️ Respondiendo JSON: ${body.status} (payload size ~${json.length} chars)")
+        Log.d(TAG, "Respondiendo JSON con estado=${body.status}, tamaño aproximado=${json.length} caracteres")
         return newFixedLengthResponse(status, "application/json", json)
     }
 

@@ -22,9 +22,6 @@ class MainActivity : ComponentActivity() {
         // Evita que la pantalla se apague
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        // Inicia el servidor en un ForegroundService
-        upService()
-
         enableEdgeToEdge()
         setContent {
             VisumLoopAppTheme(
@@ -36,15 +33,5 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-}
-
-private fun MainActivity.upService() {
-    val intent = Intent(this, ServerService::class.java)
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        startForegroundService(intent)
-    } else {
-        startService(intent)
     }
 }

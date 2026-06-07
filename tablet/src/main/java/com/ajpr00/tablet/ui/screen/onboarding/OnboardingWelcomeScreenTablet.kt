@@ -38,8 +38,8 @@ fun OnboardingWelcomeScreenTablet(
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
+            modifier = Modifier.width(400.dp),
             onClick = onNext,
-            modifier = Modifier.fillMaxWidth()
         ) {
             Text("Continuar")
         }

@@ -14,7 +14,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 /**
- * Los Services tienen constructor, pero Android siempre usa el constructor vacío por defecto.
  * No se pueden definir constructores con parámetros ni usar @Inject constructor(),
  * porque el Service lo instancia el sistema y no el desarrollador.
  * Las dependencias deben inicializarse en onCreate() o inyectarse con Hilt mediante @AndroidEntryPoint.
@@ -26,8 +25,6 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class ServerService : Service() {
 
-    // Hilt nos inyecta el servidor ya configurado.
-    // Esto evita tener que crearlo a mano.
     @Inject lateinit var tabletServer: TabletServer
 
     override fun onCreate() {
@@ -47,6 +44,7 @@ class ServerService : Service() {
             Log.d("ServerService", "Servidor HTTP iniciado correctamente en el puerto 8080")
         } catch (e: Exception) {
             Log.e("ServerService", "Error al iniciar el servidor: ${e.message}", e)
+            stopSelf()
         }
     }
 

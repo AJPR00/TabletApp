@@ -44,17 +44,18 @@ fun OnboardingInfoScreenTablet(
         Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedTextField(
+            modifier = Modifier.width(400.dp),
             value = name,
+            maxLines = 1,
             onValueChange = { name = it },
-            label = { Text("Nombre de la tablet") },
-            modifier = Modifier.fillMaxWidth()
+            label = { Text("Nombre de la tablet") }
         )
 
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = { if (name.isNotBlank()) onNext(name) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.width(400.dp),
+            onClick = { if (name.isNotBlank()) onNext(name) }
         ) {
             Text("Continuar")
         }

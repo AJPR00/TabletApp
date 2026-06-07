@@ -3,8 +3,11 @@ package com.ajpr00.tablet.ui.navigation
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -12,15 +15,16 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import com.ajpr00.tablet.presentation.viewmodel.MediaItemsViewModel
 import com.ajpr00.tablet.presentation.viewmodel.ReproducorViewModel
-import com.ajpr00.tablet.presentation.viewmodel.SplashViewModel
 import com.ajpr00.tablet.ui.screen.LoginScreenTablet
 import com.ajpr00.tablet.ui.screen.RecoverPasswordTablet
 import com.ajpr00.tablet.ui.screen.ReproductorScreen
 import com.ajpr00.presentation_common.viewmodel.AuthViewModel
 import com.ajpr00.presentation_common.viewmodel.LoginViewModel
 import com.ajpr00.presentation_common.viewmodel.RegisterViewModel
+import com.ajpr00.tablet.presentation.viewmodel.MainGraphViewModel
 import com.ajpr00.tablet.presentation.viewmodel.OnboardingTabletViewModel
 import com.ajpr00.tablet.presentation.viewmodel.SplashTabletViewModel
+import com.ajpr00.tablet.ui.components.StartServerOnce
 import com.ajpr00.tablet.ui.screen.SplashScreenTablet
 import com.ajpr00.tablet.ui.screen.onboarding.OnboardingInfoScreenTablet
 import com.ajpr00.tablet.ui.screen.onboarding.OnboardingReadyScreenTablet
@@ -83,6 +87,15 @@ fun NavigationCore(innerPadding: PaddingValues) {
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry(MainGraph::class.qualifiedName!!)
                 }
+
+                val vmMain: MainGraphViewModel = hiltViewModel(parentEntry)
+                val isFirstRun by vmMain.isFirstRun.collectAsState()
+                val context = LocalContext.current
+
+                if (!isFirstRun) {
+                    StartServerOnce(context)
+                }
+
                 val viewModelMediaBackground: ReproducorViewModel = hiltViewModel(parentEntry)
                 val viewModelMediaItems: MediaItemsViewModel = hiltViewModel(parentEntry)
                 val viewModelAuth: AuthViewModel = hiltViewModel(parentEntry)

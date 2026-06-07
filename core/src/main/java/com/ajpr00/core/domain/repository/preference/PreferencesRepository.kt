@@ -18,4 +18,7 @@ interface PreferencesRepository {
 
     fun getTabletName(): Flow<String>
     suspend fun setTabletName(name: String)
+
+    suspend fun setAesKey(bytes: ByteArray)
+    fun getAesKey(): Flow<ByteArray?>
 }
