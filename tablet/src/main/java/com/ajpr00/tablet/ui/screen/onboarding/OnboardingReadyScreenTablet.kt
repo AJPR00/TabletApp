@@ -55,8 +55,8 @@ fun OnboardingReadyScreenTablet(
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
+            modifier = Modifier.width(400.dp),
             onClick = onFinish,
-            modifier = Modifier.fillMaxWidth()
         ) {
             Text("Empezar")
         }
