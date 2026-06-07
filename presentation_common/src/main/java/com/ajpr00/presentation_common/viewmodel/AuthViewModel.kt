@@ -17,8 +17,8 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    observeLoginStateUseCase: ObserveLoginStateUseCase,
-    observeCurrentUserUseCase: ObserveCurrentUserUseCase,
+    private val observeLoginStateUseCase: ObserveLoginStateUseCase,
+    private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val logoutUseCase: LogoutUseCase
 ) : ViewModel() {
 
