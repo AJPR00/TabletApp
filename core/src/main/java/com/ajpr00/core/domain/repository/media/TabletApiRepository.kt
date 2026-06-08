@@ -43,5 +43,9 @@ interface TabletApiRepository {
     suspend fun uploadMedia(ip: String, port: Int, file: MultipartBody.Part): ApiResponse<UploadResult>?
 
     suspend fun listMediaWithThumbnails(ip: String, port: Int): List<RemoteMedia>
+
+    suspend fun showPin(ip: String, port: Int): ApiResponse<Map<String, String>>?
+
+    suspend fun pair(ip: String, port: Int, pin: String): ApiResponse<Map<String, String>>?
 }
 

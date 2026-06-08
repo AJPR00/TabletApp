@@ -55,6 +55,10 @@ class AppPreference @Inject constructor(
         private val TABLET_ID = stringPreferencesKey("tablet_id")
         private val TABLET_NAME = stringPreferencesKey("tablet_name")
 
+        // Identidad de la conexion
+        private val IS_MOBILE_CONNECTED = booleanPreferencesKey("is_mobile_connected")
+        private val MOBILE_NAME = stringPreferencesKey("mobile_name")
+
         // Seguridad: clave AES REAL (Base64)
         private val AES_KEY = stringPreferencesKey("aes_key")
     }
@@ -96,6 +100,19 @@ class AppPreference @Inject constructor(
      */
     val tabletName: Flow<String> = context.appDataStore.data.map {
         it[TABLET_NAME] ?: "Tablet"
+    }
+    /**
+     * Identificador único de la tablet generado en el onboarding.
+     */
+    val isMobileConnected: Flow<Boolean> = context.appDataStore.data.map {
+        it[IS_MOBILE_CONNECTED] ?: false
+    }
+
+    /**
+     * Nombre asignado por el usuario a la tablet.
+     */
+    val mobileName: Flow<String> = context.appDataStore.data.map {
+        it[MOBILE_NAME] ?: "Movil"
     }
 
     /**
@@ -183,5 +200,19 @@ class AppPreference @Inject constructor(
         }
 
         Log.d(TAG, "Clave AES_REAL guardada correctamente (${bytes.size} bytes)")
+    }
+
+    suspend fun setMobileConnected(connected: Boolean) {
+        context.appDataStore.edit { prefs ->
+            prefs[IS_MOBILE_CONNECTED] = connected
+        }
+        Log.d(TAG, "MobileConnected actualizado: $connected")
+    }
+
+    suspend fun setMobileName(name: String) {
+        context.appDataStore.edit { prefs ->
+            prefs[MOBILE_NAME] = name
+        }
+        Log.d(TAG, "MobileName asignado: $name")
     }
 }

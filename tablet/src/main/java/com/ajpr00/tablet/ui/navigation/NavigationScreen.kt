@@ -9,7 +9,7 @@ object ScreenPrincipal
 object Reproductor
 
 @Serializable
-object MenuOpciones
+object Settings
 
 @Serializable
 object LoginScreen
@@ -45,3 +45,6 @@ object OnboardingReadyScreenTablet
 
 @Serializable
 object MainGraph
+
+@Serializable
+object SettingsGraph

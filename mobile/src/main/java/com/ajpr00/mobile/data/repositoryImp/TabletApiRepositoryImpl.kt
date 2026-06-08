@@ -91,7 +91,11 @@ class TabletApiRepositoryImpl @Inject constructor(
      * @param id ID del archivo a eliminar.
      * @return ApiResponse<DeleteResult> con el ID eliminado.
      */
-    override suspend fun deleteMedia(ip: String, port: Int, id: String): ApiResponse<DeleteResult>? {
+    override suspend fun deleteMedia(
+        ip: String,
+        port: Int,
+        id: String
+    ): ApiResponse<DeleteResult>? {
         return api.deleteMedia(url(ip, port, "/delete/$id"))
     }
 
@@ -157,4 +161,13 @@ class TabletApiRepositoryImpl @Inject constructor(
             media.toDomain(thumbBytes)
         } ?: emptyList()
     }
+
+    override suspend fun showPin(ip: String, port: Int): ApiResponse<Map<String, String>>? =
+        api.showPin(url(ip, port, "/show_pin"))
+
+    override suspend fun pair(
+        ip: String,
+        port: Int,
+        pin: String
+    ): ApiResponse<Map<String, String>>? = api.pair(url(ip, port, "/pair"), pin)
 }

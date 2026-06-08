@@ -8,6 +8,7 @@ import com.ajpr00.core.domain.model.api.DeleteResult
 import com.ajpr00.core.domain.model.api.DeviceInfo
 import com.ajpr00.core.domain.model.api.ListMediaData
 import com.ajpr00.core.domain.model.api.UploadResult
+import com.ajpr00.core.domain.model.qr.QrPayload
 import com.ajpr00.core.domain.repository.preference.PreferencesRepository
 import com.ajpr00.core.domain.usecase.media.DeleteMediaSyncUseCase
 import com.ajpr00.core.domain.usecase.media.GetAllMediaSyncUseCase
@@ -16,6 +17,8 @@ import com.ajpr00.core.security.Crypto
 import com.ajpr00.core.security.Pbkdf2KeyDeriver
 import com.ajpr00.core.security.PinGenerator
 import com.ajpr00.core.security.SaltGenerator
+import com.ajpr00.core.util.NetworkUtils
+import com.ajpr00.core.util.NetworkUtils.getLocalIpAddress
 import com.ajpr00.data.useCase.ImportMediaFromServerUseCase
 import com.ajpr00.data.util.ImageUtils
 import com.ajpr00.data.util.VideoUtils
@@ -25,10 +28,14 @@ import com.google.gson.Gson
 import fi.iki.elonen.NanoHTTPD
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.File
+import java.security.SecureRandom
 import javax.inject.Inject
 
 /**
@@ -75,6 +82,12 @@ class TabletServer @Inject constructor(
     private val mdnsPublisher: MdnsPublisher,
     private val prefsRepository: PreferencesRepository
 ) : NanoHTTPD(8080) {
+
+    private val _pinFlow = MutableSharedFlow<String>(replay = 1)
+    val pinFlow = _pinFlow.asSharedFlow()
+
+    private val _saltFlow = MutableSharedFlow<ByteArray>(replay = 1)
+    val saltFlow = _saltFlow.asSharedFlow()
 
     /** Indica si hay un cliente activo para pausar mDNS temporalmente. */
     private var isClientConnected: Boolean = false
@@ -368,15 +381,17 @@ class TabletServer @Inject constructor(
      * El PIN se muestra en la tablet desde la capa de presentación; no viaja
      * por la red.
      */
-    private fun handleShowPin(): Response {
+    fun handleShowPin(): Response {
         Log.d(TAG, "/show_pin → Generando PIN y SALT para emparejamiento")
 
         // 1. Generar PIN
         val pin = PinGenerator.generatePin6()
         currentPin = pin
 
+        _pinFlow.tryEmit(pin)
+
         // Aquí la capa de presentación debería ser notificada para mostrar el PIN.
-        Log.d(TAG, "/show_pin → PIN generado (solo para UI de tablet)")
+        Log.d(TAG, "/show_pin → PIN generado (solo para UI de tablet) $pin")
 
         // 2. Generar SALT
         val salt = SaltGenerator.generateSalt16()
@@ -408,10 +423,14 @@ class TabletServer @Inject constructor(
      *   - SALT (por si lo necesita).
      *   - AES_REAL cifrada en Base64.
      */
-    private fun handlePair(session: IHTTPSession): Response {
+    fun handlePair(session: IHTTPSession): Response {
         Log.d(TAG, "/pair → Petición de emparejamiento recibida")
 
-        val pinFromClient = session.parameters["pin"]?.firstOrNull()
+        val files = HashMap<String, String>()
+        session.parseBody(files)
+        val rawPin = session.parameters["pin"]?.toString()
+        val pinFromClient = rawPin?.replace("[", "")?.replace("]", "")
+
         if (pinFromClient.isNullOrBlank()) {
             Log.e(TAG, "/pair → PIN no proporcionado")
             return json(
@@ -453,7 +472,7 @@ class TabletServer @Inject constructor(
 
         // 2. Generar AES_REAL aleatoria (16 bytes → AES‑128)
         val aesReal = ByteArray(16)
-        java.security.SecureRandom().nextBytes(aesReal)
+        SecureRandom().nextBytes(aesReal)
 
         // 3. Cifrar AES_REAL con la clave derivada
         val cryptoForKey = Crypto(derivedKey)
@@ -469,6 +488,7 @@ class TabletServer @Inject constructor(
         // 4. Guardar AES_REAL en preferencias
         runBlocking {
             prefsRepository.setAesKey(aesReal)
+            prefsRepository.setMobileConnected(true)
         }
         Log.d(TAG, "/pair → AES_REAL guardada en preferencias. Vinculación completada.")
 
@@ -608,7 +628,10 @@ class TabletServer @Inject constructor(
      */
     private fun json(body: ApiResponse<*>, status: Response.Status = Response.Status.OK): Response {
         val json = gson.toJson(body)
-        Log.d(TAG, "Respondiendo JSON con estado=${body.status}, tamaño aproximado=${json.length} caracteres")
+        Log.d(
+            TAG,
+            "Respondiendo JSON con estado=${body.status}, tamaño aproximado=${json.length} caracteres"
+        )
         return newFixedLengthResponse(status, "application/json", json)
     }
 
@@ -625,4 +648,31 @@ class TabletServer @Inject constructor(
             "webp" -> "image/webp"
             else -> "application/octet-stream"
         }
+
+    fun implementForQRScanner(): ApiResponse<QrPayload> {
+        val pin = PinGenerator.generatePin6()
+        currentPin = pin
+
+        val salt = SaltGenerator.generateSalt16()
+        currentSalt = salt
+
+        val ip = NetworkUtils.getLocalIpAddress() ?: "0.0.0.0"
+
+        val id = runBlocking { prefsRepository.getTabletId().first() }
+        val nombre = runBlocking { prefsRepository.getTabletName().first() }
+
+        val puerto = 8080
+
+        val payload = QrPayload(
+            pin = pin,
+            salt = Base64.encodeToString(salt, Base64.NO_WRAP),
+            id = id,
+            nombre = nombre,
+            ip = ip,
+            puerto = puerto,
+            aesKey = null
+        )
+
+        return ApiResponse(status = "OK", data = payload)
+    }
 }

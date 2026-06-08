@@ -44,7 +44,7 @@ fun CustomButtonLogin(
 ) {
     OutlinedButton(
         modifier = modifier
-            .width(250.dp)
+            .width(300.dp)
             .height(50.dp),
         enabled = enabled,
         onClick = onClick,

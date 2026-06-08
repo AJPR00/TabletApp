@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.ajpr00.components.components.showToast
 import com.ajpr00.presentation_common.viewmodel.AuthViewModel
 import com.ajpr00.tablet.presentation.viewmodel.MediaItemsViewModel
+import com.ajpr00.tablet.presentation.viewmodel.PairingViewModel
 import com.ajpr00.tablet.presentation.viewmodel.ReproducorViewModel
 import com.ajpr00.tablet.ui.components.MenuApp
 import com.ajpr00.tablet.ui.components.MenuGestoReproductor
@@ -22,8 +23,10 @@ import com.ajpr00.tablet.ui.components.ScreenMediaExplorer
 fun ReproductorScreen(
     viewModelMediaBackground: ReproducorViewModel,
     viewModelMediaItems: MediaItemsViewModel,
+    viewModelPairing: PairingViewModel,
     viewModelAuth: AuthViewModel,
-    goToLogin: () -> Unit
+    goToLogin: () -> Unit,
+    goToSetting: () -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -54,6 +57,7 @@ fun ReproductorScreen(
         // El overlay encima
         MenuOverlayScreen(
             viewModelMediaBackground = viewModelMediaBackground,
+            viewModelPairing = viewModelPairing,
             menuGestoReproducion = {
                 MenuGestoReproductor(
                     isVideo = viewModelMediaBackground.isVideo.collectAsState().value,
@@ -79,6 +83,7 @@ fun ReproductorScreen(
                     viewModelMediaBackground = viewModelMediaBackground,
                     viewModelMediaItme = viewModelMediaItems,
                     goToLogin = goToLogin,
+                    goToSetting= goToSetting,
                     viewModelAuth = viewModelAuth,
                 )
             },

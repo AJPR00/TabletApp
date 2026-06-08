@@ -1,15 +1,18 @@
 package com.ajpr00.components.screen
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -22,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -51,21 +55,22 @@ fun LoginScreenContent(
     onExit: () -> Unit
 ) {
     Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopCenter
     ) {
+        Image(
+            modifier = Modifier.width(700.dp)
+                .aspectRatio(3f)
+                .align(Alignment.TopCenter)
+                .padding(top = 40.dp),
+            painter = logo,
+            contentDescription = "Logo"
+        )
         Column(
-            modifier = Modifier.padding(24.dp),
-            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize().padding(bottom = 100.dp),
+            verticalArrangement = Arrangement.Bottom,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
-            Image(
-                modifier = Modifier.fillMaxSize(0.5f),
-                painter = logo,
-                contentDescription = "Logo"
-            )
-
             Text(
                 text = "Iniciar Sesión",
                 style = MaterialTheme.typography.headlineMedium
@@ -133,6 +138,7 @@ fun LoginScreenContent(
             CustomButtonLogin(
                 enabled = if (isEmailMode) (email.isNotBlank() && password.isNotBlank()) else true,
                 icono = R.drawable.email_ic,
+
                 label = if (!isEmailMode) "Iniciar sesión con Email" else "Iniciar sesión",
                 onClick = {
                     if (!isEmailMode) onEmailModeToggle()

@@ -18,6 +18,37 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * # ReproducorViewModel
+ *
+ * ViewModel principal del reproductor de la tablet. Gestiona:
+ *
+ * ## Responsabilidades
+ * - Estado del reproductor (`ReproductorConfig`): volumen, mute, play/pause, rewinds.
+ * - Estado visual de los menús (`EstadoMenus`): panel lateral, menú app, bloqueo de pantalla.
+ * - Lista de media obtenida desde Room mediante `GetAllMediaUseCase`.
+ * - Media actual en reproducción y navegación (next/prev/random).
+ * - Emisión de eventos tipo toast mediante `MutableSharedFlow`.
+ *
+ * ## Qué NO hace
+ * - No reproduce vídeo directamente (eso lo hace el Composable del reproductor).
+ * - No gestiona cifrado, pairing ni servidor.
+ * - No toca Room directamente (solo usa UseCases).
+ *
+ * ## Flujo interno
+ * - Al inicializarse, observa `mediaList`.
+ * - Si hay media y no hay nada reproduciéndose → inicia en índice 0.
+ * - Cada gesto del usuario actualiza `lastInteraction` para controlar el auto‑ocultado de menús.
+ *
+ * ## Relación con otras capas
+ * - **domain**: usa `GetAllMediaUseCase`.
+ * - **presentation**: `MenuOverlayScreen`, `ReproductorScreen`, paneles y menús.
+ * - **ui_common**: componentes visuales que consumen su estado.
+ *
+ * ## Advertencias
+ * - `isVideo` solo indica si el media actual es vídeo (no es un estado global).
+ * - No mezclar este ViewModel con lógica de pairing o servidor.
+ */
 @HiltViewModel
 class ReproducorViewModel @Inject constructor(
     private val getAllMediaUseCase: GetAllMediaUseCase,

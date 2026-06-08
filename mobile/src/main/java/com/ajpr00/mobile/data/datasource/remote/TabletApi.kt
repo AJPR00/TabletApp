@@ -8,131 +8,102 @@ import retrofit2.http.*
 /**
  * # TabletApi
  *
- * Interfaz Retrofit que define **todas las llamadas HTTP** que la app móvil
+ * Interfaz Retrofit que define todas las llamadas HTTP que la app móvil
  * realiza contra el servidor NanoHTTPD que corre dentro de la tablet.
  *
- * ## ¿Qué hace esta interfaz?
- * - Define los endpoints REST expuestos por la tablet.
- * - Gestiona rutas dinámicas usando `@Url`.
- * - Gestiona subida de archivos cifrados mediante multipart.
- * - Devuelve modelos envueltos en `ApiResponse<T>` para compatibilidad con Gson.
- *
- * ## Rol dentro de la arquitectura
- * - **Infraestructura (HTTP)**: solo describe endpoints.
- * - **Data layer**: es consumida por `TabletApiRepositoryImpl`.
- * - **Domain layer**: nunca toca Retrofit directamente; usa el repositorio.
- * - **Presentation layer**: nunca ve esta interfaz.
- *
- * ## Notas importantes
- * - Todas las rutas usan `@Url` porque la IP y el puerto son dinámicos (mDNS).
- * - La subida de archivos requiere un header `X-Auth-Token`.
- * - Los endpoints que devuelven binarios usan `ResponseBody`.
- *
- * ## Advertencias
- * - No hacer lógica aquí: solo definición de endpoints.
- * - No capturar errores aquí: Retrofit los lanza hacia el repositorio.
+ * Cada método usa @Url porque la IP y el puerto se descubren por mDNS.
  */
 interface TabletApi {
 
+    // -------------------------------------------------------------------------
+    // BÁSICOS
+    // -------------------------------------------------------------------------
+
     /**
-     * ## `GET /ping`
-     *
+     * ## GET /ping
      * Comprueba si la tablet está viva.
-     *
-     * @param url URL completa generada por el repositorio.
-     * @return `"pong"` si el servidor responde correctamente.
-     *
-     * ### Ejemplo
-     * ```kotlin
-     * api.ping("http://192.168.1.33:8080/ping")
-     * ```
      */
     @GET
     suspend fun ping(@Url url: String): String
 
     /**
-     * ## `GET /info`
-     *
-     * Devuelve información básica del dispositivo:
-     * - id
-     * - nombre
-     * - puerto
-     *
-     * @param url URL completa del endpoint.
-     * @return ApiResponse<DeviceInfo> parseado por Gson.
+     * ## GET /info
+     * Devuelve id, nombre y puerto de la tablet.
      */
     @GET
     suspend fun getInfo(@Url url: String): ApiResponse<DeviceInfo>
 
     /**
-     * ## `GET /list_media`
-     *
-     * Devuelve la lista de media almacenada en la tablet.
-     *
-     * @param url URL completa del endpoint.
-     * @return ApiResponse<ListMediaData> con la lista de archivos.
+     * ## GET /list_media
+     * Lista todos los archivos multimedia almacenados en la tablet.
      */
     @GET
     suspend fun listMedia(@Url url: String): ApiResponse<ListMediaData>
 
     /**
-     * ## `DELETE /delete/{id}`
-     *
+     * ## DELETE /delete/{id}
      * Elimina un archivo remoto por ID.
-     *
-     * @param url URL completa con el ID incluido.
-     * @return ApiResponse<DeleteResult> con el ID eliminado.
      */
     @DELETE
     suspend fun deleteMedia(@Url url: String): ApiResponse<DeleteResult>
 
     /**
-     * ## `GET /media/{id}`
-     *
-     * Descarga un archivo original desde la tablet.
-     *
-     * @param url URL completa del archivo.
-     * @return [ResponseBody] con el stream binario.
-     *
-     * ### Nota
-     * - No se envuelve en ApiResponse porque es un binario puro.
+     * ## GET /media/{id}
+     * Descarga un archivo original.
      */
     @GET
     suspend fun getMediaFile(@Url url: String): ResponseBody
 
     /**
-     * ## `GET /thumbnail/{id}`
-     *
+     * ## GET /thumbnail/{id}
      * Descarga un thumbnail JPEG generado por la tablet.
-     *
-     * @param url URL completa del thumbnail.
-     * @return [ResponseBody] con los bytes JPEG.
      */
     @GET
     suspend fun getThumbnail(@Url url: String): ResponseBody
 
+    // -------------------------------------------------------------------------
+    // PAIRING
+    // -------------------------------------------------------------------------
+
     /**
-     * ## `POST /upload`
+     * ## POST /show_pin
      *
-     * Sube un archivo **cifrado con AES/GCM** al servidor NanoHTTPD.
+     * Inicia el proceso de emparejamiento.
+     * Devuelve:
+     * - status = "pending"
+     * - salt = Base64
      *
-     * Flujo:
-     * 1. El repositorio construye la URL dinámica.
-     * 2. Añade el header `X-Auth-Token`.
-     * 3. Envía el archivo en un `MultipartBody.Part`.
-     * 4. El servidor descifra, guarda y responde con `UploadResult`.
+     * El PIN **NO** se devuelve aquí. Solo se muestra en la tablet.
+     */
+    @POST
+    suspend fun showPin(@Url url: String): ApiResponse<Map<String, String>>
+
+    /**
+     * ## POST /pair
      *
-     * @param url URL completa del endpoint.
-     * @param token Token de autenticación compartido.
-     * @param file Archivo cifrado en multipart.
+     * Completa el emparejamiento.
+     * Envía el PIN introducido por el usuario.
      *
-     * @return ApiResponse<UploadResult> con:
-     * - `success = true`
-     * - `uploaded = true`
+     * Devuelve:
+     * - status = "linked"
+     * - salt = Base64
+     * - encryptedAesKey = Base64
+     */
+    @FormUrlEncoded
+    @POST
+    suspend fun pair(
+        @Url url: String,
+        @Field("pin") pin: String
+    ): ApiResponse<Map<String, String>>
+
+    // -------------------------------------------------------------------------
+    // UPLOAD CIFRADO
+    // -------------------------------------------------------------------------
+
+    /**
+     * ## POST /upload
      *
-     * ### Advertencia
-     * - Si el token es incorrecto → 401.
-     * - Si el archivo no se descifra → 400.
+     * Sube un archivo cifrado con AES/GCM usando AES_REAL.
      */
     @Multipart
     @POST
