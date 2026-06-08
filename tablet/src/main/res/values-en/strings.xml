@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-      <!-- Settings -->
+
+    <!-- Settings -->
     <string name="settings_title">Configuración</string>
     <string name="dark_mode">Modo oscuro</string>
     <string name="language">Idioma</string>

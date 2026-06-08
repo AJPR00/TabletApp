@@ -5,5 +5,7 @@ data class QrPayload(
     val nombre: String,
     val ip: String,
     val puerto: Int,
-    val aesKey: String
+    val aesKey: String? = null,
+    val pin: String,
+    val salt: String
 )

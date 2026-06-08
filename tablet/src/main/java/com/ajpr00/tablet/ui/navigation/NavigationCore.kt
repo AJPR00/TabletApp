@@ -23,15 +23,18 @@ import com.ajpr00.presentation_common.viewmodel.LoginViewModel
 import com.ajpr00.presentation_common.viewmodel.RegisterViewModel
 import com.ajpr00.tablet.presentation.viewmodel.MainGraphViewModel
 import com.ajpr00.tablet.presentation.viewmodel.OnboardingTabletViewModel
+import com.ajpr00.tablet.presentation.viewmodel.PairingViewModel
+import com.ajpr00.tablet.presentation.viewmodel.SettingsViewModel
 import com.ajpr00.tablet.presentation.viewmodel.SplashTabletViewModel
 import com.ajpr00.tablet.ui.components.StartServerOnce
+import com.ajpr00.tablet.ui.screen.SettingsScreen
 import com.ajpr00.tablet.ui.screen.SplashScreenTablet
 import com.ajpr00.tablet.ui.screen.onboarding.OnboardingInfoScreenTablet
 import com.ajpr00.tablet.ui.screen.onboarding.OnboardingReadyScreenTablet
 import com.ajpr00.tablet.ui.screen.onboarding.OnboardingWelcomeScreenTablet
 
 @Composable
-fun NavigationCore(innerPadding: PaddingValues) {
+fun NavigationCore(innerPadding: PaddingValues, settingsViewModel: SettingsViewModel) {
     val navController = rememberNavController()
 
     NavHost(
@@ -39,13 +42,21 @@ fun NavigationCore(innerPadding: PaddingValues) {
         startDestination = Splash, // Todo Cambiar al SplashScreen(ModoDebug)
         modifier = Modifier.padding(innerPadding)
     ) {
-        composable<Splash> { backStackEntry ->
+        composable<Splash> {
             val viewModelSplash: SplashTabletViewModel = hiltViewModel()
             SplashScreenTablet(
                 viewModel = viewModelSplash,
                 goToOnboarding = { navController.navigate(OnboardinGraph) },
                 goToMainGraph = { navController.navigate(LoginGraph) },
             )
+        }
+
+        composable<About> {}
+        navigation<SettingsGraph>(startDestination = Settings) {
+
+            composable<Settings> {
+                SettingsScreen(settingsViewModel)
+            }
         }
 
         // Subgrafo de login
@@ -99,12 +110,15 @@ fun NavigationCore(innerPadding: PaddingValues) {
                 val viewModelMediaBackground: ReproducorViewModel = hiltViewModel(parentEntry)
                 val viewModelMediaItems: MediaItemsViewModel = hiltViewModel(parentEntry)
                 val viewModelAuth: AuthViewModel = hiltViewModel(parentEntry)
+                val viewModelPairing: PairingViewModel = hiltViewModel(parentEntry)
 
                 ReproductorScreen(
                     viewModelMediaBackground = viewModelMediaBackground,
                     viewModelMediaItems = viewModelMediaItems,
+                    viewModelPairing = viewModelPairing,
                     viewModelAuth = viewModelAuth,
-                    goToLogin = { navController.navigate(LoginGraph) }
+                    goToLogin = { navController.navigate(LoginGraph) },
+                    goToSetting = {navController.navigate(Settings)}
                 )
             }
         }

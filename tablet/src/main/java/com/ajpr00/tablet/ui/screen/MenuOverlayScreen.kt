@@ -16,8 +16,10 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.ajpr00.components.components.showToast
 import com.ajpr00.tablet.presentation.viewmodel.ReproducorViewModel
 import com.ajpr00.tablet.R
+import com.ajpr00.tablet.presentation.viewmodel.PairingViewModel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -37,14 +40,17 @@ import kotlinx.coroutines.launch
 @Composable
 fun MenuOverlayScreen(
     viewModelMediaBackground: ReproducorViewModel,
+    viewModelPairing: PairingViewModel,
     menuGestoReproducion: @Composable () -> Unit,
     menuApp: @Composable () -> Unit,
     panelSelectorMedia: @Composable () -> Unit
 ) {
     val context = LocalContext.current
     Log.d("Flow", "▶ Entrando en MenuOverlayScreen")
-    val estado by viewModelMediaBackground.stadoVisualMenu.collectAsState()
+    val overlayState by viewModelMediaBackground.stadoVisualMenu.collectAsState()
     var showLockIcon by rememberSaveable { mutableStateOf(false) }
+
+    val statePairing by viewModelPairing.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModelMediaBackground.eventos.collect { mensaje ->
@@ -52,12 +58,12 @@ fun MenuOverlayScreen(
         }
     }
 
-    LaunchedEffect(estado.lastInteraction, estado.showSidePanel, estado.showMenuApp) {
-        if (estado.showSidePanel || estado.showMenuApp) {
+    LaunchedEffect(overlayState.lastInteraction, overlayState.showSidePanel, overlayState.showMenuApp) {
+        if (overlayState.showSidePanel || overlayState.showMenuApp) {
             Log.d("FlowRelo", "⏱ Algún menú activo → iniciando temporizador de 20s")
 
             // Capturamos el momento de inicio
-            val start = estado.lastInteraction
+            val start = overlayState.lastInteraction
             Log.d("FlowRelo", "⏱ Comienzo del temporizador: $start")
             // Esperamos 20s
             delay(50000)
@@ -71,11 +77,11 @@ fun MenuOverlayScreen(
 
             if (elapsed >= 50000) {
                 // No hubo interacción → cerramos
-                if (estado.showSidePanel) {
+                if (overlayState.showSidePanel) {
                     viewModelMediaBackground.isShowSidePanel()
                     Log.d("FlowRelo", "⏱ Panel lateral cerrado por inactividad")
                 }
-                if (estado.showMenuApp) {
+                if (overlayState.showMenuApp) {
                     viewModelMediaBackground.isShowMenuApp()
                     Log.d("FlowRelo", "⏱ Menú de app cerrado por inactividad")
                 }
@@ -91,7 +97,7 @@ fun MenuOverlayScreen(
             .fillMaxSize()
             // Long press y doble tap
             .pointerInput(Unit) {
-                if (estado.isLockScreen) {
+                if (overlayState.isLockScreen) {
                     viewModelMediaBackground.enviarEvento("Pantalla bloqueada")
                 }
                 coroutineScope {
@@ -99,14 +105,14 @@ fun MenuOverlayScreen(
                         onTap = {
                             // Al hacer tap mostramos el candado
                             mostrarCandado(
-                                estado.isLockScreen,
+                                overlayState.isLockScreen,
                                 { showLockIcon = it },
                                 { block -> launch { block() } }
                             )
                         },
                         onPress = {
                             mostrarCandado(
-                                estado.isLockScreen,
+                                overlayState.isLockScreen,
                                 { showLockIcon = it },
                                 { block -> launch { block() } }
                             )
@@ -117,7 +123,7 @@ fun MenuOverlayScreen(
                                 viewModelMediaBackground.togglesLockScreen()
                                 Log.d(
                                     "Gestos",
-                                    "✋ Long press ejecutado → onLockScreen=${estado.isLockScreen}"
+                                    "✋ Long press ejecutado → onLockScreen=${overlayState.isLockScreen}"
                                 )
                             }
                             tryAwaitRelease()
@@ -126,18 +132,19 @@ fun MenuOverlayScreen(
                         },
                         onDoubleTap = {
                             mostrarCandado(
-                                estado.isLockScreen,
+                                overlayState.isLockScreen,
                                 { showLockIcon = it },
                                 { block -> launch { block() } }
                             )
                             viewModelMediaBackground.isShowMenuApp()
-                            Log.d("Gestos", "👆👆 Doble tap → showMenu=${estado.showMenuApp}")
+                            Log.d("Gestos", "👆👆 Doble tap → showMenu=${overlayState.showMenuApp}")
                         }
                     )
                 }
             }
+
     ) {
-        if (estado.isLockScreen) {
+        if (overlayState.isLockScreen) {
             if (showLockIcon) Icon(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -152,7 +159,7 @@ fun MenuOverlayScreen(
             menuGestoReproducion()
 
             AnimatedVisibility(
-                visible = estado.showMenuApp,
+                visible = overlayState.showMenuApp,
                 modifier = Modifier.align(Alignment.CenterEnd),
                 enter = slideInHorizontally(
                     initialOffsetX = { full -> -full },
@@ -167,12 +174,12 @@ fun MenuOverlayScreen(
                     // Columna izquierda → menuApp
                     Box(
                         modifier = Modifier
-                            .weight(if (estado.showSidePanel) 2f else 1f) // mitad izquierda
+                            .weight(if (overlayState.showSidePanel) 2f else 1f) // mitad izquierda
                     ) {
                         menuApp()
                     }
 
-                    if (estado.showSidePanel) {
+                    if (overlayState.showSidePanel) {
                         Box(
                             modifier = Modifier
                                 .weight(1f) // mitad derecha
@@ -183,6 +190,14 @@ fun MenuOverlayScreen(
                 }
             }
         }
+
+    }
+    if (statePairing.showPinDialog) {
+        PinDialog(
+            pin = statePairing.pin,
+            isPaired = statePairing.isPaired,
+            onDismiss = { viewModelPairing.closePinDialog() }
+        )
     }
 }
 

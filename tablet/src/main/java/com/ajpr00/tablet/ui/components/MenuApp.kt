@@ -40,6 +40,7 @@ fun MenuApp(
     viewModelMediaBackground: ReproducorViewModel,
     viewModelMediaItme: MediaItemsViewModel,
     viewModelAuth: AuthViewModel,
+    goToSetting: () -> Unit,
     goToLogin: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -66,7 +67,7 @@ fun MenuApp(
     }
 
     PanelMenuApp(
-        configuracion = { /*TODO*/ },
+        configuracion = { goToSetting() },
         info = { /*TODO*/ },
         vacio = { /*TODO*/ },
         misArchivos = { launcherMedia.launch(arrayOf("image/*", "video/*")) },

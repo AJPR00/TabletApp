@@ -3,8 +3,10 @@ package com.ajpr00.tablet.data.di
 import com.ajpr00.core.domain.repository.login.AuthPreference
 import com.ajpr00.core.domain.repository.media.MediaRepository
 import com.ajpr00.core.domain.repository.media.PlaylistRepository
+import com.ajpr00.core.domain.repository.pairing.PairingRepository
 import com.ajpr00.core.domain.repository.preference.PreferencesRepository
 import com.ajpr00.tablet.data.repositoryImp.MediaRepositoryImpl
+import com.ajpr00.tablet.data.repositoryImp.PairingRepositoryImpl
 import com.ajpr00.tablet.data.repositoryImp.PlaylistRepositoryImpl
 import com.ajpr00.tablet.data.repositoryImp.PreferencesRepositoryImpl
 import com.ajpr00.tablet.data.repositoryImp.TabletAuthPreferenceImpl
@@ -35,6 +37,12 @@ abstract class RepositoryModule {
     abstract fun bindPreferencesRepository(
         impl: PreferencesRepositoryImpl
     ): PreferencesRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPairingRepository(
+        impl: PairingRepositoryImpl
+    ): PairingRepository
 
     @Binds
     abstract fun bindAuthPreference(impl: TabletAuthPreferenceImpl): AuthPreference

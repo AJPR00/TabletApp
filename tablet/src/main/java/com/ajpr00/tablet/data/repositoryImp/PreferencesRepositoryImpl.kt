@@ -32,4 +32,12 @@ class PreferencesRepositoryImpl @Inject constructor(
     override suspend fun setAesKey(bytes: ByteArray) = prefs.setAesKey(bytes)
 
     override fun getAesKey(): Flow<ByteArray?> = prefs.aesKey
+
+    override fun getMobileConnected(): Flow<Boolean> = prefs.isMobileConnected
+
+    override suspend fun setMobileConnected(connected: Boolean) = prefs.setMobileConnected(connected)
+
+    override suspend fun setMobileName(name: String) = prefs.setMobileName(name)
+
+    override fun getMobileName(): Flow<String> = prefs.mobileName
 }

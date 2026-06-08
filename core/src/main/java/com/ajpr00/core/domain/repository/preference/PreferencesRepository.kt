@@ -21,4 +21,10 @@ interface PreferencesRepository {
 
     suspend fun setAesKey(bytes: ByteArray)
     fun getAesKey(): Flow<ByteArray?>
+
+    fun getMobileConnected(): Flow<Boolean>
+    suspend fun setMobileConnected(connected: Boolean)
+
+    suspend fun setMobileName(name: String)
+    fun getMobileName(): Flow<String>
 }
