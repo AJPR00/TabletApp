@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
 
@@ -13,6 +15,11 @@ plugins {
 
     // Firebase
     alias(libs.plugins.google.services)
+
+    alias(libs.plugins.dokka)
+}
+val properties = Properties().apply {
+    load(rootProject.file("local.properties").inputStream())
 }
 
 android {
@@ -30,6 +37,11 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        resValue("string", "facebook_app_id", properties["FACEBOOK_APP_ID"].toString())
+        resValue("string", "facebook_client_token", properties["FACEBOOK_CLIENT_TOKEN"].toString())
+        resValue("string", "google_client_id", properties["GOOGLE_CLIENT_ID"].toString())
+
     }
 
     buildTypes {
@@ -52,6 +64,7 @@ android {
 
     kotlinOptions {
         jvmTarget = "11"
+        freeCompilerArgs = listOf("-XXLanguage:+PropertyParamAnnotationDefaultTargetMode")
     }
 
     buildFeatures {
@@ -115,6 +128,8 @@ dependencies {
     // Hilt
     implementation(libs.hilt)
     implementation(libs.hilt.navigation.compose)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
 
     ksp(libs.hilt.compiler)
 
@@ -157,4 +172,20 @@ dependencies {
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.kotlinx.coroutines.test)
+
+    // Credential Manager
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+
+    // Google Identity Services
+    implementation(libs.google.identity)
+
+    // Login Facebook
+    implementation(libs.facebook.login)
+
+    implementation(libs.androidx.core.splashscreen)
+
+    implementation(libs.material)
+
+    implementation(libs.androidx.work.runtime.ktx)
 }

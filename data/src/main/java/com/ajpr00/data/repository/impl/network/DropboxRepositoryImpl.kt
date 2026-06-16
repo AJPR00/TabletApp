@@ -1,7 +1,7 @@
 package com.ajpr00.data.repository.impl.network
 
 
-import com.ajpr00.core.domain.repository.network.DropboxRepository
+import com.ajpr00.data.repository.network.DropboxRepository
 import com.ajpr00.data.datasource.login.FirebaseAuthDataSource
 import javax.inject.Inject
 

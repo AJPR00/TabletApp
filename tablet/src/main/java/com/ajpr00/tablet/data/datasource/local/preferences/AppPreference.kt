@@ -55,6 +55,8 @@ class AppPreference @Inject constructor(
         private val TABLET_ID = stringPreferencesKey("tablet_id")
         private val TABLET_NAME = stringPreferencesKey("tablet_name")
 
+        private val TOKEN = stringPreferencesKey("token")
+
         // Identidad de la conexion
         private val IS_MOBILE_CONNECTED = booleanPreferencesKey("is_mobile_connected")
         private val MOBILE_NAME = stringPreferencesKey("mobile_name")
@@ -114,6 +116,11 @@ class AppPreference @Inject constructor(
     val mobileName: Flow<String> = context.appDataStore.data.map {
         it[MOBILE_NAME] ?: "Movil"
     }
+
+    val token: Flow<String> = context.appDataStore.data.map {
+        it[TOKEN] ?: ""
+    }
+
 
     /**
      * Clave AES REAL usada para cifrar tráfico con el móvil.
@@ -214,5 +221,12 @@ class AppPreference @Inject constructor(
             prefs[MOBILE_NAME] = name
         }
         Log.d(TAG, "MobileName asignado: $name")
+    }
+
+    suspend fun setToken(name: String) {
+        context.appDataStore.edit { prefs ->
+            prefs[TOKEN] = name
+        }
+        Log.d(TAG, "Token asignado: $name")
     }
 }

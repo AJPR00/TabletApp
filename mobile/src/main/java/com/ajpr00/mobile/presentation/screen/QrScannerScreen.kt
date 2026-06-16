@@ -1,7 +1,6 @@
 package com.ajpr00.mobile.presentation.screen
 
 import android.util.Log
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,18 +12,23 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.ajpr00.core.domain.model.Dispositivo
+import com.ajpr00.components.components.showToast
+import com.ajpr00.core.domain.model.Eventos
+import com.ajpr00.core.domain.model.qr.QrPayload
 import com.ajpr00.mobile.presentation.viewmodel.QrScannerViewModel
 import com.ajpr00.mobile.qr.camara.buildPreviewView
 import com.ajpr00.mobile.qr.camara.setupCamera
+import kotlinx.coroutines.delay
 
 
 /**
@@ -45,12 +49,37 @@ import com.ajpr00.mobile.qr.camara.setupCamera
 @Composable
 fun QrScannerScreen(
     viewModel: QrScannerViewModel,
-    onConnectionReady: (Dispositivo) -> Unit,
+    onConnectionReady: (QrPayload) -> Unit,
     onCancel: () -> Unit
 ) {
     Log.d("QR_UI", "Entrando en QrScannerScreen")
 
+    val context = LocalContext.current
+
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    LaunchedEffect(Unit) {
+        viewModel.eventos.collect { evento ->
+            when (evento) {
+                is Eventos.Error -> {
+                    showToast(context, evento.mensaje)
+                    onCancel()
+                }
+                is Eventos.Info -> {
+                    showToast(context, evento.mensaje)
+
+                    if (evento.mensaje != "QR leído correctamente") {
+                        onCancel()
+                    }
+                }
+
+                is Eventos.RegisterSuccess -> {
+                    // Este no tiene mensaje → no usar evento.mensaje
+                    showToast(context, "Registro completado")
+                }
+            }
+        }
+    }
 
     // Observamos el StateFlow del ViewModel.
     // Si ya tenemos datos → cerramos el dialog y seguimos el flujo.

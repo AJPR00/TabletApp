@@ -144,7 +144,6 @@ fun DiscoveredDeviceCard(
     dispositivo: DispositivoUi,
     onClick: () -> Unit = {}
 ) {
-    // 🔥 LOG 5: Qué recibe la Card
     Log.d(
         "DiscoveredDeviceCard",
         "Render → nombre=${dispositivo.nombre}, id=${dispositivo.id}, isSelected=$isSelected"
@@ -218,14 +217,12 @@ fun RemoteMediaCard(
         }
     }
 
-    Box(
+    Card(
         modifier = modifier
-            .size(150.dp)
-            .border(2.dp, Color.Black, RoundedCornerShape(12.dp))
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .clickable(enabled = onClick != null) { onClick?.invoke() }
-            .padding(8.dp)
+            .padding(4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        onClick = { onClick?.invoke() }
     ) {
 
         // Imagen o placeholder
@@ -254,22 +251,6 @@ fun RemoteMediaCard(
                     modifier = Modifier.size(48.dp)
                 )
             }
-        }
-
-        // Nombre abajo
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .background(Color.Black.copy(alpha = 0.5f))
-                .padding(4.dp)
-        ) {
-            Text(
-                text = media.name,
-                color = Color.White,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 1
-            )
         }
     }
 }

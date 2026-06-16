@@ -3,15 +3,17 @@ package com.ajpr00.mobile.data.di
 import com.ajpr00.core.domain.repository.dispositivo.DispositivoRepository
 import com.ajpr00.core.domain.repository.media.PendingMediaRepository
 import com.ajpr00.core.domain.repository.dispositivo.TabletLocatorRepository
-import com.ajpr00.core.domain.repository.login.AuthPreference
 import com.ajpr00.core.domain.repository.media.TabletApiRepository
-import com.ajpr00.core.domain.repository.preference.PreferencesRepository
+import com.ajpr00.core.domain.repository.network.NetworkRepository
+import com.ajpr00.core.domain.repository.preference.SettingsManager
+import com.ajpr00.core.domain.repository.preference.SessionManager
 import com.ajpr00.data.repository.impl.dispositivo.TabletLocatorRepositoryImpl
+import com.ajpr00.data.repository.impl.network.NetworkRepositoryImpl
 import com.ajpr00.mobile.data.repositoryImp.DispositivoRepositoryImpl
-import com.ajpr00.mobile.data.repositoryImp.MobileAuthPreferenceImpl
 import com.ajpr00.mobile.data.repositoryImp.PendingMediaRepositoryImpl
-import com.ajpr00.mobile.data.repositoryImp.PreferencesRepositoryImpl
+import com.ajpr00.mobile.data.repositoryImp.prefrence.MobileAppPreferencesRepositoryImpl
 import com.ajpr00.mobile.data.repositoryImp.TabletApiRepositoryImpl
+import com.ajpr00.mobile.data.repositoryImp.prefrence.MobileSessionPreferencesRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -31,8 +33,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindPreferencesRepository(
-        impl: PreferencesRepositoryImpl
-    ): PreferencesRepository
+        impl: MobileAppPreferencesRepositoryImpl
+    ): SettingsManager
 
     @Binds
     @Singleton
@@ -51,6 +53,16 @@ abstract class RepositoryModule {
         impl: TabletApiRepositoryImpl
     ): TabletApiRepository
 
+    // Repositorio de sesión del usuario
     @Binds
-    abstract fun bindAuthPreference(impl: MobileAuthPreferenceImpl): AuthPreference
+    @Singleton
+    abstract fun bindSessionManager(
+        impl: MobileSessionPreferencesRepositoryImpl
+    ): SessionManager
+
+    @Binds
+    @Singleton
+    abstract fun bindNetworkRepository(
+        impl: NetworkRepositoryImpl
+    ): NetworkRepository
 }

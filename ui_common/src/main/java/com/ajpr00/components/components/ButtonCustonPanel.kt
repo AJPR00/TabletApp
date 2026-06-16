@@ -27,16 +27,14 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.VectorPainter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.ajpr00.uicommon.R
 
 @Composable
 fun ButtonCustonPanel(
     modifier: Modifier = Modifier,
+    isEnable: Boolean = true,
     shape: Shape = RoundedCornerShape(12),
     icon: Painter,
     iconSize: Dp = 64.dp,
@@ -52,6 +50,7 @@ fun ButtonCustonPanel(
             containerColor = color,
             contentColor = MaterialTheme.colorScheme.onPrimary
         ),
+        enabled = isEnable,
         onClick = onClick
     ) {
         Box(

@@ -1,8 +1,13 @@
 package com.ajpr00.mobile.presentation.screen
 
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
@@ -24,70 +29,94 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.ajpr00.components.cards.MediaPreviewCard
 import com.ajpr00.mobile.presentation.viewmodel.PanelControlViewModel
 import com.ajpr00.mobile.ui.components.DispositivoCard
-import com.ajpr00.mobile.ui.components.FabAdd
+import com.ajpr00.mobile.ui.components.FabFloat
 import com.ajpr00.mobile.ui.model.DispositivoUi
 import com.ajpr00.components.components.TextoConDivisor
+import com.ajpr00.components.components.showToast
 import com.ajpr00.components.screen.ScreenMediaExplorer
 import com.ajpr00.core.domain.model.PendingMedia
+import com.ajpr00.core.domain.model.RemoteMedia
 import com.ajpr00.mobile.ui.components.RemoteMediaCard
+import kotlin.collections.forEach
 
 @Composable
 fun ScreenPanelControl(
     modifier: Modifier = Modifier,
     viewModel: PanelControlViewModel = hiltViewModel(),
-    onSelectImage: () -> Unit,
-    onSelectVideo: () -> Unit,
-    onEnviar: () -> Unit,
     onConfiguracion: () -> Unit,
     onAgregarDispositivo: () -> Unit,
 ) {
+    val context = LocalContext.current
+
+
     val dispositivos by viewModel.dispositivosConEstado.collectAsState()
     val mediaList by viewModel.pendingMedia.collectAsState()
     val selectedDevice by viewModel.selectedDevice.collectAsState()
-    val mediaListRepro by viewModel.listRepro.collectAsState()
+    val state by viewModel.state.collectAsState()
 
-    var showExplorer by remember { mutableStateOf(false) }
-    val mdnsInfo by viewModel.mdnsState.collectAsState()
+    val isSelecId = selectedDevice != null
 
     LaunchedEffect(Unit) {
-        viewModel.startMdnsDiscovery()
+        viewModel.eventos.collect { mensaje ->
+            showToast(context, mensaje)
+        }
     }
 
-    mdnsInfo?.let { info ->
-        Text("Tablet encontrada: ${info.name} (${info.ip}:${info.port})")
+    val launcherMedia = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris: List<Uri> ->
+        uris.forEach { uri ->
+            val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+            context.contentResolver.takePersistableUriPermission(uri, flags)
+        }
+        viewModel.importSelectedMedia(uris)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
 
         PanelMenu(
             modifier = modifier,
+            isSelecId = isSelecId,
             dispositivos = dispositivos,
             listSendMedia = mediaList,
             selectedDevice = selectedDevice,
             onSelectDevice = { viewModel.selectDevice(it) },
-            onSelectImage = onSelectImage,
-            onSelectVideo = onSelectVideo,
+            onSelectImage = { launcherMedia.launch(arrayOf("image/*")) },
+            onSelectVideo = { launcherMedia.launch(arrayOf("video/*")) },
             onPendSend = viewModel::enviarMediaCifrado,
-            openExploreListRepro = { showExplorer = true },
+            openExploreListRepro = viewModel::loadListFav,
             onConfiguracion = onConfiguracion,
             onAgregarDispositivo = onAgregarDispositivo
         )
 
-        if (showExplorer) {
-            ScreenMediaExplorer(
-                items = mediaListRepro,
-                label = "Lista de reproducción",
-                itemContent = { RemoteMediaCard(media = it) }
-            )
+        if (state.showExplorerFav && isSelecId) {
+
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.75f))
+            {
+                ScreenMediaExplorer<RemoteMedia>(
+                    itemsFlow = viewModel.listReproServer,
+                    label = "Lista de reproducción",
+                    itemContent = { RemoteMediaCard(media = it) }
+                )
+                FabFloat(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .align(Alignment.TopEnd)
+                        .offset((-10).dp, 1.dp),
+                    icon = painterResource(id = R.drawable.ic_close_small_24),
+                    icDesc = "Agregar dispositivo",
+                    onClick = { viewModel.closeExplorer()  }
+                )
+            }
         }
     }
 }
@@ -95,6 +124,7 @@ fun ScreenPanelControl(
 @Composable
 private fun PanelMenu(
     modifier: Modifier,
+    isSelecId: Boolean = true,
     dispositivos: List<DispositivoUi>,
     listSendMedia: List<PendingMedia>,
     selectedDevice: DispositivoUi?,
@@ -115,6 +145,7 @@ private fun PanelMenu(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(sizePanelButton),
+            isEnable = isSelecId,
             onSelectImage = onSelectImage,
             onSelectVideo = onSelectVideo,
             openExploreListRepro = openExploreListRepro,
@@ -125,7 +156,7 @@ private fun PanelMenu(
         if (isListSendMedia) {
             MediaListSection(
                 modifier = Modifier.weight(0.25f),
-                icon = painterResource(id = R.drawable.ic_mobile_control),
+                icon = painterResource(id = R.drawable.ic_send_24),
                 onFabClick = onPendSend,
                 listSendMedia = listSendMedia
             )
@@ -135,7 +166,7 @@ private fun PanelMenu(
         DeviceListSection(
             modifier = Modifier.weight(0.25f),
             title = "Dispositivos disponibles:",
-            dispositivos = dispositivos,
+            listDispositivos = dispositivos,
             selectedDevice = selectedDevice,
             onSelectDevice = onSelectDevice,
             icon = painterResource(id = com.ajpr00.uicommon.R.drawable.ic_add_tablet24),
@@ -147,6 +178,7 @@ private fun PanelMenu(
 @Composable
 private fun ActionGrid(
     modifier: Modifier,
+    isEnable: Boolean = true,
     onSelectImage: () -> Unit,
     onSelectVideo: () -> Unit,
     openExploreListRepro: () -> Unit,
@@ -164,29 +196,33 @@ private fun ActionGrid(
         ) {
             item {
                 ButtonCustonPanel(
-                    icon = painterResource(id = R.drawable.ic_mobile_control),
+                    icon = painterResource(id = R.drawable.ic_imag_up_24),
                     label = "Enviar Imagen",
+                    isEnable = isEnable,
                     onClick = onSelectImage
                 )
             }
             item {
                 ButtonCustonPanel(
-                    icon = painterResource(id = R.drawable.ic_mobile_control),
+                    icon = painterResource(id = R.drawable.ic_video_add_24),
                     label = "Enviar Video",
+                    isEnable = isEnable,
                     onClick = onSelectVideo
                 )
             }
             item {
                 ButtonCustonPanel(
-                    icon = painterResource(id = R.drawable.ic_mobile_control),
+                    icon = painterResource(id = R.drawable.outline_reviews_24),
                     label = "Ver lista reproducción",
+                    isEnable = isEnable,
                     onClick = { openExploreListRepro() }
                 )
             }
             item {
                 ButtonCustonPanel(
-                    icon = painterResource(id = R.drawable.ic_mobile_control),
+                    icon = painterResource(id = R.drawable.ic_conf_24),
                     label = "Configuración",
+                    isEnable = isEnable,
                     onClick = onConfiguracion
                 )
             }
@@ -222,7 +258,7 @@ private fun MediaListSection(
                 }
             }
         }
-        FabAdd(
+        FabFloat(
             modifier = Modifier
                 .size(60.dp)
                 .align(Alignment.BottomEnd)
@@ -254,7 +290,7 @@ fun DeviceListSection(
     icon: Painter,
     selectedDevice: DispositivoUi?,
     onSelectDevice: (DispositivoUi) -> Unit,
-    dispositivos: List<DispositivoUi>,
+    listDispositivos: List<DispositivoUi>,
     onFabClick: () -> Unit
 ) {
     Box(
@@ -264,7 +300,7 @@ fun DeviceListSection(
             // Título con divisor (línea decorativa)
             TextoConDivisor(texto = title)
 
-            if (dispositivos.isEmpty()) {
+            if (listDispositivos.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -286,7 +322,7 @@ fun DeviceListSection(
                         .padding(top = 16.dp, start = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    items(dispositivos) { dispositivo ->
+                    items(listDispositivos) { dispositivo ->
 
                         // Comprobamos si el dispositivo está seleccionado
                         val isSelected = selectedDevice?.id == dispositivo.id
@@ -302,7 +338,7 @@ fun DeviceListSection(
             }
         }
 
-        FabAdd(
+        FabFloat(
             modifier = Modifier
                 .size(60.dp)
                 .align(Alignment.BottomEnd)

@@ -2,11 +2,17 @@ package com.ajpr00.mobile.presentation.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.ajpr00.core.domain.model.Dispositivo
+import com.ajpr00.core.domain.model.Eventos
+import com.ajpr00.core.domain.model.qr.QrPayload
 import com.ajpr00.mobile.qr.QrProcessor
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -24,39 +30,55 @@ import javax.inject.Inject
  * 3. Llama al UseCase para convertir el raw en un `Dispositivo`.
  * 4. Expone el resultado por StateFlow para que la UI reaccione.
  */
+
+@HiltViewModel
 class QrScannerViewModel @Inject constructor(
     private val qrProcessor: QrProcessor
 ) : ViewModel() {
 
-    private val _connectionData = MutableStateFlow<Dispositivo?>(null)
-    val connectionData: StateFlow<Dispositivo?> = _connectionData.asStateFlow()
+    private val _connectionData = MutableStateFlow<QrPayload?>(null)
+    val connectionData: StateFlow<QrPayload?> = _connectionData.asStateFlow()
+
+    private val _eventos = MutableSharedFlow<Eventos>()
+    val eventos = _eventos
 
     private var processed = false
 
-    /**
-     * Recibe el texto del QR detectado y delega su procesamiento al UseCase.
-     */
     fun onQrDetected(raw: String) {
         Log.d("QR_VM", "onQrDetected: QR recibido → $raw")
 
+        //QR repetido → emitir evento
         if (processed) {
             Log.d("QR_VM", "onQrDetected: ignorado (ya procesado previamente)")
+            viewModelScope.launch {
+                _eventos.emit(Eventos.Info("QR ya procesado"))
+            }
             return
         }
 
         processed = true
         Log.d("QR_VM", "onQrDetected: procesando QR por primera vez")
 
-        val dispositivo = qrProcessor(raw)
+        val qrPayload = qrProcessor(raw)
 
-        Log.d("QR_VM", "onQrDetected: dispositivo generado → $dispositivo")
+        //QR inválido → emitir evento
+        if (qrPayload == null) {
+            viewModelScope.launch {
+                _eventos.emit(Eventos.Error("QR inválido o no compatible"))
+            }
+            return
+        }
 
-        _connectionData.value = dispositivo
+        Log.d("QR_VM", "onQrDetected: dispositivo generado → $qrPayload")
+
+        _connectionData.value = qrPayload
+
+        //QR válido → emitir evento
+        viewModelScope.launch {
+            _eventos.emit(Eventos.Info("QR leído correctamente"))
+        }
     }
 
-    /**
-     * Permite volver a escanear otro QR.
-     */
     fun reset() {
         Log.d("QR_VM", "reset: limpiando estado del ViewModel")
         processed = false

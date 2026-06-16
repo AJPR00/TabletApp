@@ -24,7 +24,7 @@
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
     <application
-        android:name="com.ajpr00.tablet.TabletApp"
+        android:name="com.ajpr00.tablet.TabletMainApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -34,6 +34,20 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TabletApp"
         tools:targetApi="31">
+
+        <!-- Facebook Login -->
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+
+        <meta-data
+            android:name="com.facebook.sdk.ClientToken"
+            android:value="@string/facebook_client_token" />
+
+        <provider
+            android:name="com.facebook.FacebookContentProvider"
+            android:authorities="${applicationId}.FacebookContentProvider"
+            android:exported="false" />
 
         <activity
             android:name="com.ajpr00.tablet.MainActivity"

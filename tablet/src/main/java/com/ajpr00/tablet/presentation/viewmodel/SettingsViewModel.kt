@@ -1,12 +1,24 @@
 package com.ajpr00.tablet.presentation.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ajpr00.core.domain.model.qr.QrPayload
 import com.ajpr00.core.domain.usecase.pairing.GetQrUseCase
-import com.ajpr00.core.domain.usecase.preference.*
+import com.ajpr00.core.domain.usecase.preference.GetConnectedUseCase
+import com.ajpr00.core.domain.usecase.preference.GetDarkModeUseCase
+import com.ajpr00.core.domain.usecase.preference.GetIdUseCase
+import com.ajpr00.core.domain.usecase.preference.GetLanguageUseCase
+import com.ajpr00.core.domain.usecase.preference.GetNameUseCase
+import com.ajpr00.core.domain.usecase.preference.GetnameMobileUseCase
+import com.ajpr00.core.domain.usecase.preference.SaveAesKeyUseCase
+import com.ajpr00.core.domain.usecase.preference.SetConnectedUseCase
+import com.ajpr00.core.domain.usecase.preference.SetDarkModeUseCase
+import com.ajpr00.core.domain.usecase.preference.SetLanguageUseCase
+import com.ajpr00.core.domain.usecase.preference.SetNameUseCase
 import com.ajpr00.tablet.presentation.state.SettingsState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -39,29 +51,55 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val getDarkMode: GetDarkModeUseCase,
     private val getLanguage: GetLanguageUseCase,
-    private val getTabletId: GetTabletIdUseCase,
-    private val getTabletName: GetTabletNameUseCase,
-    private val getMobileConnected: GetMobileConnectedUseCase,
-    private val getMobileName: GetMobileNameUseCase,
+    private val getTabletId: GetIdUseCase,
+    private val getTabletName: GetNameUseCase,
+    private val isConnectedRed: GetConnectedUseCase,
+    private val getMobileName: GetnameMobileUseCase,
     private val setDarkMode: SetDarkModeUseCase,
     private val setLanguage: SetLanguageUseCase,
-    private val setTabletName: SetTabletNameUseCase,
-    private val setMobileConnected: SetMobileConnectedUseCase,
-    private val setMobileName: SetMobileNameUseCase,
+    private val setTabletName: SetNameUseCase,
+    private val setMobileConnected: SetConnectedUseCase,
+    private val setMobileName: SetNameUseCase,
     private val saveAesKey: SaveAesKeyUseCase,
     private val getQrUseCase: GetQrUseCase
 ) : ViewModel() {
 
+    val TAG = "SettingsViewModel"
     private val _state = MutableStateFlow(SettingsState())
     val state: StateFlow<SettingsState> = _state
 
     private val _qrPayload = MutableStateFlow<QrPayload?>(null)
     val qrPayload: StateFlow<QrPayload?> = _qrPayload
 
+    private val _qrTimer = MutableStateFlow(0)
+    val qrTimer: StateFlow<Int> = _qrTimer
+
+    private val _showQrDialog = MutableStateFlow(false)
+    val showQrDialog: StateFlow<Boolean> = _showQrDialog
+
 
     init {
         observePreferences()
     }
+
+    fun startQrTimer(duration: Int = 60) {
+        viewModelScope.launch {
+            _qrTimer.value = duration
+            _showQrDialog.value = true
+
+            while (_qrTimer.value > 0) {
+                delay(1000)
+                _qrTimer.value -= 1
+            }
+
+            _showQrDialog.value = false
+        }
+    }
+
+    fun closeQrDialog() {
+        _showQrDialog.value = false
+    }
+
 
     /**
      * ## observePreferences()
@@ -84,7 +122,6 @@ class SettingsViewModel @Inject constructor(
                     getLanguage(),
                     getTabletId(),
                     getTabletName(),
-                    getMobileConnected(),
                     getMobileName()
                 )
             ) { values ->
@@ -93,11 +130,10 @@ class SettingsViewModel @Inject constructor(
                     language = values[1] as String,
                     tabletId = values[2] as String,
                     tabletName = values[3] as String,
-                    isMobileConnected = values[4] as Boolean,
-                    mobileName = values[5] as String
+                    mobileName = values[4] as String
                 )
             }.collect { newState ->
-                println("[SettingsVM] Nuevo estado recibido: $newState")
+               Log.d(TAG, " Nuevo estado recibido: $newState")
                 _state.value = newState
             }
         }
@@ -110,16 +146,16 @@ class SettingsViewModel @Inject constructor(
     /**
      * Actualiza el modo oscuro.
      */
-    fun toggleDarkMode(enabled: Boolean) = viewModelScope.launch {
-        println("[SettingsVM] Cambiando modo oscuro a: $enabled")
-        setDarkMode(enabled)
+    fun toggleDarkMode() = viewModelScope.launch {
+       Log.d(TAG, " Cambiando modo oscuro a: ${!state.value.isDarkMode}")
+        setDarkMode()
     }
 
     /**
      * Cambia el idioma de la aplicación.
      */
     fun changeLanguage(lang: String) = viewModelScope.launch {
-        println("[SettingsVM] Cambiando idioma a: $lang")
+       Log.d(TAG, " Cambiando idioma a: $lang")
         setLanguage(lang)
     }
 
@@ -131,7 +167,7 @@ class SettingsViewModel @Inject constructor(
      * Cambia el nombre de la tablet.
      */
     fun changeTabletName(name: String) = viewModelScope.launch {
-        println("[SettingsVM] Cambiando nombre de la tablet a: $name")
+       Log.d(TAG, " Cambiando nombre de la tablet a: $name")
         setTabletName(name)
     }
 
@@ -143,26 +179,26 @@ class SettingsViewModel @Inject constructor(
      * Regenera el QR llamando al servidor local.
      */
     fun regenerateQr() = viewModelScope.launch {
-        println("[SettingsVM] Regenerando QR…")
+        Log.d(TAG, "Regenerando QR…")
 
         val result = getQrUseCase()
 
         result.onSuccess { payload ->
-            println("[SettingsVM] QR recibido: $payload")
+            Log.d(TAG, "QR recibido: $payload")
             _qrPayload.value = payload
+            startQrTimer()   // Iniciar temporizador aquí
         }
 
         result.onFailure { error ->
-            println("[SettingsVM] ERROR generando QR: ${error.message}")
+            Log.d(TAG, "ERROR generando QR: ${error.message}")
         }
     }
-
 
     /**
      * Borra la clave AES → desvincula el móvil.
      */
     fun clearAesKey() = viewModelScope.launch {
-        println("[SettingsVM] Borrando clave AES y desvinculando móvil…")
+       Log.d(TAG, " Borrando clave AES y desvinculando móvil…")
         saveAesKey(ByteArray(0))
         setMobileConnected(false)
         setMobileName("Movil")

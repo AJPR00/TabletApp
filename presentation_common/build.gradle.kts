@@ -8,6 +8,8 @@ plugins {
 
     // Hilt
     alias(libs.plugins.hilt.android)
+
+    alias(libs.plugins.dokka)
 }
 
 android {
@@ -43,6 +45,7 @@ android {
 
     kotlinOptions {
         jvmTarget = "11"
+        freeCompilerArgs = listOf("-XXLanguage:+PropertyParamAnnotationDefaultTargetMode")
     }
 }
 
@@ -50,6 +53,7 @@ dependencies {
 
     // Core
     implementation(project(":core"))
+    implementation(project(":data"))
 
 
     // Lifecycle + ViewModel
@@ -73,4 +77,7 @@ dependencies {
 
     // Desugaring
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+
+    // Login Facebook
+    implementation(libs.facebook.login)
 }

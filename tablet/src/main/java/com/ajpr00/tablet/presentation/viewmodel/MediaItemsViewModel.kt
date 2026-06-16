@@ -11,7 +11,7 @@ import com.ajpr00.core.domain.usecase.media.SaveMediaUseCase
 import com.ajpr00.core.domain.usecase.media.ListMediaDriveUseCase
 import com.ajpr00.core.domain.usecase.media.ListMediaFTPUseCase
 import com.ajpr00.core.domain.usecase.ToggleFavoriteUseCase
-import com.ajpr00.data.mapper.toMediaContentList
+import com.ajpr00.data.mapper.tablet.toMediaContentList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,156 +48,88 @@ class MediaItemsViewModel @Inject constructor(
      * Emite eventos en caso de error.
      */
     fun loadFromDrive() {
+        Log.d("MediaItemsVM", "ROOM_TEST → Solicitando archivos desde Google Drive...")
         viewModelScope.launch {
             when (val result = listMediaDriveUseCase()) {
                 is MediaResult.Success -> {
+                    Log.d("MediaItemsVM", "ROOM_TEST → Archivos recibidos desde Drive: ${result.files.size}")
                     _mediaItems.value = result.files
                 }
                 is MediaResult.Error -> {
+                    Log.e("MediaItemsVM", "ROOM_TEST → Error cargando desde Drive: ${result.message}")
                     showError(result.message)
                 }
             }
         }
     }
 
-
-    /*  fun loadFromDrive() {
-          viewModelScope.launch {
-              val tokenValue = loginPreferences.idTokenDrive.firstOrNull()
-
-              if (tokenValue == null) {
-                  Log.e("MediaItemsVM", "Drive token no definido")
-                  return@launch
-              }
-
-              val mediaResult = repositoryMedia.listMediaFilesDrive(tokenValue)
-              Log.d("MediaItemsVM", "Cargando archivos desde Google Drive...$mediaResult")
-              when (mediaResult) {
-                  is MediaResult.Success -> _mediaItems.update { mediaResult.files.toList() }
-                  is MediaResult.Error -> _errors.value = _errors.value + mediaResult.message
-              }
-          }
-      }*/
-
     /**
      * Carga archivos desde FTP.
      * Captura excepciones y emite un evento para la UI.
      */
     fun loadFromFtp() {
-        Log.d("MediaItemsVM", "Cargando archivos desde FTP...")
+        Log.d("MediaItemsVM", "ROOM_TEST → Solicitando archivos desde FTP...")
         viewModelScope.launch {
             try {
                 val files = listMediaFTPUseCase()
+                Log.d("MediaItemsVM", "ROOM_TEST → Archivos recibidos desde FTP: ${files.size}")
                 _mediaItems.value = files
-                Log.d("MediaItemsVM", "Archivos FTP cargados: ${files.size}")
             } catch (e: Exception) {
-                Log.e("MediaItemsVM", "Error al cargar desde FTP", e)
+                Log.e("MediaItemsVM", "ROOM_TEST → Error al cargar desde FTP", e)
                 showError("Error al cargar archivos desde FTP")
             }
         }
     }
-
-
-    /** Procesa la selección de medias desde el selector de archivos */
-    /* fun loadMediaLocal(context: Context, uris: List<Uri>) {
-         Log.d("MediaBackgroundVM", "Se han seleccionado ${uris.size} medias")
-
-         val newMedia = uris.map { uri ->
-             Log.d("MediaBackgroundVM", "Analizando URI: $uri")
-
-             MediaContent(
-                 id = 0,
-                 name = uri.toString(),
-                 path = uri.toString(),
-                 type = detectFormatType(context, uri),
-                 isFavorite = false,
-             )
-         }
-
-         // Inserta cada media en la base de datos
-         viewModelScope.launch {
-             newMedia.forEach {
-                 Log.d("MediaBackgroundVM", "Insertando media en BD: $it")
-                 repositoryMedia.addBd(it)
-             }
-         }
-     }*/
 
     /**
      * Importa las URIs seleccionadas y las transforma a MediaContent.
      * Emite eventos en caso de fallo o éxito.
      */
     fun importSelectedMedia(uris: List<Uri>, playlistId: String) {
+        Log.d("MediaItemsVM", "ROOM_TEST → Importando ${uris.size} medias desde selector...")
         viewModelScope.launch {
             try {
                 val medias = uris.toMediaContentList(context)
+                Log.d("MediaItemsVM", "ROOM_TEST → Transformación a MediaContent completada (${medias.size})")
                 importMediaListUseCase(medias, playlistId)
+                Log.d("MediaItemsVM", "ROOM_TEST → Importación completada en Room")
                 enviarEvento("Medias importadas correctamente")
             } catch (e: IllegalStateException) {
-                Log.e("MediaItemsVM", "Error importando medias", e)
+                Log.e("MediaItemsVM", "ROOM_TEST → Error importando medias", e)
                 showError(e.message ?: "Error al importar medias")
             } catch (e: Exception) {
-                Log.e("MediaItemsVM", "Error inesperado importando medias", e)
+                Log.e("MediaItemsVM", "ROOM_TEST → Error inesperado importando medias", e)
                 showError("Error al importar medias")
             }
         }
     }
 
-    // Marcar/desmarcar favoritos
-    /* fun toggleFavorite(media: MediaContent) {
-         viewModelScope.launch {
-             if (media.isFavorite) repositoryMedia.deleteMedia(media)
-             else {
-                 media.isFavorite = true
-                 repositoryMedia.addBd(media)
-             }
-
-             Log.d("MediaItemsVM", "Favorito cambiado para: ${media.name}")
-
-             // Actualizar la lista en memoria
-             _mediaItems.update { list ->
-                 list.map {
-                     if (it.path == media.path) it.copy(isFavorite = !media.isFavorite)
-                     else it
-                 }
-             }
-         }
-     }*/
-    /**
-     * Alterna favorito mediante el UseCase y actualiza la lista local.
-     */
     fun toggleAction(media: MediaContent) {
+        Log.d("MediaItemsVM", "ROOM_TEST → Alternando favorito para: ${media.name}")
         viewModelScope.launch {
             try {
                 toggleFavoriteUseCase(media)
+                Log.d("MediaItemsVM", "ROOM_TEST → Favorito actualizado correctamente")
             } catch (e: Exception) {
-                Log.e("MediaItemsVM", "Error toggling favorite", e)
+                Log.e("MediaItemsVM", "ROOM_TEST → Error toggling favorite", e)
                 showError("Error al cambiar favorito")
             }
         }
     }
 
-    /**
-     * Selecciona un media para reproducir.
-     * Solo registra la selección; la reproducción la maneja el ReproductorViewModel.
-     */
     fun selectMedia(media: MediaContent) {
-        Log.d("MediaItemsVM", "Seleccionado para reproducción: ${media.name}")
+        Log.d("MediaItemsVM", "ROOM_TEST → Media seleccionada para reproducción: ${media.name}")
     }
 
-    /**
-     * Emite un evento de un solo uso hacia la UI.
-     */
     private fun enviarEvento(mensaje: String) {
+        Log.d("MediaItemsVM", "ROOM_TEST → Evento emitido: $mensaje")
         viewModelScope.launch {
             _eventos.emit(mensaje)
         }
     }
 
-    /**
-     * Fun auxiliar para mostrar errores desde otras capas.
-     */
     fun showError(message: String) {
+        Log.e("MediaItemsVM", "ROOM_TEST → Error mostrado a UI: $message")
         enviarEvento("Error: $message")
     }
 }

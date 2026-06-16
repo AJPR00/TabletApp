@@ -1,10 +1,9 @@
 package com.ajpr00.mobile.presentation.screen
 
-import android.widget.Toast
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import com.ajpr00.mobile.presentation.state.EstadoEvento
+import com.ajpr00.mobile.presentation.state.StateEvento
 import com.ajpr00.visumloop.mobile.R
 import com.ajpr00.components.screen.RegisterContent
 import com.ajpr00.presentation_common.viewmodel.RegisterViewModel
@@ -19,7 +18,7 @@ fun RegisterMobile(
     val uiEvent by viewModel.state.collectAsState()
 
     RegisterContent(
-        logo = painterResource(id = R.drawable.ic_mobile_control),
+        logo = painterResource(id = R.drawable.image_vontrol),
         email = uiState.email ?: "",
         confirmEmail = uiState.confirmEmail ?: "",
         password = uiState.password,
@@ -32,6 +31,6 @@ fun RegisterMobile(
         onTogglePasswordVisibility = viewModel::togglePasswordVisibility,
         onRegisterClick = viewModel::registrar,
         onBackClick = goToBack,
-        loading = uiEvent is EstadoEvento.Cargando,
+        loading = uiEvent is StateEvento.Cargando,
        )
 }

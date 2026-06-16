@@ -36,17 +36,21 @@ fun RegisterContent(
 
     Box(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.TopCenter
     ) {
+        Image(
+            modifier = Modifier.width(300.dp)
+                .aspectRatio(3f)
+                .align(Alignment.TopCenter)
+                .padding(top = 40.dp),
+            painter = logo,
+            contentDescription = "Logo"
+        )
         Column(
-            modifier = Modifier.padding(24.dp),
-            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize().padding(bottom = 100.dp),
+            verticalArrangement = Arrangement.Bottom,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Image(
-                painter = logo,
-                contentDescription = "Logo"
-            )
 
             Text("Crear cuenta", style = MaterialTheme.typography.headlineMedium)
 

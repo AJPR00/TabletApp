@@ -15,7 +15,7 @@ object RegisterDeviceGraph
 object PanelControl
 
 @Serializable
-object MenuOpciones
+object Configuracion
 
 @Serializable
 object About

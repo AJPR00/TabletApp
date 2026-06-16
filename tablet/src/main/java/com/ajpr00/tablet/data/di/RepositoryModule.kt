@@ -1,15 +1,17 @@
 package com.ajpr00.tablet.data.di
 
-import com.ajpr00.core.domain.repository.login.AuthPreference
 import com.ajpr00.core.domain.repository.media.MediaRepository
 import com.ajpr00.core.domain.repository.media.PlaylistRepository
+import com.ajpr00.core.domain.repository.network.NetworkRepository
 import com.ajpr00.core.domain.repository.pairing.PairingRepository
-import com.ajpr00.core.domain.repository.preference.PreferencesRepository
+import com.ajpr00.core.domain.repository.preference.SessionManager
+import com.ajpr00.core.domain.repository.preference.SettingsManager
+import com.ajpr00.data.repository.impl.network.NetworkRepositoryImpl
 import com.ajpr00.tablet.data.repositoryImp.MediaRepositoryImpl
 import com.ajpr00.tablet.data.repositoryImp.PairingRepositoryImpl
 import com.ajpr00.tablet.data.repositoryImp.PlaylistRepositoryImpl
-import com.ajpr00.tablet.data.repositoryImp.PreferencesRepositoryImpl
-import com.ajpr00.tablet.data.repositoryImp.TabletAuthPreferenceImpl
+import com.ajpr00.tablet.data.repositoryImp.preference.TabletAppPreferencesRepositoryImpl
+import com.ajpr00.tablet.data.repositoryImp.preference.TabletSessionPreferencesRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -35,8 +37,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindPreferencesRepository(
-        impl: PreferencesRepositoryImpl
-    ): PreferencesRepository
+        impl: TabletAppPreferencesRepositoryImpl
+    ): SettingsManager
 
     @Binds
     @Singleton
@@ -45,6 +47,15 @@ abstract class RepositoryModule {
     ): PairingRepository
 
     @Binds
-    abstract fun bindAuthPreference(impl: TabletAuthPreferenceImpl): AuthPreference
+    @Singleton
+    abstract fun bindSessionManager(
+        impl: TabletSessionPreferencesRepositoryImpl
+    ): SessionManager
+
+    @Binds
+    @Singleton
+    abstract fun bindNetworkRepository(
+        impl: NetworkRepositoryImpl
+    ): NetworkRepository
 }
 

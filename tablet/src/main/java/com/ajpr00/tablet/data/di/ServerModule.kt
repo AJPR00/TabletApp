@@ -1,6 +1,7 @@
 package com.ajpr00.tablet.data.di
 
-import com.ajpr00.core.domain.repository.preference.PreferencesRepository
+import com.ajpr00.core.domain.repository.preference.SessionManager
+import com.ajpr00.core.domain.repository.preference.SettingsManager
 import com.ajpr00.core.domain.usecase.media.DeleteMediaSyncUseCase
 import com.ajpr00.core.domain.usecase.media.GetAllMediaSyncUseCase
 import com.ajpr00.core.domain.usecase.media.GetMediaByIdSyncUseCase
@@ -25,7 +26,7 @@ object ServerModule {
         getAllMediaSyncUseCase: GetAllMediaSyncUseCase,
         importMediaFromServerUseCase: ImportMediaFromServerUseCase,
         mdnsPublisher: MdnsPublisher,
-        prefsRepository: PreferencesRepository
+        userSession: SettingsManager
     ): TabletServer {
         return TabletServer(
             getMediaByIdSync,
@@ -33,7 +34,7 @@ object ServerModule {
             getAllMediaSyncUseCase,
             importMediaFromServerUseCase,
             mdnsPublisher,
-            prefsRepository
+            userSession
         )
     }
 }

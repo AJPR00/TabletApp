@@ -6,6 +6,8 @@ plugins {
 
     alias(libs.plugins.ksp)             // KSP: procesa anotaciones (Room, Hilt, Serialization…)
     alias(libs.plugins.hilt.android)    // Plugin de Hilt para generar código de inyección de dependencias
+
+    alias(libs.plugins.dokka)
 }
 
 // Cargamos variables privadas desde local.properties (client_id, secrets…)

@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.dp
 import com.ajpr00.core.domain.model.EstadoDispositivo
 import com.ajpr00.mobile.ui.components.DispositivoCard
 import com.ajpr00.mobile.ui.components.DrawerMenu
-import com.ajpr00.mobile.ui.components.FabAdd
+import com.ajpr00.mobile.ui.components.FabFloat
 import com.ajpr00.mobile.ui.components.FloatingBottomBar
 import com.ajpr00.mobile.ui.model.DispositivoUi
 import org.junit.Rule
@@ -79,7 +79,7 @@ class UiComponentsTest {
     @Test
     fun fabAdd_tiene_content_description() {
         composeRule.setContent {
-            FabAdd(
+            FabFloat(
                 icon = androidx.compose.ui.res.painterResource(id = R.drawable.ic_battery_full_24),
                 icDesc = "Añadir dispositivo",
                 onClick = {}
@@ -92,7 +92,7 @@ class UiComponentsTest {
     @Test
     fun fabAdd_tiene_tamano_minimo() {
         composeRule.setContent {
-            FabAdd(
+            FabFloat(
                 icon = androidx.compose.ui.res.painterResource(id = R.drawable.ic_battery_full_24),
                 icDesc = "Añadir dispositivo",
                 onClick = {}

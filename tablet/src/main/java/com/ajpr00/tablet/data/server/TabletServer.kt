@@ -9,16 +9,16 @@ import com.ajpr00.core.domain.model.api.DeviceInfo
 import com.ajpr00.core.domain.model.api.ListMediaData
 import com.ajpr00.core.domain.model.api.UploadResult
 import com.ajpr00.core.domain.model.qr.QrPayload
-import com.ajpr00.core.domain.repository.preference.PreferencesRepository
+import com.ajpr00.core.domain.repository.preference.SettingsManager
 import com.ajpr00.core.domain.usecase.media.DeleteMediaSyncUseCase
 import com.ajpr00.core.domain.usecase.media.GetAllMediaSyncUseCase
 import com.ajpr00.core.domain.usecase.media.GetMediaByIdSyncUseCase
 import com.ajpr00.core.security.Crypto
+import com.ajpr00.core.security.CryptoStreamDecrypt
 import com.ajpr00.core.security.Pbkdf2KeyDeriver
 import com.ajpr00.core.security.PinGenerator
 import com.ajpr00.core.security.SaltGenerator
 import com.ajpr00.core.util.NetworkUtils
-import com.ajpr00.core.util.NetworkUtils.getLocalIpAddress
 import com.ajpr00.data.useCase.ImportMediaFromServerUseCase
 import com.ajpr00.data.util.ImageUtils
 import com.ajpr00.data.util.VideoUtils
@@ -29,13 +29,13 @@ import fi.iki.elonen.NanoHTTPD
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.security.SecureRandom
+import java.util.UUID
 import javax.inject.Inject
 
 /**
@@ -80,7 +80,7 @@ class TabletServer @Inject constructor(
     private val getAllMediaSyncUseCase: GetAllMediaSyncUseCase,
     private val importMediaFromServerUseCase: ImportMediaFromServerUseCase,
     private val mdnsPublisher: MdnsPublisher,
-    private val prefsRepository: PreferencesRepository
+    private val userSettings: SettingsManager
 ) : NanoHTTPD(8080) {
 
     private val _pinFlow = MutableSharedFlow<String>(replay = 1)
@@ -127,8 +127,8 @@ class TabletServer @Inject constructor(
         super.start()
         Log.d(TAG, "Servidor HTTP iniciado en el puerto 8080")
 
-        val id = runBlocking { prefsRepository.getTabletId().first() }
-        val name = runBlocking { prefsRepository.getTabletName().first() }
+        val id = runBlocking { userSettings.getDeviceId().first() }
+        val name = runBlocking { userSettings.getDeviceName().first() }
 
         Log.d(TAG, "Iniciando mDNS con id=$id name=$name port=8080")
 
@@ -266,8 +266,8 @@ class TabletServer @Inject constructor(
      */
     private fun handleInfo(): Response {
         Log.d(TAG, "/info → Enviando información del dispositivo")
-        val id = runBlocking { prefsRepository.getTabletId().first() }
-        val name = runBlocking { prefsRepository.getTabletName().first() }
+        val id = runBlocking { userSettings.getDeviceId().first() }
+        val name = runBlocking { userSettings.getDeviceName().first() }
         val info = DeviceInfo(id = id, name = name, port = 8080)
         return json(ApiResponse(status = "OK", data = info))
     }
@@ -339,30 +339,34 @@ class TabletServer @Inject constructor(
         Log.d(TAG, "/thumbnail/$id → Generando thumbnail")
 
         val media = getMediaByIdSync(id)
-            ?: return json(ApiResponse<Unit>(status = "ERROR", error = "not found"))
+            ?: return json(ApiResponse<Unit>("ERROR", error = "not found"))
 
         val file = File(media.path)
-        if (!file.exists()) {
-            Log.e(TAG, "/thumbnail/$id → Archivo físico no encontrado")
-            return json(ApiResponse<Unit>(status = "ERROR", error = "not found"))
+        if (!file.exists() || file.length() == 0L) {
+            Log.e(TAG, "/thumbnail/$id → Archivo no encontrado o vacío")
+            return json(ApiResponse<Unit>("ERROR", error = "file missing"))
         }
 
-        val thumb = when (media.type) {
-            FormatType.IMAGE -> ImageUtils.generateThumbnail(file)
-            FormatType.VIDEO -> VideoUtils.generateVideoThumbnail(file)
-            else -> {
-                Log.e(TAG, "/thumbnail/$id → Tipo no soportado: ${media.type}")
-                return json(ApiResponse<Unit>(status = "ERROR", error = "unsupported"))
+        return try {
+            val thumb = when (media.type) {
+                FormatType.IMAGE -> ImageUtils.generateThumbnail(file)
+                FormatType.VIDEO -> VideoUtils.generateVideoThumbnail(file)
+                else -> throw Exception("Tipo no soportado")
             }
-        }
 
-        Log.d(TAG, "Enviando thumbnail (${thumb.length()} bytes)")
-        return newFixedLengthResponse(
-            Response.Status.OK,
-            "image/jpeg",
-            thumb.inputStream(),
-            thumb.length()
-        )
+            Log.d(TAG, "/thumbnail/$id → Thumbnail generado (${thumb.length()} bytes)")
+
+            newFixedLengthResponse(
+                Response.Status.OK,
+                "image/jpeg",
+                thumb.inputStream(),
+                thumb.length()
+            )
+
+        } catch (e: Exception) {
+            Log.e(TAG, "/thumbnail/$id → Error generando thumbnail: ${e.message}")
+            json(ApiResponse<Unit>("ERROR", error = "thumbnail failed"))
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -484,11 +488,13 @@ class TabletServer @Inject constructor(
                 Response.Status.INTERNAL_ERROR
             )
         }
+        val token = UUID.randomUUID().toString()
 
         // 4. Guardar AES_REAL en preferencias
         runBlocking {
-            prefsRepository.setAesKey(aesReal)
-            prefsRepository.setMobileConnected(true)
+            userSettings.setAesKey(aesReal)
+            userSettings.setDeviceConnected(true)
+            userSettings.setToken(token)
         }
         Log.d(TAG, "/pair → AES_REAL guardada en preferencias. Vinculación completada.")
 
@@ -498,6 +504,7 @@ class TabletServer @Inject constructor(
 
         val payload = mapOf(
             "status" to "linked",
+            "token" to token,
             "salt" to saltBase64,
             "encryptedAesKey" to encryptedAesBase64
         )
@@ -533,7 +540,7 @@ class TabletServer @Inject constructor(
         Log.d(TAG, "/upload → Petición de subida recibida")
 
         // 1. Cargar clave AES REAL
-        val aesKey = runBlocking { prefsRepository.getAesKey().first() }
+        val aesKey = runBlocking { userSettings.getAesKey().first() }
         if (aesKey == null) {
             Log.e(TAG, "/upload → No hay clave AES_REAL configurada. Dispositivo no vinculado.")
             return json(
@@ -542,12 +549,21 @@ class TabletServer @Inject constructor(
             )
         }
 
-        val crypto = Crypto(aesKey)
-
-        // 2. Parse multipart body
+        // 2. Parse multipart
         val files = HashMap<String, String>()
-        session.parseBody(files)
+        try {
+            session.parseBody(files)
+            Log.d(TAG, "/upload → Sesion.parameters ${session.parameters}")
+            Log.d(TAG, "/upload → Sesion.files ${files}")
+        } catch (e: Exception) {
+            Log.e(TAG, "/upload → Error parseando multipart: ${e.message}", e)
+            return json(
+                ApiResponse<Unit>(status = "ERROR", error = "multipart parse error"),
+                Response.Status.BAD_REQUEST
+            )
+        }
 
+        // 3. Obtener archivo cifrado temporal
         val tempPath = files["file"]
         if (tempPath == null) {
             Log.e(TAG, "/upload → Archivo no recibido en multipart")
@@ -558,47 +574,46 @@ class TabletServer @Inject constructor(
         }
 
         val tempFile = File(tempPath)
-        val encryptedBytes = try {
-            tempFile.readBytes()
-        } catch (e: Exception) {
-            Log.e(TAG, "/upload → Error leyendo fichero temporal: ${e.message}", e)
+        if (!tempFile.exists()) {
+            Log.e(TAG, "/upload → Fichero temporal no existe: $tempPath")
             return json(
-                ApiResponse<Unit>(status = "ERROR", error = "file read error"),
+                ApiResponse<Unit>(status = "ERROR", error = "temp file missing"),
                 Response.Status.INTERNAL_ERROR
             )
         }
-        Log.d(TAG, "/upload → Bytes cifrados recibidos (${encryptedBytes.size} bytes)")
 
-        // 3. Descifrado AES/GCM
-        val decryptedBytes = crypto.decrypt(encryptedBytes)
-        if (decryptedBytes.isEmpty()) {
-            Log.e(TAG, "/upload → Error descifrando datos (clave incorrecta o datos corruptos)")
+        Log.d(TAG, "/upload → Fichero cifrado recibido: ${tempFile.absolutePath}")
+        Log.d(TAG, "/upload → Tamaño cifrado: ${tempFile.length()} bytes")
+
+        // 4. DESCIFRADO POR STREAMING
+        val plainTempFile = File(tempFile.parentFile, "dec_${tempFile.name}")
+        Log.d(TAG, "/upload → Iniciando descifrado streaming…")
+
+        val tDecStart = System.currentTimeMillis()
+        try {
+            CryptoStreamDecrypt(aesKey).decryptFile(tempFile, plainTempFile)
+        } catch (e: Exception) {
+            Log.e(TAG, "/upload → Error descifrando archivo grande: ${e.message}", e)
             return json(
                 ApiResponse<Unit>(status = "ERROR", error = "decrypt failed"),
                 Response.Status.BAD_REQUEST
             )
         }
+        val tDecEnd = System.currentTimeMillis()
 
-        // 4. Guardar fichero temporal descifrado
-        val plainTempFile = File(tempFile.parentFile, "dec_${tempFile.name}")
-        try {
-            plainTempFile.writeBytes(decryptedBytes)
-        } catch (e: Exception) {
-            Log.e(TAG, "/upload → Error escribiendo fichero descifrado: ${e.message}", e)
-            return json(
-                ApiResponse<Unit>(status = "ERROR", error = "file write error"),
-                Response.Status.INTERNAL_ERROR
-            )
-        }
+        Log.d(TAG, "/upload → Descifrado OK (${plainTempFile.length()} bytes) en ${tDecEnd - tDecStart} ms")
         Log.d(TAG, "/upload → Archivo descifrado guardado en ${plainTempFile.absolutePath}")
 
-        // 5. Extraer metadata y delegar en use case
-        val mime = session.headers["content-type"] ?: "application/octet-stream"
-        val originalName = session.parameters["file"]?.firstOrNull() ?: "uploaded_file"
-        val ext = originalName.substringAfterLast('.', "")
+        // 5. METADATOS
+        val originalName = session.parameters["original_name"]?.firstOrNull() ?: "unknown"
+        val ext = session.parameters["original_ext"]?.firstOrNull() ?: ""
+        val mime = session.parameters["original_mime"]?.firstOrNull() ?: "application/octet-stream"
 
-        Log.d(TAG, "/upload → Archivo descifrado: $originalName ($mime) ext=$ext")
+        Log.d(TAG, "/upload → Nombre original: $originalName")
+        Log.d(TAG, "/upload → Extensión real: $ext")
+        Log.d(TAG, "/upload → MIME real: $mime")
 
+        // 6. IMPORTAR EN ROOM
         runBlocking {
             importMediaFromServerUseCase(plainTempFile, mime, ext)
         }
@@ -658,8 +673,8 @@ class TabletServer @Inject constructor(
 
         val ip = NetworkUtils.getLocalIpAddress() ?: "0.0.0.0"
 
-        val id = runBlocking { prefsRepository.getTabletId().first() }
-        val nombre = runBlocking { prefsRepository.getTabletName().first() }
+        val id = runBlocking { userSettings.getDeviceId().first() }
+        val nombre = runBlocking { userSettings.getDeviceName().first() }
 
         val puerto = 8080
 

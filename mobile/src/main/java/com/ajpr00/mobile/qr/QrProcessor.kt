@@ -1,6 +1,7 @@
 package com.ajpr00.mobile.qr
 
 import com.ajpr00.core.domain.model.Dispositivo
+import com.ajpr00.core.domain.model.qr.QrPayload
 import com.ajpr00.mobile.data.mapper.toDomain
 import com.ajpr00.mobile.qr.parse.QrParser
 import javax.inject.Inject
@@ -17,12 +18,7 @@ class QrProcessor @Inject constructor(
     private val parser: QrParser
 ) {
 
-    operator fun invoke(raw: String): Dispositivo {
-
-        val payload = parser.parse(raw)
-
-        val dispositivo = payload.toDomain()
-
-        return dispositivo
+    operator fun invoke(raw: String): QrPayload {
+        return parser.parse(raw)
     }
 }

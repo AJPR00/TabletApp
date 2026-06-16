@@ -1,8 +1,6 @@
 package com.ajpr00.data.repository.impl.dispositivo
 
 import android.util.Log
-import com.ajpr00.core.domain.model.Dispositivo
-import com.ajpr00.core.domain.model.EstadoDispositivo
 import com.ajpr00.core.domain.model.mDNS.MdnsServiceInfo
 import com.ajpr00.core.domain.repository.dispositivo.TabletLocatorRepository
 import com.ajpr00.core.util.NetworkUtils.getBaseIp
@@ -33,8 +31,7 @@ import javax.inject.Inject
  */
 
 class TabletLocatorRepositoryImpl @Inject constructor(
-    private val resolver: MdnsResolver
-) : TabletLocatorRepository {
+    private val resolver: MdnsResolver) : TabletLocatorRepository {
 
     private val TAG = "TabletLocatorRepo"
 

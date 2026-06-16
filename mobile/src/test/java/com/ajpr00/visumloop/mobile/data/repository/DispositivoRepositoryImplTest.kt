@@ -30,7 +30,7 @@ import org.mockito.kotlin.whenever
  * Este test garantiza que la implementación concreta usada por el módulo móvil
  * cumple su responsabilidad sin acoplarse a la base de datos real.
  */
-class DispositivoRepositoryImplTest {
+class SDispositivoRepositoryImplTest {
 
     /** DataSource local mockeado para aislar la lógica del repositorio. */
     private val dataSource = mock<DispositivoLocalDataSource>()

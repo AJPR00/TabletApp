@@ -34,7 +34,11 @@ import com.ajpr00.tablet.ui.screen.onboarding.OnboardingReadyScreenTablet
 import com.ajpr00.tablet.ui.screen.onboarding.OnboardingWelcomeScreenTablet
 
 @Composable
-fun NavigationCore(innerPadding: PaddingValues, settingsViewModel: SettingsViewModel) {
+fun NavigationCore(
+    innerPadding: PaddingValues,
+    authViewModel: AuthViewModel,
+    settingsViewModel: SettingsViewModel,
+    onFacebookLogin: () -> Unit) {
     val navController = rememberNavController()
 
     NavHost(
@@ -67,7 +71,9 @@ fun NavigationCore(innerPadding: PaddingValues, settingsViewModel: SettingsViewM
 
                 LoginScreenTablet(
                     modifier = Modifier,
-                    viewModel = viewModelLoginViewModel,
+                    viewModelAuth = authViewModel,
+                    onFacebookLogin = onFacebookLogin,
+                    viewModelLogin = viewModelLoginViewModel,
                     goToMainGraph = { navController.navigate(MainGraph) },
                     goToFromRegistro = { navController.navigate(RegisterScreen) },
                     goToRecuperarPass = { navController.navigate(FromRecover) }

@@ -1,6 +1,6 @@
 package com.ajpr00.tablet.domain.usecase
 
-import com.ajpr00.core.domain.repository.preference.PreferencesRepository
+import com.ajpr00.core.domain.repository.preference.SettingsManager
 import kotlinx.coroutines.flow.first
 import java.util.UUID
 import javax.inject.Inject
@@ -32,7 +32,7 @@ import javax.inject.Inject
  * @param prefs Repositorio de preferencias donde se guardan los datos persistentes.
  */
 class InitTabletUseCase @Inject constructor(
-    private val prefs: PreferencesRepository
+    private val prefs: SettingsManager
 ) {
 
     /**
@@ -53,8 +53,8 @@ class InitTabletUseCase @Inject constructor(
             val uuid = UUID.randomUUID().toString()
 
             // 2. Guardar identidad
-            prefs.setTabletId(uuid)
-            prefs.setTabletName(name)
+            prefs.setDeviceId(uuid)
+            prefs.setDeviceName(name)
 
             // 3. Marcar onboarding completado
             prefs.setFirstRunCompleted()

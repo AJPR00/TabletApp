@@ -43,13 +43,19 @@ import com.ajpr00.mobile.presentation.screen.onboarding.OnboardingDoneScreen
 import com.ajpr00.mobile.presentation.screen.onboarding.OnboardingLoginScreen
 import com.ajpr00.mobile.presentation.screen.onboarding.OnboardingWelcomeScreen
 import com.ajpr00.mobile.presentation.viewmodel.OnboardingViewModel
+import com.ajpr00.mobile.presentation.viewmodel.SettingsViewModel
+import com.ajpr00.presentation_common.viewmodel.AuthViewModel
 import com.ajpr00.presentation_common.viewmodel.LoginViewModel
 import com.ajpr00.presentation_common.viewmodel.RegisterViewModel
 import com.ajpr00.presentation_common.viewmodel.SplashViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun NavigationCore() {
+fun NavigationCore(
+    viewModelAuth: AuthViewModel,
+    viewModelSettings: SettingsViewModel,
+    onFacebookLogin: () -> Unit)
+{
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -84,6 +90,10 @@ fun NavigationCore() {
                 if (!hideBars) {
                     Log.d("UI", "Mostrando TopBar (estamos en MainGraph)")
                     TopBar(
+                        onLoginClick = {
+                            Log.d("DRAWER", "Abriendo menú lateral")
+                            navController.navigate(LoginGraph)
+                        },
                         onMenuClick = {
                             Log.d("DRAWER", "Abriendo menú lateral")
                             scope.launch { drawerState.open() }
@@ -107,7 +117,7 @@ fun NavigationCore() {
             NavHost(
                 modifier = Modifier.padding(innerPadding),
                 navController = navController,
-                startDestination = MainGraph
+                startDestination = Splash
             ) {
 
                 // SPLASH
@@ -138,7 +148,9 @@ fun NavigationCore() {
                         val viewModelLoginViewModel: LoginViewModel = hiltViewModel()
 
                         LoginScreenMobile(
-                            viewModel = viewModelLoginViewModel,
+                            viewModelAuth = viewModelAuth,
+                            viewModelLogin = viewModelLoginViewModel,
+                            onFacebookLogin = onFacebookLogin,
                             goToMainGraph = {
                                 Log.d("NAV", "Login correcto → MainGraph")
                                 navController.navigate(MainGraph)
@@ -150,7 +162,7 @@ fun NavigationCore() {
                             goToRecuperarPass = {
                                 Log.d("NAV", "Login → RecoverPassword")
                                 navController.navigate(FromRecover)
-                            },
+                            }
                         )
                     }
                 }
@@ -198,27 +210,20 @@ fun NavigationCore() {
                         ScreenPanelControl(
                             modifier = Modifier,
                             viewModel = viewModelPanelControl,
-                            onSelectImage = {
-                                Log.d("NAV", "PanelControl → SelectImage")
-                                // navController.navigate(SelectImage)
-                            },
-                            onSelectVideo = {
-                                Log.d("NAV", "PanelControl → SelectVideo")
-                                //  navController.navigate(SelectVideo)
-                            },
-                            onEnviar = {
-                                Log.d("NAV", "PanelControl → Enviar")
-                                // navController.navigate(Enviar)
-                            },
-
                             onConfiguracion = {
                                 Log.d("NAV", "PanelControl → Configuracion")
+                                navController.navigate(Configuracion)
                             },
                             onAgregarDispositivo = {
                                 Log.d("NAV", "PanelControl → AgregarDispositivo")
                                 navController.navigate(RegisterDevice)
                             }
                         )
+                    }
+
+                    composable<Configuracion> {
+                        Log.d("NAV", "Entrando en Configuracion (MainGraph)")
+                        //ScreenConfiguracion( viewModel= settingsViewModel, onBack = { navController.popBackStack() }) { }
                     }
 
                     navigation<RegisterDeviceGraph>(startDestination = RegisterDevice) {
@@ -249,8 +254,9 @@ fun NavigationCore() {
 
                             QrScannerScreen(
                                 viewModel = viewModelQrScanner,
-                                onConnectionReady = { dispositivo ->
-                                    viewModelRegisterDevice.setCurrentDevice(dispositivo)
+                                onConnectionReady = { qrPayload ->
+                                    viewModelRegisterDevice.setCurrentPayload(qrPayload)
+                                    viewModelRegisterDevice.registreDispositQr()
                                     navController.popBackStack()
                                 },
                                 onCancel = {navController.popBackStack()}

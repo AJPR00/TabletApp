@@ -44,10 +44,12 @@ class MdnsPublisher @Inject constructor(
             val serviceInfo = ServiceInfo.create(
                 "_visumloop._tcp.local.",
                 name,
+                "",
                 port,
+                0,
+                0,
                 "id=$id"
             )
-
             jmdns?.registerService(serviceInfo)
             Log.d(TAG, "mDNS → Servicio registrado correctamente")
 

@@ -30,7 +30,11 @@ fun OnboardingWelcomeScreenTablet(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Tu tablet está lista para recibir contenido multimedia desde tu móvil.",
+            text = "Dale una segunda vida a tus tablets antiguas y conviértelas en elegantes marcos digitales para fotos y vídeos.\n" +
+                    "\n" +
+                    "Disfruta de tus recuerdos favoritos en una presentación continua, sincroniza contenido fácilmente desde tu móvil y gestiona todo de forma remota.\n" +
+                    "\n" +
+                    "Una solución sencilla, sostenible y diseñada para aprovechar dispositivos que ya no utilizas.",
             fontSize = 20.sp,
             lineHeight = 26.sp
         )

@@ -31,13 +31,14 @@ class SessionPreference @Inject constructor(
         private val ID_TOKEN_DRIVE = stringPreferencesKey("id_token_drive")
         private val AUTH_CODE_DRIVE = stringPreferencesKey("auth_code_drive")
 
+        private val AES_TOKEN = stringPreferencesKey("aes_token")
 
     }
 
     // Flujos Local
 
     val usernameLocal: Flow<String> = context.sessionDataStore.data.map {
-        val value = it[USERNAME_LOCAL] ?: ""
+        val value = it[USERNAME_LOCAL] ?: "UserLocal"
         Log.d(TAG, "usernameLocal leído: $value")
         value
     }
@@ -63,6 +64,10 @@ class SessionPreference @Inject constructor(
         value
     }
 
+    val aesToken: Flow<String> = context.sessionDataStore.data.map {
+        it[AES_TOKEN] ?: ""
+    }
+
     // Flujos Drive
     val emailDrive: Flow<String> = context.sessionDataStore.data.map {
         val value = it[EMAIL_DRIVE] ?: ""
@@ -81,14 +86,19 @@ class SessionPreference @Inject constructor(
     }
 
     // Métodos de guardado
-    suspend fun saveLocalSession(username: String, email: String, avatarUrl: String, token: String) {
+    suspend fun saveAesToken(token: String) {
         context.sessionDataStore.edit { prefs ->
-            prefs[USERNAME_LOCAL] = username
+            prefs[AES_TOKEN] = token
+        }
+    }
+    suspend fun saveLocalSession(username: String?, email: String, avatarUrl: String, token: String?) {
+        context.sessionDataStore.edit { prefs ->
+            prefs[USERNAME_LOCAL] = username ?: "UserLocal"
             prefs[EMAIL_LOCAL] = email
             prefs[AVATAR_LOCAL] = avatarUrl
-            prefs[ID_TOKEN_LOCAL] = token
+            prefs[ID_TOKEN_LOCAL] = token ?: ""
         }
-        Log.d(TAG, "Guardando sesión local, email: $email, token: ${token.take(10)}..., avatar: $avatarUrl, username: $username")
+        Log.d(TAG, "Guardando sesión local, email: $email, token: ${token?.take(10)}..., avatar: $avatarUrl, username: $username")
     }
 
     suspend fun saveDriveSession(email: String, idToken: String? = null, authCode: String? = null) {

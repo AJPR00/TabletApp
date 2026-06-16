@@ -1,34 +1,45 @@
 package com.ajpr00.core.security
 
+import com.ajpr00.core.domain.excepcion.FileCoreException
 import com.ajpr00.core.util.CoreLog
-import java.security.MessageDigest
-import java.security.SecureRandom
 import javax.crypto.AEADBadTagException
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import java.security.MessageDigest
+import java.security.SecureRandom
 
 /**
- * # Crypto
+ * ## Crypto
  *
  * Utilidad de cifrado basada en **AES‑GCM**, usada tanto en móvil como en tablet.
  *
- * ## ¿Por qué existe esta clase?
- * - Para encapsular toda la lógica de cifrado/descifrado.
- * - Para permitir dos formas de crear la clave AES:
- *   1. Desde un **String** (clave derivada).
- *   2. Desde un **ByteArray** (clave AES REAL).
+ * ### Responsabilidad dentro de la arquitectura
+ * - Pertenece a la **Domain/Core layer**.
+ * - Encapsula toda la lógica de cifrado y descifrado.
+ * - No depende de Android; usa `CoreLog` para registrar eventos.
  *
- * ## Casos de uso
+ * ### Casos de uso
  * - Durante la vinculación:
  *   - `Crypto(derivedKey)` para cifrar la clave AES_REAL.
  * - Durante el uso normal:
  *   - `Crypto(aesReal)` para cifrar/descifrar archivos.
  *
- * ## Advertencias
+ * ### Flujo interno del cifrado
+ * 1. Genera un IV aleatorio de 12 bytes.
+ * 2. Inicializa AES‑GCM con la clave.
+ * 3. Cifra los datos y genera el TAG de integridad.
+ * 4. Devuelve `[IV] + [CIFRADO+TAG]`.
+ *
+ * ### Flujo interno del descifrado
+ * 1. Extrae IV.
+ * 2. Extrae cipherText.
+ * 3. Descifra y valida integridad.
+ *
+ * ### Notas
  * - AES‑GCM valida integridad: si la clave no coincide, el descifrado falla.
- * - Esta clase no genera claves; solo las usa.
+ * - Esta clase **no genera claves**, solo las usa.
  */
 class Crypto {
 
@@ -44,14 +55,11 @@ class Crypto {
     /**
      * Constructor para claves derivadas desde texto plano.
      *
-     * Ejemplo:
-     * ```
-     * Crypto("holaMundo")
-     * ```
+     * ### Flujo
+     * - Aplica SHA‑256 al texto.
+     * - Recorta a 16 bytes para AES‑128.
      *
-     * Flujo:
-     * - SHA‑256 al texto.
-     * - Recorte a 16 bytes.
+     * @param userPlainKey Texto plano desde el que se deriva la clave.
      */
     constructor(userPlainKey: String) {
         CoreLog.d(TAG, "Derivando clave AES desde String…")
@@ -68,13 +76,9 @@ class Crypto {
     /**
      * Constructor para claves AES ya generadas (AES_REAL).
      *
-     * Ejemplo:
-     * ```
-     * Crypto(aesRealByteArray)
-     * ```
+     * @param aesKeyBytes Clave AES REAL de 16 bytes.
      *
-     * Requisitos:
-     * - Debe tener exactamente 16 bytes (AES‑128).
+     * @throws IllegalArgumentException si la clave no tiene 16 bytes.
      */
     constructor(aesKeyBytes: ByteArray) {
         require(aesKeyBytes.size == AES_KEY_SIZE) {
@@ -89,11 +93,16 @@ class Crypto {
     /**
      * Cifra datos usando AES‑GCM.
      *
-     * Flujo:
-     * 1. Genera IV aleatorio de 12 bytes.
-     * 2. Inicializa el cifrador.
+     * ### Flujo interno
+     * 1. Genera IV aleatorio.
+     * 2. Inicializa AES‑GCM.
      * 3. Cifra los datos.
      * 4. Devuelve `[IV] + [CIFRADO+TAG]`.
+     *
+     * @param plain Datos en claro.
+     * @return Array de bytes con IV + cifrado.
+     *
+     * @throws FileCoreException.WriteError si ocurre un error durante el cifrado.
      */
     fun encrypt(plain: ByteArray): ByteArray {
         return try {
@@ -113,25 +122,32 @@ class Crypto {
             iv + cipherText
         } catch (e: Exception) {
             CoreLog.e(TAG, "Error cifrando: ${e.message}")
-            ByteArray(0)
+            throw FileCoreException.WriteError
         }
     }
 
     /**
      * Descifra datos cifrados con AES‑GCM.
      *
-     * Flujo:
+     * ### Flujo interno
      * 1. Extrae IV (primeros 12 bytes).
      * 2. Extrae cipherText.
-     * 3. Descifra.
+     * 3. Descifra y valida integridad.
+     *
+     * @param encrypted Datos cifrados en formato `[IV] + [CIFRADO+TAG]`.
+     * @return Bytes descifrados.
+     *
+     * @throws FileCoreException.ReadError si los datos son demasiado cortos.
+     * @throws FileCoreException.ReadError si ocurre un error general de descifrado.
+     * @throws FileCoreException.ReadError si el TAG es inválido (clave incorrecta o datos corruptos).
      */
     fun decrypt(encrypted: ByteArray): ByteArray {
-        return try {
-            if (encrypted.size <= GCM_IV_SIZE) {
-                CoreLog.e(TAG, "Datos demasiado cortos para descifrar")
-                return ByteArray(0)
-            }
+        if (encrypted.size <= GCM_IV_SIZE) {
+            CoreLog.e(TAG, "Datos demasiado cortos para descifrar")
+            throw FileCoreException.ReadError
+        }
 
+        return try {
             val iv = encrypted.copyOfRange(0, GCM_IV_SIZE)
             val cipherText = encrypted.copyOfRange(GCM_IV_SIZE, encrypted.size)
 
@@ -139,12 +155,13 @@ class Crypto {
             cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(GCM_TAG_SIZE, iv))
 
             cipher.doFinal(cipherText)
+
         } catch (e: AEADBadTagException) {
             CoreLog.e(TAG, "TAG inválido: clave incorrecta o datos corruptos")
-            ByteArray(0)
+            throw FileCoreException.ReadError
         } catch (e: Exception) {
             CoreLog.e(TAG, "Error descifrando: ${e.message}")
-            ByteArray(0)
+            throw FileCoreException.ReadError
         }
     }
 }

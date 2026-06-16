@@ -1,5 +1,6 @@
 package com.ajpr00.mobile.presentation.screen
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
 import com.ajpr00.visumloop.mobile.R
@@ -13,6 +14,7 @@ fun SplashScreenMobile(
     onNavigateToLogin: () -> Unit,
     ) {
 
+    Log.d("SPLASH", "SplashScreenMobile() ejecutado $")
     SplashScreenContent(
         splashImage = painterResource(id = R.drawable.imag_splash_control),
         onAnimationFinished = {

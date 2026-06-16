@@ -5,7 +5,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import com.ajpr00.visumloop.mobile.R
-import com.ajpr00.mobile.presentation.state.EstadoEvento
+import com.ajpr00.mobile.presentation.state.StateEvento
 import com.ajpr00.components.screen.RecoverPasswordContent
 import com.ajpr00.core.util.validarEmail
 import androidx.compose.runtime.mutableStateOf
@@ -39,17 +39,17 @@ fun RecoverPasswordMobile(
         },
         onBackClick = goToBack,
         emailError = emailTouched && !validarEmail(uiState.email),
-        isLoading = uiEvent is EstadoEvento.Cargando
+        isLoading = uiEvent is StateEvento.Cargando
     )
 
     when (uiEvent) {
-        is EstadoEvento.Exito -> {
+        is StateEvento.Exito -> {
             Toast.makeText(context, "Correo enviado correctamente", Toast.LENGTH_SHORT).show()
             goToBack()
         }
 
-        is EstadoEvento.Mensajes -> {
-            (uiEvent as EstadoEvento.Mensajes).mensajes.forEach {
+        is StateEvento.Mensajes -> {
+            (uiEvent as StateEvento.Mensajes).mensajes.forEach {
                 Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             }
             viewModel.clearErrors()

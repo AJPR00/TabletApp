@@ -1,12 +1,13 @@
 package com.ajpr00.core.domain.usecase.preference
 
-import com.ajpr00.core.domain.repository.preference.PreferencesRepository
+import com.ajpr00.core.domain.repository.preference.SettingsManager
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 class SetDarkModeUseCase @Inject constructor(
-    private val repository: PreferencesRepository
+    private val repo: SettingsManager
 ) {
-    suspend operator fun invoke(enabled: Boolean) {
-        repository.setDarkMode(enabled)
+    suspend operator fun invoke() {
+        repo.setDarkMode(!repo.isDarkMode().first())
     }
 }

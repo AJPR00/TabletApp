@@ -45,6 +45,11 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        resValue("string", "facebook_app_id", properties["FACEBOOK_APP_ID"].toString())
+        resValue("string", "facebook_client_token", properties["FACEBOOK_CLIENT_TOKEN"].toString())
+        resValue("string", "google_client_id", properties["GOOGLE_CLIENT_ID"].toString())
+
     }
 
     buildTypes {
@@ -201,4 +206,13 @@ dependencies {
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.kotlinx.coroutines.test)
 
+    // Credential Manager
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+
+    // Google Identity Services
+    implementation(libs.google.identity)
+
+    // Login Facebook
+    implementation(libs.facebook.login)
 }

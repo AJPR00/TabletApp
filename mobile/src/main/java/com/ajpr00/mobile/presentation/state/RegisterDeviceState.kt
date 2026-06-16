@@ -10,6 +10,7 @@ data class RegisterDeviceState(
     val ip: String = "",
     val isValid: Boolean = false,
     val isSearchingAut: Boolean = false,
+    val isPairingQr: Boolean = false,
     val isSearchingManual: Boolean = false,
     val foundDevices: List<Dispositivo> = emptyList()
 )

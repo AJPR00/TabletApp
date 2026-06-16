@@ -1,12 +1,12 @@
 package com.ajpr00.core.domain.usecase.preference
 
-import com.ajpr00.core.domain.repository.preference.PreferencesRepository
+import com.ajpr00.core.domain.repository.preference.SettingsManager
 import javax.inject.Inject
 
 class SaveAesKeyUseCase @Inject constructor(
-    private val prefs: PreferencesRepository
+    private val repo: SettingsManager
 ) {
     suspend operator fun invoke(bytes: ByteArray) {
-        prefs.setAesKey(bytes)
+        repo.setAesKey(bytes)
     }
 }

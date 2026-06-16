@@ -1,5 +1,6 @@
 package com.ajpr00.data.datasource.login
 
+import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
@@ -39,12 +40,17 @@ class FirebaseAuthDataSource @Inject constructor(
         return user.getIdToken(true).await()?.token.orEmpty()
     }
 
+    fun isFirebaseLoggedIn(): Boolean = firebaseAuth.currentUser != null
+
+    suspend fun loginWithFacebook(token: String): FirebaseUser {
+        val credential = FacebookAuthProvider.getCredential(token)
+        firebaseAuth.signInWithCredential(credential).await()
+        return firebaseAuth.currentUser!!
+    }
+
+    fun loginWithDropbox(token: String) { }
+
     fun logout() {
         firebaseAuth.signOut()
     }
-
-    fun isFirebaseLoggedIn(): Boolean = firebaseAuth.currentUser != null
-    fun loginWithFacebook(token: String) { }
-
-    fun loginWithDropbox(token: String) { }
 }

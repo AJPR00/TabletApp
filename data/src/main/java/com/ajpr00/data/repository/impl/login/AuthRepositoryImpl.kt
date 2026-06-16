@@ -1,46 +1,108 @@
 package com.ajpr00.data.repository.impl.login
 
-import com.ajpr00.core.domain.model.UserGoogle
-import com.ajpr00.core.domain.repository.login.AuthPreference
-import com.ajpr00.core.domain.repository.login.StateAuthRepository
+import android.util.Log
+import com.ajpr00.core.domain.model.UserAuthData
+import com.ajpr00.core.domain.repository.login.AuthRepository
+import com.ajpr00.core.domain.repository.preference.SessionManager
 import com.ajpr00.data.datasource.login.FirebaseAuthDataSource
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
-    private val authPreference: AuthPreference,
-    private val firebaseDataSource: FirebaseAuthDataSource
-) : StateAuthRepository {
+    private val authPreference: SessionManager,
+    private val firebaseDS: FirebaseAuthDataSource
+) : AuthRepository {
+    override suspend fun loginWithEmail(email: String, password: String): Result<Unit> {
+        Log.d("LoginRepo", "Intentando login con Firebase para: $email")
+        return try {
+            // Esperamos a que Firebase responda (sin callbacks, gracias a await()).
+            firebaseDS.loginWithEmailAndPassword(email, password)
+            Log.d("LoginRepo", "🟢 Firebase autenticó correctamente al usuario")
 
-    override val isLoggedIn: Flow<Boolean> =
-        authPreference.idTokenLocal.map { it != null }
+            val user = firebaseDS.getCurrentUser()
+            val idToken = user?.getIdToken(true)?.await()?.token.orEmpty()
+            Log.d("LoginRepo", "Token obtenido: ${idToken.take(10)}... (truncado)")
+            Log.d("LoginRepo", "Avatar: ${user?.photoUrl}")
 
-    override val currentUser: Flow<UserGoogle?> =
-        combine(
-            authPreference.usernameLocal,
-            authPreference.emailLocal,
-            authPreference.avatarLocal,
-            authPreference.idTokenLocal
-        ) { username, email, avatar, token ->
-
-            if (token.isNullOrEmpty()) {
-                null
-            } else {
-                UserGoogle(
-                    name = username,
+            // Guardamos la sesión localmente para no pedir login cada vez.
+            authPreference.saveLocalSession(
+                UserAuthData(
+                    token = idToken,
                     email = email,
-                    avatarUrl = avatar,
-                    idToken = token,
+                    username = user?.displayName.orEmpty(),
+                    avatarUrl = user?.photoUrl?.toString().orEmpty(),
                     authCode = null
                 )
-            }
+            )
+            Log.d("LoginRepo", "💾 Sesión guardada en LoginPreferences")
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            // Si Firebase falla, lo capturamos y devolvemos el error.
+            Log.e("LoginRepo", "Error en login: ${e.message}")
+            Result.failure(e)
         }
+    }
+
+    override suspend fun registerWithEmail(
+        email: String,
+        password: String
+    ): Result<Unit> {
+        return try {
+            firebaseDS.registerEmail(email, password)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun loginWithGoogle(idToken: String): Result<UserAuthData> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun loginWithFacebook(token: String): Result<UserAuthData> {
+        return try {
+            val firebaseUser = firebaseDS.loginWithFacebook(token)
+
+            val user = UserAuthData(
+                token = token,
+                email = firebaseUser.email ?: "",
+                username = firebaseUser.displayName ?: "",
+                avatarUrl = firebaseUser.photoUrl?.toString() ?: "",
+                authCode = null, // Facebook no usa authCode
+            )
+
+            Result.success(user)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun userExists(email: String): Boolean {
+        return firebaseDS.userExists(email)
+    }
+
+    override suspend fun sendPasswordReset(email: String): Result<Unit> {
+        return try {
+            firebaseDS.sendPasswordReset(email)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getCurrentUserToken(): String {
+        return firebaseDS.getCurrentUserToken()
+    }
 
     override suspend fun logout(): Result<Unit> {
-        firebaseDataSource.logout()
-        authPreference.clearAll()
-        return Result.success(Unit)
+        return try {
+            firebaseDS.logout()
+            authPreference.clearLocalSession()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

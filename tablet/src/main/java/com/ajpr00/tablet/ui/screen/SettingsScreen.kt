@@ -1,6 +1,5 @@
 package com.ajpr00.tablet.ui.screen
 
-import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
@@ -48,24 +47,14 @@ import kotlinx.coroutines.delay
  */
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel,
-    durationSeconds: Int = 60,
-    ) {
+    viewModel: SettingsViewModel
+) {
     val state by viewModel.state.collectAsState()
     val qrPayload by viewModel.qrPayload.collectAsState()
 
-    var showQrDialog by remember { mutableStateOf(false) }
-    var remaining by remember { mutableIntStateOf(durationSeconds) }
-
-
-    LaunchedEffect(Unit) {
-        while (remaining > 0) {
-            delay(1000)
-            remaining--
-        }
-        showQrDialog = false
-    }
-
+    // ⭐ Estado del ViewModel (NO local)
+    val showQrDialog by viewModel.showQrDialog.collectAsState()
+    val remaining by viewModel.qrTimer.collectAsState()
 
     Box(
         modifier = Modifier
@@ -85,6 +74,7 @@ fun SettingsScreen(
             else
                 stringResource(R.string.mobile_disconnected)
         )
+
         Column(
             modifier = Modifier
                 .width(500.dp)
@@ -93,14 +83,20 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(28.dp)
         ) {
+
+            // ---------------------------------------------------------
+            // MODO OSCURO
+            // ---------------------------------------------------------
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = stringResource(R.string.dark_mode))
-                Switch(checked = state.isDarkMode, onCheckedChange = viewModel::toggleDarkMode)
+                Switch(
+                    checked = state.isDarkMode,
+                    onCheckedChange = { viewModel.toggleDarkMode() }
+                )
             }
-
 
             // ---------------------------------------------------------
             // IDIOMA
@@ -158,10 +154,12 @@ fun SettingsScreen(
                 )
                 Text(state.tabletName, style = MaterialTheme.typography.bodySmall)
             }
+
             Text(
                 text = stringResource(R.string.tablet_id_label) + " ${state.tabletId}",
                 style = MaterialTheme.typography.bodySmall
             )
+
             // ---------------------------------------------------------
             // ACCIONES
             // ---------------------------------------------------------
@@ -172,8 +170,7 @@ fun SettingsScreen(
 
             Button(
                 onClick = {
-                    viewModel.regenerateQr()
-                    showQrDialog = true
+                    viewModel.regenerateQr()   // ⭐ Esto ya inicia el temporizador
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -189,8 +186,12 @@ fun SettingsScreen(
             ) {
                 Text(stringResource(R.string.clear_aes_key))
             }
+
+            // ---------------------------------------------------------
+            // DIÁLOGO QR
+            // ---------------------------------------------------------
             if (showQrDialog) {
-                Dialog(onDismissRequest = { showQrDialog = false }) {
+                Dialog(onDismissRequest = { viewModel.closeQrDialog() }) {
 
                     Surface(
                         shape = RoundedCornerShape(16.dp),
@@ -219,6 +220,7 @@ fun SettingsScreen(
                             } ?: Text("Generando QR…")
 
                             Spacer(modifier = Modifier.height(20.dp))
+
                             Text(
                                 text = "Tiempo restante: $remaining s",
                                 fontSize = 16.sp,
@@ -227,7 +229,7 @@ fun SettingsScreen(
                             )
 
                             Button(
-                                onClick = { showQrDialog = false },
+                                onClick = { viewModel.closeQrDialog() },
                                 modifier = Modifier.width(150.dp)
                             ) {
                                 Text("Cerrar")

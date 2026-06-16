@@ -2,6 +2,7 @@ package com.ajpr00.mobile.qr.parse
 
 import com.ajpr00.core.domain.model.qr.QrPayload
 import com.google.gson.Gson
+import javax.inject.Inject
 
 /**
  * Parser encargado de convertir el texto bruto del QR en un objeto `QrPayload`.
@@ -19,7 +20,7 @@ import com.google.gson.Gson
  * @param raw Texto completo del QR leído por ZXing.
  * @return Objeto `QrPayload` con los campos del QR.
  */
-class QrParser {
+class QrParser @Inject constructor() {
     fun parse(raw: String): QrPayload {
         val payload = Gson().fromJson(raw, QrPayload::class.java)
 

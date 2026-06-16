@@ -2,7 +2,7 @@ package com.ajpr00.mobile.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ajpr00.core.domain.repository.preference.PreferencesRepository
+import com.ajpr00.core.domain.repository.preference.SettingsManager
 import com.ajpr00.data.datasource.network.MdnsResolver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -13,7 +13,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
-    private val prefsRepository: PreferencesRepository,
+    private val prefsRepository: SettingsManager,
     private val mdnsResolver: MdnsResolver
 ) : ViewModel() {
 

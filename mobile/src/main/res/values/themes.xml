@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.TabletApp" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- Tema mínimo para el splash -->
+    <style name="Theme.VisumLoop.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenAnimatedIcon">@drawable/imag_splash_control</item>
+        <item name="windowSplashScreenBackground">@color/black</item>
+        <item name="postSplashScreenTheme">@style/Theme.VisumLoop</item>
+    </style>
+
+    <!-- Tema puente hacia Compose -->
+    <style name="Theme.VisumLoop" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- vacío: Compose controla colores -->
+    </style>
+
 </resources>

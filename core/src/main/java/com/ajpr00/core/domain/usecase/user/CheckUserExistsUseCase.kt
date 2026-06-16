@@ -1,12 +1,12 @@
 package com.ajpr00.core.domain.usecase.user
 
-import com.ajpr00.core.domain.repository.login.EmailAuthRepository
+import com.ajpr00.core.domain.repository.login.AuthRepository
 import javax.inject.Inject
 
 class CheckUserExistsUseCase @Inject constructor(
-    private val repository: EmailAuthRepository
+    private val repo: AuthRepository
 ) {
     suspend operator fun invoke(email: String): Boolean {
-        return repository.userExists(email)
+        return repo.userExists(email)
     }
 }

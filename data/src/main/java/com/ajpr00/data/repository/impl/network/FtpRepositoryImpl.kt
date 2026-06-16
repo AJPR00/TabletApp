@@ -1,8 +1,7 @@
 package com.ajpr00.data.repository.impl.network
 
 import com.ajpr00.core.domain.model.MediaContent
-import com.ajpr00.core.domain.repository.login.AuthPreference
-import com.ajpr00.core.domain.repository.network.FtpRepository
+import com.ajpr00.data.repository.network.FtpRepository
 import com.ajpr00.data.datasource.cloud.FtpClientDataSource
 import javax.inject.Inject
 

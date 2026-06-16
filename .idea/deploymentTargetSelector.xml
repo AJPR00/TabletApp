@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="tablet">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-06-07T23:35:34.635893300Z">
+        <DropdownSelection timestamp="2026-06-16T18:14:12.087913Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=T30PRO0000000020341" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=19807777" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -15,10 +15,10 @@
       </SelectionState>
       <SelectionState runConfigName="mobile">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-06-04T21:48:58.593341600Z">
+        <DropdownSelection timestamp="2026-06-16T19:22:16.598398700Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=T30PRO0000000020341" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=19807777" />
             </handle>
           </Target>
         </DropdownSelection>

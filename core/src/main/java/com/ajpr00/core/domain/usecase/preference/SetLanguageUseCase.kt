@@ -1,12 +1,12 @@
 package com.ajpr00.core.domain.usecase.preference
 
-import com.ajpr00.core.domain.repository.preference.PreferencesRepository
+import com.ajpr00.core.domain.repository.preference.SettingsManager
 import javax.inject.Inject
 
 class SetLanguageUseCase @Inject constructor(
-    private val repository: PreferencesRepository
+    private val repo: SettingsManager
 ) {
     suspend operator fun invoke(lang: String) {
-        repository.setLanguage(lang)
+        repo.setLanguage(lang)
     }
 }

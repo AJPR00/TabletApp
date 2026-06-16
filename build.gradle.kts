@@ -1,4 +1,3 @@
-
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
@@ -15,4 +14,11 @@ plugins {
 
     // Firebase Google Services
     alias(libs.plugins.google.services) apply false
+
+    //Dakka
+    alias(libs.plugins.dokka)
+}
+
+tasks.dokkaHtmlMultiModule {
+    outputDirectory.set(layout.buildDirectory.dir("dokka/htmlMultiModule"))
 }

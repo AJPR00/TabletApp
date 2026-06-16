@@ -2,6 +2,7 @@ package com.ajpr00.mobile.data.datasource.remote
 
 import com.ajpr00.core.domain.model.api.*
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.http.*
 
@@ -24,7 +25,7 @@ interface TabletApi {
      * Comprueba si la tablet está viva.
      */
     @GET
-    suspend fun ping(@Url url: String): String
+    suspend fun ping(@Url url: String): ApiResponse<String>
 
     /**
      * ## GET /info
@@ -110,6 +111,10 @@ interface TabletApi {
     suspend fun uploadMedia(
         @Url url: String,
         @Header("X-Auth-Token") token: String,
-        @Part file: MultipartBody.Part
+        @Part file: MultipartBody.Part,
+        @Part("original_name") originalName: RequestBody,
+        @Part("original_ext") originalExt: RequestBody,
+        @Part("original_mime") originalMime: RequestBody
     ): ApiResponse<UploadResult>
+
 }

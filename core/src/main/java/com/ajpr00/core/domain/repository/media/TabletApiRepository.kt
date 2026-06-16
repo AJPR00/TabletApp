@@ -28,7 +28,7 @@ import okhttp3.ResponseBody
 
 interface TabletApiRepository {
 
-    suspend fun ping(ip: String, port: Int): String?
+    suspend fun ping(ip: String, port: Int): ApiResponse<String>
 
     suspend fun getInfo(ip: String, port: Int): ApiResponse<DeviceInfo>?
 
@@ -40,7 +40,14 @@ interface TabletApiRepository {
 
     suspend fun getThumbnail(ip: String, port: Int, id: String): ResponseBody?
 
-    suspend fun uploadMedia(ip: String, port: Int, file: MultipartBody.Part): ApiResponse<UploadResult>?
+    suspend fun uploadMedia(
+        ip: String,
+        port: Int,
+        file: MultipartBody.Part,
+        originalName: okhttp3.RequestBody,
+        originalExt: okhttp3.RequestBody,
+        originalMime: okhttp3.RequestBody
+    ): ApiResponse<UploadResult>
 
     suspend fun listMediaWithThumbnails(ip: String, port: Int): List<RemoteMedia>
 

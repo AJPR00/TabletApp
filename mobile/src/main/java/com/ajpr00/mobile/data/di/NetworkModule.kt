@@ -19,7 +19,6 @@ object NetworkModule {
     fun provideOkHttpClient(): OkHttpClient =
         OkHttpClient.Builder().build()
 
-
     @Provides
     @Singleton
     fun provideTabletApi(retrofit: Retrofit): TabletApi {

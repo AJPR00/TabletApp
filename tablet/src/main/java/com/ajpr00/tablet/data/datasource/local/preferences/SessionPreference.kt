@@ -81,14 +81,14 @@ class SessionPreference @Inject constructor(
     }
 
     // Métodos de guardado
-    suspend fun saveLocalSession(username: String, email: String, avatarUrl: String, token: String) {
+    suspend fun saveLocalSession(username: String?, email: String, avatarUrl: String, token: String?) {
         context.sessionDataStore.edit { prefs ->
-            prefs[USERNAME_LOCAL] = username
+            prefs[USERNAME_LOCAL] = username ?: "UserLocal"
             prefs[EMAIL_LOCAL] = email
             prefs[AVATAR_LOCAL] = avatarUrl
-            prefs[ID_TOKEN_LOCAL] = token
+            prefs[ID_TOKEN_LOCAL] = token ?: ""
         }
-        Log.d(TAG, "Guardando sesión local, email: $email, token: ${token.take(10)}..., avatar: $avatarUrl, username: $username")
+        Log.d(TAG, "Guardando sesión local, email: $email, token: ${token?.take(10)}..., avatar: $avatarUrl, username: $username")
     }
 
     suspend fun saveDriveSession(email: String, idToken: String? = null, authCode: String? = null) {

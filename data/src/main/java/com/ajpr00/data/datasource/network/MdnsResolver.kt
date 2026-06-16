@@ -30,6 +30,8 @@ class MdnsResolver @Inject constructor(
 
     private var jmdns: JmDNS? = null
     private var multicastLock: WifiManager.MulticastLock? = null
+    private val seenDevices = mutableSetOf<String>()
+
 
     fun discover(serviceType: String = "_visumloop._tcp.local."): Flow<MdnsServiceInfo> = callbackFlow {
 
@@ -67,18 +69,31 @@ class MdnsResolver @Inject constructor(
                     }
 
                     override fun serviceResolved(event: ServiceEvent) {
-                        Log.d(TAG, "mDNS → serviceResolved: ${event.info}")
+                        val name = event.info.name
+                        val ip = event.info.inet4Addresses.firstOrNull()?.hostAddress ?: return
+                        val id = event.info.getPropertyString("id") ?: ""
 
-                        val info = MdnsServiceInfo(
-                            name = event.info.name,
-                            ip = event.info.inet4Addresses.firstOrNull()?.hostAddress ?: "",
-                            port = event.info.port,
-                            txt = event.info.textString
+                        val key = "$id-$ip"
+
+                        // Evitar duplicados
+                        if (seenDevices.contains(key)) {
+                            Log.d(TAG, "mDNS → Ignorado (duplicado): $key")
+                            return
+                        }
+                        seenDevices.add(key)
+
+                        Log.d(TAG, "mDNS → Tablet detectada: name=$name ip=$ip id=$id")
+
+                        trySend(
+                            MdnsServiceInfo(
+                                name = name,
+                                ip = ip,
+                                port = event.info.port,
+                                txt = id // ahora txt contiene SOLO el id
+                            )
                         )
-
-                        Log.d(TAG, "mDNS → Tablet detectada: $info")
-                        trySend(info)
                     }
+
                 }
 
                 Log.d(TAG, "discover() → Registrando listener mDNS…")
@@ -112,7 +127,7 @@ class MdnsResolver @Inject constructor(
     }
 
     /**
-     * ⭐ Obtiene la IP REAL del móvil usando la API moderna (Android 10–14)
+     * Obtiene la IP REAL del móvil usando la API moderna (Android 10–14)
      */
     @RequiresPermission(Manifest.permission.ACCESS_NETWORK_STATE)
     private fun getLocalIpAddress(): InetAddress {

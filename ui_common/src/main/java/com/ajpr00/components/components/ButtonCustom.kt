@@ -20,19 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.ajpr00.uicommon.R as commonR
-
-@Preview(showBackground = true)
-@Composable
-fun CustomButtonPreview() {
-    CustomButtonLogin(
-        icono = commonR.drawable.facebook_logo,
-        label = "Login con Facebook",
-        onClick = {}
-    )
-}
 
 @Composable
 fun CustomButtonLogin(

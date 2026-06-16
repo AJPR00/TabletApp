@@ -2,18 +2,22 @@ package com.ajpr00.mobile.ui.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.SupervisedUserCircle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.ajpr00.uicommon.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar(onMenuClick: () -> Unit) {
+fun TopBar(
+    onLoginClick: () -> Unit,
+    onMenuClick: () -> Unit
+) {
     TopAppBar(
         title = { Text("Panel VisumControl") },
         navigationIcon = {
@@ -22,8 +26,12 @@ fun TopBar(onMenuClick: () -> Unit) {
             }
         },
         actions = {
-            IconButton(onClick = { /* Search */ }) {
-                Icon(Icons.Default.SupervisedUserCircle, contentDescription = "Search")
+            IconButton(onClick = onLoginClick) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_off_red),
+                    tint = androidx.compose.ui.graphics.Color.Unspecified,
+                    contentDescription = "Search"
+                )
             }
         }
     )
@@ -37,6 +45,9 @@ fun TopBar(onMenuClick: () -> Unit) {
 @Composable
 fun TopBarPreview() {
     TopBar(
+        onLoginClick = {
+            // [Logica_preview_login_click](ca://s?q=Logica_preview_login_click)
+        },
         onMenuClick = {
             // [Logica_preview_menu_click](ca://s?q=Logica_preview_menu_click)
         }

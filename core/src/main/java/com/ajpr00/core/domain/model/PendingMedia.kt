@@ -8,7 +8,7 @@ data class PendingMedia(
     val status: PendingStatus,
     val createdAt: Long,
     val retries: Int,
-    val deviceId: String
+    var deviceId: String
 )
 
 enum class PendingStatus {

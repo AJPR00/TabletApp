@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+
+    alias(libs.plugins.dokka)
     alias(libs.plugins.kotlin.compose)
 }
 
@@ -35,6 +37,7 @@ android {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":presentation_common"))
 
     implementation(libs.coil.compose)
 
