@@ -50,9 +50,24 @@ fun NavigationCore(
             val viewModelSplash: SplashTabletViewModel = hiltViewModel()
             SplashScreenTablet(
                 viewModel = viewModelSplash,
-                goToOnboarding = { navController.navigate(OnboardinGraph) },
-                goToMainGraph = { navController.navigate(LoginGraph) },
+                viewModelAuth = authViewModel,
+                goToOnboarding = {
+                    navController.navigate(OnboardinGraph) {
+                        popUpTo(Splash) { inclusive = true }
+                    }
+                },
+                goToMainGraph = {
+                    navController.navigate(MainGraph) {
+                        popUpTo(Splash) { inclusive = true }
+                    }
+                },
+                goToLogin = {
+                    navController.navigate(LoginGraph) {
+                        popUpTo(Splash) { inclusive = true }
+                    }
+                }
             )
+
         }
 
         composable<About> {}

@@ -1,6 +1,8 @@
 package com.ajpr00.data.di
 
+import com.ajpr00.core.domain.repository.dispositivo.TabletRepository
 import com.ajpr00.core.domain.repository.login.AuthRepository
+import com.ajpr00.data.repository.impl.dispositivo.TabletRepositoryImpl
 import com.ajpr00.data.repository.network.DropboxRepository
 import com.ajpr00.data.repository.network.FtpRepository
 import com.ajpr00.data.repository.impl.login.AuthRepositoryImpl
@@ -37,4 +39,9 @@ abstract class RepositoryModule {
         impl: FtpRepositoryImpl
     ): FtpRepository
 
+    @Binds
+    @Singleton
+    abstract fun bindTabletRepository(
+        impl: TabletRepositoryImpl
+    ): TabletRepository
 }

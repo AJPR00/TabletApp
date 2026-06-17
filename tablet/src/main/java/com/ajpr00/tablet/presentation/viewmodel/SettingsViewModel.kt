@@ -5,17 +5,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ajpr00.core.domain.model.qr.QrPayload
 import com.ajpr00.core.domain.usecase.pairing.GetQrUseCase
-import com.ajpr00.core.domain.usecase.preference.GetConnectedUseCase
-import com.ajpr00.core.domain.usecase.preference.GetDarkModeUseCase
-import com.ajpr00.core.domain.usecase.preference.GetIdUseCase
-import com.ajpr00.core.domain.usecase.preference.GetLanguageUseCase
-import com.ajpr00.core.domain.usecase.preference.GetNameUseCase
-import com.ajpr00.core.domain.usecase.preference.GetnameMobileUseCase
-import com.ajpr00.core.domain.usecase.preference.SaveAesKeyUseCase
-import com.ajpr00.core.domain.usecase.preference.SetConnectedUseCase
-import com.ajpr00.core.domain.usecase.preference.SetDarkModeUseCase
-import com.ajpr00.core.domain.usecase.preference.SetLanguageUseCase
-import com.ajpr00.core.domain.usecase.preference.SetNameUseCase
+import com.ajpr00.core.domain.usecase.preference.session.GetLocalEmailUseCase
+import com.ajpr00.core.domain.usecase.preference.setting.GetDarkModeUseCase
+import com.ajpr00.core.domain.usecase.preference.setting.GetIdUseCase
+import com.ajpr00.core.domain.usecase.preference.setting.GetLanguageUseCase
+import com.ajpr00.core.domain.usecase.preference.setting.GetNameUseCase
+import com.ajpr00.core.domain.usecase.preference.setting.GetnameMobileUseCase
+import com.ajpr00.core.domain.usecase.preference.setting.SaveAesKeyUseCase
+import com.ajpr00.core.domain.usecase.preference.setting.SetConnectedUseCase
+import com.ajpr00.core.domain.usecase.preference.setting.SetDarkModeUseCase
+import com.ajpr00.core.domain.usecase.preference.setting.SetLanguageUseCase
+import com.ajpr00.core.domain.usecase.preference.setting.SetNameUseCase
 import com.ajpr00.tablet.presentation.state.SettingsState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -53,7 +53,7 @@ class SettingsViewModel @Inject constructor(
     private val getLanguage: GetLanguageUseCase,
     private val getTabletId: GetIdUseCase,
     private val getTabletName: GetNameUseCase,
-    private val isConnectedRed: GetConnectedUseCase,
+    private val isConnectedRed: GetLocalEmailUseCase,
     private val getMobileName: GetnameMobileUseCase,
     private val setDarkMode: SetDarkModeUseCase,
     private val setLanguage: SetLanguageUseCase,

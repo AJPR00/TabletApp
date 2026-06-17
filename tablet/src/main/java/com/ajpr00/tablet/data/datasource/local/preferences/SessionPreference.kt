@@ -31,7 +31,6 @@ class SessionPreference @Inject constructor(
         private val ID_TOKEN_DRIVE = stringPreferencesKey("id_token_drive")
         private val AUTH_CODE_DRIVE = stringPreferencesKey("auth_code_drive")
 
-
     }
 
     // Flujos Local

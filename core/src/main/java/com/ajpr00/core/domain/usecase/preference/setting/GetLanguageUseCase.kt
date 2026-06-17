@@ -1,4 +1,4 @@
-package com.ajpr00.core.domain.usecase.preference
+package com.ajpr00.core.domain.usecase.preference.setting
 
 import com.ajpr00.core.domain.repository.preference.SettingsManager
 import kotlinx.coroutines.flow.Flow

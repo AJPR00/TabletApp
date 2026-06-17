@@ -20,6 +20,7 @@ class TabletMainApplication : Application() {
         FacebookSdk.addLoggingBehavior(LoggingBehavior.GRAPH_API_DEBUG_INFO)
         FacebookSdk.addLoggingBehavior(LoggingBehavior.GRAPH_API_DEBUG_WARNING)
 
+        // Obtener y mostrar la clave hash de la aplicación
       /*  try {
             val info = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
             for (signature in info.signatures!!) {

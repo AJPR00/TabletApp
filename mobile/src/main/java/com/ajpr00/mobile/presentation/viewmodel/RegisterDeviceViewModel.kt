@@ -14,7 +14,7 @@ import com.ajpr00.data.repository.tablet.LocateAutoIpByLanUseCase
 import com.ajpr00.data.repository.tablet.LocateTabletByManualUseCase
 import com.ajpr00.core.domain.usecase.pairing.CallShowPinUseCase
 import com.ajpr00.core.domain.usecase.pairing.SetParinUseCase
-import com.ajpr00.core.domain.usecase.preference.SaveAesKeyUseCase
+import com.ajpr00.core.domain.usecase.preference.setting.SaveAesKeyUseCase
 import com.ajpr00.core.domain.usecase.user.IsLoginStateUseCase
 import com.ajpr00.core.util.isValidIpv4
 import com.ajpr00.data.mapper.tablet.toDispositivo

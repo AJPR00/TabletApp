@@ -22,7 +22,7 @@ import com.ajpr00.core.domain.usecase.media.GetNextPendingMediaUseCase
 import com.ajpr00.core.domain.usecase.media.SendEncryptedMediaUseCase
 import com.ajpr00.core.domain.usecase.media.UpdatePendingMediaStatusUseCase
 import com.ajpr00.core.domain.usecase.network.IsTabletAliveUseCase
-import com.ajpr00.core.domain.usecase.preference.GetAesKeyUseCase
+import com.ajpr00.core.domain.usecase.preference.setting.GetAesKeyUseCase
 import com.ajpr00.core.util.VisumException
 import com.ajpr00.data.useCase.AddPendingMediaUseCase
 import com.ajpr00.mobile.presentation.state.StatePanelControl

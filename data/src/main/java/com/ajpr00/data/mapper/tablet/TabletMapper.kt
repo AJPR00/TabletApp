@@ -8,3 +8,19 @@ fun TabletFirestoreDto.toDomain() = Tablet(
     emailUsuario = emailUsuario,
     modelo = modelo
 )
+
+fun Tablet.toFirestoreDto(
+    ip: String,
+    puerto: Int,
+    estado: String,
+    ultimoUpdate: Long
+) = TabletFirestoreDto(
+    id = id,
+    emailUsuario = emailUsuario,
+    modelo = modelo,
+    ip = ip,
+    puerto = puerto,
+    estado = estado,
+    ultimoUpdate = ultimoUpdate
+)
+

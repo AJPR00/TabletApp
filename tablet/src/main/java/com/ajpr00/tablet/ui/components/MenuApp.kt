@@ -50,7 +50,7 @@ fun MenuApp(
     Log.d("MenuApp", "isLocalLoggedIn: $isLocalLoggedIn")
     Log.d("MenuApp", "avatar: $user")
 
-    val avatarPainter = if (isLocalLoggedIn && user?.avatarUrl?.isNotEmpty() == true) {
+    val avatarPainter = if (isLocalLoggedIn == true && user?.avatarUrl?.isNotEmpty() == true) {
         rememberAsyncImagePainter(user?.avatarUrl)
     } else {
         painterResource(R.drawable.user_circle_fill)
@@ -73,7 +73,7 @@ fun MenuApp(
         misArchivos = { launcherMedia.launch(arrayOf("image/*", "video/*")) },
         favorito = { viewModelMediaBackground.isShowSidePanel() },
         login = {
-            if (!isLocalLoggedIn) goToLogin else viewModelAuth.logout()
+            isLocalLoggedIn?.let { if (!it) goToLogin else viewModelAuth.logout() }
         },
         ftp = {
             //goToLogin(AccesLoginType.FTP)

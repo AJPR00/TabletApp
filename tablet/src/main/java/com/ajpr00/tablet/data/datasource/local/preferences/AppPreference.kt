@@ -16,19 +16,21 @@ private val Context.appDataStore by preferencesDataStore(name = "app_preference"
 /**
  * # AppPreference
  *
- * DataSource local para la configuración de la app.
+ * DataSource local basado en **Jetpack DataStore Preferences** encargado de
+ * persistir la configuración interna de la tablet.
  *
  * ## ¿Qué guarda esta clase?
  * - Configuración general (modo oscuro, idioma).
  * - Estado de primer arranque.
  * - Identidad de la tablet (ID + nombre).
- * - **Clave AES** usada para cifrar tráfico con el móvil tras la vinculación.
+ * - Estado de conexión con el móvil.
+ * - Token de sesión local.
+ * - **Clave AES REAL** usada para cifrar tráfico con el móvil tras el pairing.
  *
- * ## Responsabilidad dentro de la arquitectura
- * Esta clase pertenece a la capa **data/datasource/local** y actúa como
- * infraestructura de persistencia.
- * No contiene lógica de negocio ni validaciones complejas; solo lectura/escritura
- * de valores simples.
+ * ## Rol dentro de la arquitectura
+ * - Pertenece a la capa **data/datasource/local**.
+ * - Es infraestructura pura: solo lectura/escritura de valores simples.
+ * - No contiene lógica de negocio ni validaciones complejas.
  *
  * ## Relación con otras capas
  * - **domain**: los casos de uso leen/escriben aquí.
@@ -37,6 +39,7 @@ private val Context.appDataStore by preferencesDataStore(name = "app_preference"
  *
  * ## Notas importantes
  * - La clave AES REAL se guarda en Base64 para evitar problemas binarios.
+ * - Ningún valor aquí debe bloquear el hilo principal.
  */
 @Singleton
 class AppPreference @Inject constructor(
@@ -55,9 +58,10 @@ class AppPreference @Inject constructor(
         private val TABLET_ID = stringPreferencesKey("tablet_id")
         private val TABLET_NAME = stringPreferencesKey("tablet_name")
 
+        // Token de sesión
         private val TOKEN = stringPreferencesKey("token")
 
-        // Identidad de la conexion
+        // Estado de conexión con el móvil
         private val IS_MOBILE_CONNECTED = booleanPreferencesKey("is_mobile_connected")
         private val MOBILE_NAME = stringPreferencesKey("mobile_name")
 
@@ -71,6 +75,9 @@ class AppPreference @Inject constructor(
 
     /**
      * Flujo que expone si el modo oscuro está activado.
+     *
+     * ## Notas
+     * - Devuelve `false` por defecto.
      */
     val isDarkMode: Flow<Boolean> = context.appDataStore.data.map {
         it[IS_DARK_MODE] ?: false
@@ -78,6 +85,9 @@ class AppPreference @Inject constructor(
 
     /**
      * Idioma actual de la aplicación.
+     *
+     * ## Notas
+     * - Devuelve `"es"` por defecto.
      */
     val language: Flow<String> = context.appDataStore.data.map {
         it[LANGUAGE] ?: "es"
@@ -85,6 +95,9 @@ class AppPreference @Inject constructor(
 
     /**
      * Indica si es la primera vez que se inicia la app.
+     *
+     * ## Notas
+     * - Devuelve `true` por defecto.
      */
     val isFirstRun: Flow<Boolean> = context.appDataStore.data.map {
         it[IS_FIRST_RUN] ?: true
@@ -103,29 +116,32 @@ class AppPreference @Inject constructor(
     val tabletName: Flow<String> = context.appDataStore.data.map {
         it[TABLET_NAME] ?: "Tablet"
     }
+
     /**
-     * Identificador único de la tablet generado en el onboarding.
+     * Indica si el móvil está actualmente vinculado y conectado.
      */
     val isMobileConnected: Flow<Boolean> = context.appDataStore.data.map {
         it[IS_MOBILE_CONNECTED] ?: false
     }
 
     /**
-     * Nombre asignado por el usuario a la tablet.
+     * Nombre del móvil vinculado.
      */
     val mobileName: Flow<String> = context.appDataStore.data.map {
         it[MOBILE_NAME] ?: "Movil"
     }
 
+    /**
+     * Token de sesión local generado tras el pairing.
+     */
     val token: Flow<String> = context.appDataStore.data.map {
         it[TOKEN] ?: ""
     }
 
-
     /**
      * Clave AES REAL usada para cifrar tráfico con el móvil.
      *
-     * ## Detalles
+     * ## Detalles técnicos
      * - Se guarda en Base64.
      * - Se devuelve como `ByteArray?`.
      * - Si no existe, significa que la tablet **no está vinculada**.
@@ -142,6 +158,8 @@ class AppPreference @Inject constructor(
 
     /**
      * Actualiza el modo oscuro.
+     *
+     * @param enabled `true` para activar, `false` para desactivar.
      */
     suspend fun setDarkMode(enabled: Boolean) {
         context.appDataStore.edit { prefs ->
@@ -152,6 +170,8 @@ class AppPreference @Inject constructor(
 
     /**
      * Actualiza el idioma de la aplicación.
+     *
+     * @param lang Código ISO del idioma (ej: `"es"`, `"en"`).
      */
     suspend fun setLanguage(lang: String) {
         context.appDataStore.edit { prefs ->
@@ -191,11 +211,11 @@ class AppPreference @Inject constructor(
     }
 
     /**
-     * Guarda la clave AES.
+     * Guarda la clave AES REAL.
      *
      * ## ¿Cuándo se llama?
-     * - Solo después de que el móvil y la tablet hayan validado el PIN.
-     * - Solo después de descifrar correctamente la clave AES REAL.
+     * - Después de validar el PIN en `/pair`.
+     * - Después de descifrar correctamente la clave AES REAL enviada por el móvil.
      *
      * @param bytes Clave AES en formato binario (16 bytes para AES‑128).
      */
@@ -209,6 +229,9 @@ class AppPreference @Inject constructor(
         Log.d(TAG, "Clave AES_REAL guardada correctamente (${bytes.size} bytes)")
     }
 
+    /**
+     * Actualiza el estado de conexión con el móvil.
+     */
     suspend fun setMobileConnected(connected: Boolean) {
         context.appDataStore.edit { prefs ->
             prefs[IS_MOBILE_CONNECTED] = connected
@@ -216,6 +239,9 @@ class AppPreference @Inject constructor(
         Log.d(TAG, "MobileConnected actualizado: $connected")
     }
 
+    /**
+     * Guarda el nombre del móvil vinculado.
+     */
     suspend fun setMobileName(name: String) {
         context.appDataStore.edit { prefs ->
             prefs[MOBILE_NAME] = name
@@ -223,6 +249,9 @@ class AppPreference @Inject constructor(
         Log.d(TAG, "MobileName asignado: $name")
     }
 
+    /**
+     * Guarda el token de sesión generado tras el pairing.
+     */
     suspend fun setToken(name: String) {
         context.appDataStore.edit { prefs ->
             prefs[TOKEN] = name

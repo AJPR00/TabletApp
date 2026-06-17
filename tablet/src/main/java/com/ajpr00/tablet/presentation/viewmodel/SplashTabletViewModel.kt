@@ -12,7 +12,6 @@ import javax.inject.Inject
 class SplashTabletViewModel @Inject constructor(
     prefsRepository: SettingsManager
 ) : ViewModel() {
-
-    val firstRunCompleted = prefsRepository.isFirstRun()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val isFirstRun = prefsRepository.isFirstRun()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 }

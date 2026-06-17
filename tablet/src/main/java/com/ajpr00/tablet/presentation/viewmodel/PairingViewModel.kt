@@ -7,7 +7,7 @@ import com.ajpr00.core.domain.model.qr.QrPayload
 import com.ajpr00.core.domain.usecase.pairing.ObservePinUseCase
 import com.ajpr00.core.domain.usecase.pairing.ShowPinUseCase
 import com.ajpr00.core.domain.usecase.pairing.GetQrUseCase
-import com.ajpr00.core.domain.usecase.preference.SaveAesKeyUseCase
+import com.ajpr00.core.domain.usecase.preference.setting.SaveAesKeyUseCase
 import com.ajpr00.tablet.presentation.state.PairingState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
